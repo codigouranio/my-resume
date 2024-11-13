@@ -1,5 +1,5 @@
 # José Blanco  
-Metuchen, NJ, USA | (908) 902-3015 | blancosj@gmail.com
+Metuchen, NJ, USA | (908) 902-3015 | blancosj@gmail.com | ![LinkedIn](https://img.shields.io/badge/linkedin-%230077B5.svg?style=for-the-badge&logo=linkedin&logoColor=white)
 
 ## Profile Summary
 Highly skilled Software Engineer with 25 years of experience in platform development, scalable architectures, and distributed systems. Proven track record of transforming legacy systems into modern, cloud-based applications and leading initiatives that drive business growth. Expertise in building RESTful services, multi-tenant platforms, and high-performance API solutions using JavaScript, TypeScript, Spring Boot, and Node.js. Experienced in designing security-focused solutions, including OAuth2 services and API gateways, with a strong ability to deliver enterprise-grade solutions across telecommunications, mobile networks, and endpoint security.
@@ -7,7 +7,13 @@ Highly skilled Software Engineer with 25 years of experience in platform develop
 ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
 ![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white)
+![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)
+![C#](https://img.shields.io/badge/c%23-%23239120.svg?style=for-the-badge&logo=csharp&logoColor=white)
+![Java](https://img.shields.io/badge/java-%23ED8B00.svg?style=for-the-badge&logo=openjdk&logoColor=white)
+![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E)
 
+
+ 
 ## Career
 
 ### Software Engineer | Asurion LLC  
