@@ -1,6 +1,6 @@
 [![LinkedIn](https://img.shields.io/badge/linkedin-%230077B5.svg?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/blancojose/)
 [![Gmail](https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:blancosj@gmail.com?subject=Hello%20World)
-[![LeetCode](https://img.shields.io/badge/LeetCode-000000?style=for-the-badge&logo=LeetCode&logoColor=#d16c06)](https://leetcode.com/u/blancosj/)
+[![LeetCode](https://img.shields.io/badge/LeetCode-FFFFFF?style=for-the-badge&logo=LeetCode&logoColor=#d16c06)](https://leetcode.com/u/blancosj/)
 
 # José Blanco  
 Metuchen, NJ, USA | (908) 902-3015 | blancosj@gmail.com
