@@ -1,0 +1,15 @@
+name: llm-service
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - numpy=1.24.3
+  - pip:
+    - flask==3.0.0
+    - flask-cors==4.0.0
+    - llama-cpp-python==0.2.27
+    - requests==2.31.0
+    - python-dotenv==1.0.0
+    - gunicorn==21.2.0

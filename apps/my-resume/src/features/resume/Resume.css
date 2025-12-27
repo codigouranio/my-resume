@@ -1,0 +1,89 @@
+.resume-container {
+  @apply bg-base-100 rounded-box shadow-xl p-8 md:p-12;
+}
+
+.resume-container .prose {
+  @apply text-base-content;
+}
+
+.resume-container .prose h1 {
+  @apply text-4xl font-bold mb-4 text-primary;
+}
+
+.resume-container .prose h2 {
+  @apply text-3xl font-bold mt-8 mb-4 text-secondary border-b-2 border-base-300 pb-2;
+}
+
+.resume-container .prose h3 {
+  @apply text-2xl font-semibold mt-6 mb-3 text-accent;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.resume-container .prose h3 img {
+  @apply inline-block;
+  height: 28px;
+  width: 28px;
+  object-fit: contain;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.resume-container .prose h4 {
+  @apply text-xl font-semibold mt-4 mb-2;
+}
+
+.resume-container .prose p {
+  @apply mb-4 leading-relaxed;
+}
+
+.resume-container .prose ul {
+  @apply list-disc list-inside mb-4 space-y-2;
+}
+
+.resume-container .prose li {
+  @apply ml-4;
+}
+
+.resume-container .prose strong {
+  @apply font-bold text-primary;
+}
+
+.resume-container .prose a {
+  @apply link link-primary;
+}
+
+.resume-container .prose hr {
+  @apply border-base-300 my-8;
+}
+
+.resume-container .prose blockquote {
+  @apply border-l-4 border-primary pl-4 italic;
+}
+
+.resume-container .prose code {
+  @apply bg-base-200 px-2 py-1 rounded text-sm;
+}
+
+.resume-container .video-container {
+  @apply my-6;
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  height: 0;
+  overflow: hidden;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  background: #000;
+  border-radius: 0.5rem;
+}
+
+.resume-container .video-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
