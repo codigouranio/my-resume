@@ -68,6 +68,26 @@ USE_CONDA=true ./deploy.sh
 ./deploy.sh
 ```
 
+### Automated Deployment with GitHub Actions
+
+The project includes automated CI/CD with GitHub Actions:
+
+1. **Setup GitHub Secrets** (Settings → Secrets and variables → Actions):
+   - `AWS_ACCESS_KEY_ID` - AWS access key
+   - `AWS_SECRET_ACCESS_KEY` - AWS secret key
+   - `AWS_REGION` - AWS region (e.g., `us-east-1`)
+   - `LLM_API_URL` - Your LLM service URL (optional)
+
+2. **Deploy automatically**:
+   - Push to `main` branch triggers deployment
+   - Or manually trigger from GitHub Actions tab
+
+3. **Monitor deployment**:
+   - Check GitHub Actions tab for logs
+   - View CloudFormation stack in AWS Console
+
+See [.github/workflows/README.md](.github/workflows/README.md) for details.
+
 ## Environment Setup
 
 ### Resume App
@@ -75,7 +95,7 @@ USE_CONDA=true ./deploy.sh
 ```bash
 cd apps/my-resume
 cp .env.example .env
-# Edit .env and set REACT_APP_LLM_API_URL to your LLM service URL
+# Edit .env and set PUBLIC_LLM_API_URL to your LLM service URL
 npm run build
 ```
 
