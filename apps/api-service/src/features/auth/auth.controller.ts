@@ -26,4 +26,20 @@ export class AuthController {
   async login(@Request() req, @Body() _loginDto: LoginDto) {
     return this.authService.login(req.user);
   }
+
+  @Post('refresh')
+  @ApiOperation({ summary: 'Refresh access token' })
+  @ApiResponse({ status: 200, description: 'Token successfully refreshed' })
+  @ApiResponse({ status: 401, description: 'Invalid or expired refresh token' })
+  async refresh(@Body('refresh_token') refreshToken: string) {
+    return this.authService.refreshAccessToken(refreshToken);
+  }
+
+  @Post('logout')
+  @ApiOperation({ summary: 'Logout user (invalidate refresh token)' })
+  @ApiResponse({ status: 200, description: 'Successfully logged out' })
+  async logout(@Body('refresh_token') refreshToken: string) {
+    await this.authService.logout(refreshToken);
+    return { message: 'Successfully logged out' };
+  }
 }

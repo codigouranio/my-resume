@@ -52,17 +52,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     const response = await apiClient.login({ email, password });
     apiClient.setToken(response.access_token);
+    apiClient.setRefreshToken(response.refresh_token);
     setUser(response.user);
   };
 
   const register = async (data: { email: string; password: string; firstName?: string; lastName?: string }) => {
     const response = await apiClient.register(data);
     apiClient.setToken(response.access_token);
+    apiClient.setRefreshToken(response.refresh_token);
     setUser(response.user);
   };
 
-  const logout = () => {
-    apiClient.setToken(null);
+  const logout = async () => {
+    await apiClient.logout();
     setUser(null);
   };
 
