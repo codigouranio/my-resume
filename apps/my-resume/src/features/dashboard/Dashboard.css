@@ -1,0 +1,29 @@
+.dashboard-container {
+  min-height: 100vh;
+  background: hsl(var(--b2));
+}
+
+.dashboard-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  background: hsl(var(--b1));
+  border-radius: 1rem;
+  padding: 2rem;
+}

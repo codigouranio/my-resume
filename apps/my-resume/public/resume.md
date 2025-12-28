@@ -1,4 +1,4 @@
-# Jose Blanco - SWE
+# José Blanco - SWE
 
 ## Professional Summary
 Senior Full-Stack Software Engineer with expertise in building robust, production-grade solutions across distributed systems, cloud infrastructure, and enterprise applications.

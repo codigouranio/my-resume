@@ -1,0 +1,11 @@
+.landing-container {
+  min-height: 100vh;
+}
+
+.features-section {
+  background: hsl(var(--b2));
+}
+
+.cta-section {
+  background: linear-gradient(135deg, hsl(var(--p)) 0%, hsl(var(--s)) 100%);
+}
