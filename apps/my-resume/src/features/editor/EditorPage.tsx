@@ -27,6 +27,9 @@ export function EditorPage() {
   const [isCheckingSlug, setIsCheckingSlug] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
   const [activeTab, setActiveTab] = useState<'content' | 'ai-context'>('content');
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   useEffect(() => {
     if (!isNew) {
@@ -43,6 +46,24 @@ export function EditorPage() {
 
     return () => clearTimeout(timeoutId);
   }, [formData.slug]);
+
+  // Auto-save effect - triggers 2 seconds after changes stop
+  useEffect(() => {
+    // Don't auto-save for new resumes (need initial manual save first)
+    if (isNew) return;
+    // Don't auto-save if there are validation errors
+    if (!formData.title || !formData.slug || slugError) return;
+    // Don't auto-save if already saving
+    if (isSaving || isAutoSaving) return;
+    // Don't auto-save on initial load
+    if (!hasUnsavedChanges) return;
+
+    const autoSaveTimeout = setTimeout(() => {
+      autoSave();
+    }, 2000); // Auto-save 2 seconds after last change
+
+    return () => clearTimeout(autoSaveTimeout);
+  }, [formData, isNew, slugError, hasUnsavedChanges]);
 
   const fetchResume = async () => {
     try {
@@ -63,6 +84,24 @@ export function EditorPage() {
     }
   };
 
+  const autoSave = async () => {
+    if (!formData.title || !formData.slug || isNew) return;
+
+    setIsAutoSaving(true);
+    setError('');
+
+    try {
+      await apiClient.updateResume(id!, formData);
+      setLastSaved(new Date());
+      setHasUnsavedChanges(false);
+    } catch (err: any) {
+      // Silently fail auto-save, don't alert user
+      console.error('Auto-save failed:', err);
+    } finally {
+      setIsAutoSaving(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!formData.title || !formData.slug) {
       setError('Title and slug are required');
@@ -75,9 +114,13 @@ export function EditorPage() {
     try {
       if (isNew) {
         const newResume = await apiClient.createResume(formData);
+        setLastSaved(new Date());
+        setHasUnsavedChanges(false);
         navigate(`/editor/${newResume.id}`, { replace: true });
       } else {
         await apiClient.updateResume(id!, formData);
+        setLastSaved(new Date());
+        setHasUnsavedChanges(false);
       }
       alert('Resume saved successfully!');
     } catch (err: any) {
@@ -136,6 +179,7 @@ export function EditorPage() {
   const handleSlugChange = (value: string) => {
     const sanitized = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
     setFormData({ ...formData, slug: sanitized });
+    setHasUnsavedChanges(true);
   };
 
   const handleTitleChange = (value: string) => {
@@ -144,6 +188,28 @@ export function EditorPage() {
       title: value,
       slug: isNew ? generateSlug(value) : formData.slug,
     });
+    setHasUnsavedChanges(true);
+  };
+
+  const handleContentChange = (field: string, value: any) => {
+    setFormData({ ...formData, [field]: value });
+    setHasUnsavedChanges(true);
+  };
+
+  const formatLastSaved = (date: Date) => {
+    const now = new Date();
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (seconds < 10) return 'just now';
+    if (seconds < 60) return `${seconds}s ago`;
+
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+
+    return date.toLocaleTimeString();
   };
 
   if (isLoading) {
@@ -165,7 +231,29 @@ export function EditorPage() {
           Back to Dashboard
         </button>
 
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          {/* Auto-save status indicator */}
+          {!isNew && (
+            <div className="text-sm text-gray-500 mr-2">
+              {isAutoSaving && (
+                <span className="flex items-center gap-1">
+                  <span className="loading loading-spinner loading-xs"></span>
+                  Auto-saving...
+                </span>
+              )}
+              {!isAutoSaving && lastSaved && (
+                <span className="flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-success" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Saved {formatLastSaved(lastSaved)}
+                </span>
+              )}
+              {!isAutoSaving && !lastSaved && hasUnsavedChanges && (
+                <span className="text-warning">Unsaved changes</span>
+              )}
+            </div>
+          )}
           <button
             className="btn btn-ghost gap-2"
             onClick={() => setShowPreview(!showPreview)}
@@ -243,7 +331,7 @@ export function EditorPage() {
                 type="checkbox"
                 className="toggle toggle-primary"
                 checked={formData.isPublic}
-                onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })}
+                onChange={(e) => handleContentChange('isPublic', e.target.checked)}
               />
             </label>
             <p className="text-xs text-base-content/60 mt-1">Anyone can view your resume</p>
@@ -256,7 +344,7 @@ export function EditorPage() {
                 type="checkbox"
                 className="toggle toggle-success"
                 checked={formData.isPublished}
-                onChange={(e) => setFormData({ ...formData, isPublished: e.target.checked })}
+                onChange={(e) => handleContentChange('isPublished', e.target.checked)}
               />
             </label>
             <p className="text-xs text-base-content/60 mt-1">Make resume visible in search</p>
@@ -296,7 +384,7 @@ export function EditorPage() {
               <textarea
                 className="textarea textarea-bordered w-full h-full font-mono text-sm"
                 value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                onChange={(e) => handleContentChange('content', e.target.value)}
                 placeholder="Write your resume in Markdown..."
               ></textarea>
             ) : (
@@ -310,7 +398,7 @@ export function EditorPage() {
                 <textarea
                   className="textarea textarea-bordered flex-1 font-mono text-sm"
                   value={formData.llmContext}
-                  onChange={(e) => setFormData({ ...formData, llmContext: e.target.value })}
+                  onChange={(e) => handleContentChange('llmContext', e.target.value)}
                   placeholder="Add detailed career info, metrics, accomplishments for AI chatbot...&#10;&#10;Example:&#10;- Led team of 5 engineers, increased velocity 40%&#10;- Reduced AWS costs by $50k/year through optimization&#10;- Mentored 3 junior developers, all promoted within 6 months"
                 ></textarea>
               </div>
