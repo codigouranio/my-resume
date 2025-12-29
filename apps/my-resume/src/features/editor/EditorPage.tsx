@@ -238,7 +238,7 @@ export function EditorPage() {
     setIsImprovingText(true);
     try {
       const result = await apiClient.improveText(selectedText, 'resume');
-      
+
       // Store the improved text and show modal for review
       setImprovedText(result.improved);
       setOriginalSelectedText(selectedText);
@@ -264,7 +264,7 @@ export function EditorPage() {
     const newContent = before + improvedText + after;
     setFormData({ ...formData, content: newContent });
     setHasUnsavedChanges(true);
-    
+
     // Reset state
     setShowImproveModal(false);
     setImprovedText('');
@@ -559,7 +559,7 @@ export function EditorPage() {
         <div className="modal modal-open">
           <div className="modal-box max-w-4xl">
             <h3 className="font-bold text-xl mb-4">✨ AI Text Improvement</h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               {/* Original Text */}
               <div>
@@ -589,13 +589,13 @@ export function EditorPage() {
             </div>
 
             <div className="modal-action">
-              <button 
+              <button
                 className="btn btn-ghost"
                 onClick={cancelImprovedText}
               >
                 Cancel
               </button>
-              <button 
+              <button
                 className="btn btn-primary gap-2"
                 onClick={acceptImprovedText}
               >
