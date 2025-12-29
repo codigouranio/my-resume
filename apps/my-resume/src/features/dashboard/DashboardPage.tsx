@@ -109,7 +109,9 @@ export function DashboardPage() {
           <div className="dropdown dropdown-end">
             <label tabIndex={0} className="btn btn-ghost btn-circle avatar placeholder">
               <div className="bg-neutral-focus text-neutral-content rounded-full w-10">
-                <span className="text-xl">{user?.firstName?.[0] || user?.email[0].toUpperCase()}</span>
+                <span className="text-xl">
+                  {user?.firstName?.[0] || ''}{user?.lastName?.[0] || user?.email[0].toUpperCase()}
+                </span>
               </div>
             </label>
             <ul tabIndex={0} className="mt-3 p-2 shadow menu menu-compact dropdown-content bg-base-100 rounded-box w-52">
