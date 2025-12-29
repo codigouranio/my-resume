@@ -214,6 +214,10 @@ class ApiClient {
     });
   }
 
+  async getResumeAnalytics(id: string) {
+    return this.request(`/resumes/${id}/analytics`);
+  }
+
   // Recruiter Interest
   async submitRecruiterInterest(data: {
     resumeSlug: string;

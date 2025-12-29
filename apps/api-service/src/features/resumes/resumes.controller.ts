@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Query,
+  Req,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ResumesService } from './resumes.service';
@@ -48,8 +49,15 @@ export class ResumesController {
   findBySlug(
     @Param('slug') slug: string,
     @Query('view') view?: string,
+    @Req() req?: any,
   ) {
-    return this.resumesService.findBySlug(slug, view === 'true');
+    const viewData = view === 'true' ? {
+      ipAddress: req?.ip || req?.connection?.remoteAddress,
+      userAgent: req?.headers?.['user-agent'],
+      referrer: req?.headers?.['referer'] || req?.headers?.['referrer'],
+    } : undefined;
+    
+    return this.resumesService.findBySlug(slug, view === 'true', viewData);
   }
 
   @Get('llm/:slug')
@@ -137,5 +145,16 @@ export class ResumesController {
     @CurrentUser() user: any,
   ) {
     return this.resumesService.toggleFavorite(id, user.id);
+  }
+
+  @Get(':id/analytics')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get resume analytics and view statistics' })
+  getAnalytics(
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.resumesService.getResumeAnalytics(id, user.id);
   }
 }

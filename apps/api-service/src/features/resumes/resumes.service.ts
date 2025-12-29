@@ -74,7 +74,15 @@ export class ResumesService {
     return resume;
   }
 
-  async findBySlug(slug: string, incrementView = false) {
+  async findBySlug(
+    slug: string,
+    incrementView = false,
+    viewData?: {
+      ipAddress?: string;
+      userAgent?: string;
+      referrer?: string;
+    },
+  ) {
     const resume = await this.prisma.resume.findUnique({
       where: { slug },
       include: {
@@ -97,8 +105,26 @@ export class ResumesService {
       throw new NotFoundException('Resume not found');
     }
 
-    // Increment view count
-    if (incrementView) {
+    // Track detailed view
+    if (incrementView && viewData) {
+      await Promise.all([
+        // Increment simple counter
+        this.prisma.resume.update({
+          where: { id: resume.id },
+          data: { viewCount: { increment: 1 } },
+        }),
+        // Create detailed view record
+        this.prisma.resumeView.create({
+          data: {
+            resumeId: resume.id,
+            ipAddress: viewData.ipAddress,
+            userAgent: viewData.userAgent,
+            referrer: viewData.referrer,
+          },
+        }),
+      ]);
+    } else if (incrementView) {
+      // Fallback to simple counter if no detailed data
       await this.prisma.resume.update({
         where: { id: resume.id },
         data: { viewCount: { increment: 1 } },
@@ -310,5 +336,96 @@ export class ResumesService {
       where: { id: interestId },
       data: { isFavorite: !interest.isFavorite },
     });
+  }
+
+  async getResumeAnalytics(resumeId: string, userId: string) {
+    // Verify ownership
+    const resume = await this.prisma.resume.findUnique({
+      where: { id: resumeId },
+    });
+
+    if (!resume) {
+      throw new NotFoundException('Resume not found');
+    }
+
+    if (resume.userId !== userId) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    // Get views data
+    const [totalViews, recentViews, viewsByDay, viewsByCountry, viewsByReferrer] =
+      await Promise.all([
+        // Total views
+        this.prisma.resumeView.count({
+          where: { resumeId },
+        }),
+        // Recent views (last 30 days)
+        this.prisma.resumeView.findMany({
+          where: {
+            resumeId,
+            viewedAt: {
+              gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+            },
+          },
+          orderBy: { viewedAt: 'desc' },
+          take: 100,
+          select: {
+            id: true,
+            viewedAt: true,
+            country: true,
+            city: true,
+            referrer: true,
+            userAgent: true,
+          },
+        }),
+        // Views by day (last 30 days)
+        this.prisma.$queryRaw`
+          SELECT 
+            DATE(viewed_at) as date,
+            COUNT(*) as views
+          FROM "ResumeView"
+          WHERE resume_id = ${resumeId}
+            AND viewed_at >= NOW() - INTERVAL '30 days'
+          GROUP BY DATE(viewed_at)
+          ORDER BY date DESC
+        `,
+        // Views by country
+        this.prisma.$queryRaw`
+          SELECT 
+            COALESCE(country, 'Unknown') as country,
+            COUNT(*) as views
+          FROM "ResumeView"
+          WHERE resume_id = ${resumeId}
+          GROUP BY country
+          ORDER BY views DESC
+          LIMIT 10
+        `,
+        // Views by referrer
+        this.prisma.$queryRaw`
+          SELECT 
+            CASE 
+              WHEN referrer IS NULL THEN 'Direct'
+              WHEN referrer LIKE '%google%' THEN 'Google'
+              WHEN referrer LIKE '%linkedin%' THEN 'LinkedIn'
+              WHEN referrer LIKE '%facebook%' THEN 'Facebook'
+              WHEN referrer LIKE '%twitter%' THEN 'Twitter'
+              ELSE 'Other'
+            END as source,
+            COUNT(*) as views
+          FROM "ResumeView"
+          WHERE resume_id = ${resumeId}
+          GROUP BY source
+          ORDER BY views DESC
+        `,
+      ]);
+
+    return {
+      totalViews: resume.viewCount,
+      detailedViews: totalViews,
+      recentViews,
+      viewsByDay,
+      viewsByCountry,
+      viewsByReferrer,
+    };
   }
 }

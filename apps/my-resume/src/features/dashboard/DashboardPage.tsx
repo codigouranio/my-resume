@@ -38,6 +38,9 @@ export function DashboardPage() {
   const [isLoadingInterests, setIsLoadingInterests] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'resumes' | 'interests'>('resumes');
+  const [selectedResumeForAnalytics, setSelectedResumeForAnalytics] = useState<string | null>(null);
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -112,6 +115,19 @@ export function DashboardPage() {
       setResumes(resumes.filter(r => r.id !== id));
     } catch (err: any) {
       alert(err.message || 'Failed to delete resume');
+    }
+  };
+
+  const handleViewAnalytics = async (resumeId: string) => {
+    setSelectedResumeForAnalytics(resumeId);
+    setIsLoadingAnalytics(true);
+    try {
+      const data = await apiClient.getResumeAnalytics(resumeId);
+      setAnalytics(data);
+    } catch (err: any) {
+      alert(err.message || 'Failed to load analytics');
+    } finally {
+      setIsLoadingAnalytics(false);
     }
   };
 
@@ -271,6 +287,15 @@ export function DashboardPage() {
                           </a>
                         )}
                         <button
+                          className="btn btn-sm btn-info gap-1"
+                          onClick={() => handleViewAnalytics(resume.id)}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+                          </svg>
+                          Analytics
+                        </button>
+                        <button
                           className="btn btn-sm btn-primary"
                           onClick={() => navigate(`/editor/${resume.id}`)}
                         >
@@ -404,6 +429,108 @@ export function DashboardPage() {
           </>
         )}
       </div>
+
+      {/* Analytics Modal */}
+      {selectedResumeForAnalytics && (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-4xl">
+            <h3 className="font-bold text-lg mb-4">
+              Resume Analytics - {resumes.find(r => r.id === selectedResumeForAnalytics)?.title}
+            </h3>
+
+            {isLoadingAnalytics ? (
+              <div className="flex justify-center py-8">
+                <span className="loading loading-spinner loading-lg"></span>
+              </div>
+            ) : analytics ? (
+              <div className="space-y-6">
+                {/* Summary Stats */}
+                <div className="stats stats-vertical lg:stats-horizontal shadow w-full">
+                  <div className="stat">
+                    <div className="stat-title">Total Views</div>
+                    <div className="stat-value text-primary">{analytics.totalViews}</div>
+                    <div className="stat-desc">All time</div>
+                  </div>
+                  <div className="stat">
+                    <div className="stat-title">Detailed Tracking</div>
+                    <div className="stat-value text-secondary">{analytics.detailedViews}</div>
+                    <div className="stat-desc">With visitor info</div>
+                  </div>
+                </div>
+
+                {/* Recent Views */}
+                {analytics.recentViews && analytics.recentViews.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Recent Views (Last 30 days)</h4>
+                    <div className="overflow-x-auto">
+                      <table className="table table-sm">
+                        <thead>
+                          <tr>
+                            <th>Date</th>
+                            <th>Location</th>
+                            <th>Referrer</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {analytics.recentViews.slice(0, 10).map((view: any) => (
+                            <tr key={view.id}>
+                              <td>{new Date(view.viewedAt).toLocaleDateString()}</td>
+                              <td>{view.city && view.country ? `${view.city}, ${view.country}` : view.country || 'Unknown'}</td>
+                              <td className="truncate max-w-xs">{view.referrer || 'Direct'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Views by Country */}
+                {analytics.viewsByCountry && analytics.viewsByCountry.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Views by Country</h4>
+                    <div className="space-y-2">
+                      {analytics.viewsByCountry.map((item: any) => (
+                        <div key={item.country} className="flex justify-between items-center">
+                          <span>{item.country}</span>
+                          <div className="flex items-center gap-2">
+                            <progress className="progress progress-primary w-32" value={item.views} max={analytics.viewsByCountry[0].views}></progress>
+                            <span className="font-bold">{item.views}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Views by Source */}
+                {analytics.viewsByReferrer && analytics.viewsByReferrer.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Traffic Sources</h4>
+                    <div className="space-y-2">
+                      {analytics.viewsByReferrer.map((item: any) => (
+                        <div key={item.source} className="flex justify-between items-center">
+                          <span>{item.source}</span>
+                          <div className="flex items-center gap-2">
+                            <progress className="progress progress-secondary w-32" value={item.views} max={analytics.viewsByReferrer[0].views}></progress>
+                            <span className="font-bold">{item.views}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-center py-8">No analytics data available</p>
+            )}
+
+            <div className="modal-action">
+              <button className="btn" onClick={() => { setSelectedResumeForAnalytics(null); setAnalytics(null); }}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

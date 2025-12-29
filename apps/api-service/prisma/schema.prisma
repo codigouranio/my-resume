@@ -88,6 +88,7 @@ model Resume {
   user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   template          Template?           @relation(fields: [templateId], references: [id])
   recruiterInterests RecruiterInterest[]
+  views             ResumeView[]
   
   @@index([userId])
   @@index([slug])
@@ -135,4 +136,31 @@ model RecruiterInterest {
   @@index([isRead])
   @@index([isFavorite])
   @@index([deletedAt])
+}
+
+model ResumeView {
+  id        String   @id @default(cuid())
+  resumeId  String
+  
+  // Visitor information
+  ipAddress    String?
+  userAgent    String?  @db.Text
+  country      String?
+  city         String?
+  referrer     String?  @db.Text
+  
+  // Session tracking
+  sessionId    String?
+  duration     Int?     // Time spent on page in seconds
+  
+  // Metadata
+  viewedAt     DateTime @default(now())
+  
+  // Relations
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  
+  @@index([resumeId])
+  @@index([viewedAt])
+  @@index([sessionId])
+  @@index([country])
 }
