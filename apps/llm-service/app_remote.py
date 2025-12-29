@@ -316,7 +316,9 @@ def call_ollama_server(prompt: str, max_tokens: int = 256) -> dict:
         raise
 
 
-def call_ollama_for_completion(prompt: str, max_tokens: int = 256, temperature: float = 0.3) -> dict:
+def call_ollama_for_completion(
+    prompt: str, max_tokens: int = 256, temperature: float = 0.3
+) -> dict:
     """Call Ollama API with specific settings for text completion (not chat)."""
     try:
         response = requests.post(
@@ -511,16 +513,12 @@ def improve_text():
 
         # Craft a prompt for text improvement
         if context == "resume":
-            # Use examples in completion format (not chat)
-            prompt = f"""Rewrite resume bullet points professionally with strong verbs and metrics.
-
-Example: "Worked on website" → "Developed and deployed a responsive e-commerce website serving 50,000+ monthly users, increasing online sales by 35%"
-
-Example: "Managed projects" → "Led cross-functional teams of 8+ members to deliver 12 high-priority projects on time and 15% under budget"
-
-Rewrite: "{text}" →"""
+            # Use minimal arrow completion format with examples
+            prompt = f""""Worked on website" → "Developed and deployed responsive e-commerce website serving 50,000+ monthly users, increasing sales by 35%"
+"Managed projects" → "Led cross-functional teams of 8+ members to deliver 12 high-priority projects on time and 15% under budget"
+"{text}" → """
         else:
-            prompt = f"""Rewrite professionally: "{text}" →"""
+            prompt = f'"{text}" → "'
 
         logger.info(f"Improving text: {text[:50]}...")
 
@@ -529,7 +527,7 @@ Rewrite: "{text}" →"""
             result = call_ollama_for_completion(prompt, max_tokens=512, temperature=0.3)
         else:
             result = generate_completion(prompt, max_tokens=512)
-        
+
         improved_text = result["text"].strip()
 
         logger.info(f"Raw AI response: {improved_text[:150]}...")
