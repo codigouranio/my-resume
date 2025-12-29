@@ -344,6 +344,41 @@ def call_ollama_for_completion(
         raise
 
 
+def call_ollama_chat_for_rewrite(original_text: str, max_tokens: int = 256) -> dict:
+    """Call Ollama chat API for text rewriting with a system message."""
+    try:
+        response = requests.post(
+            f"{LLAMA_SERVER_URL}/api/chat",
+            json={
+                "model": os.getenv("OLLAMA_MODEL", "llama2"),
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are a resume bullet point rewriter. Given a bullet point, rewrite it professionally with strong action verbs and metrics. Output ONLY the rewritten bullet point, nothing else. No explanations, no preambles, no additional text."
+                    },
+                    {
+                        "role": "user",
+                        "content": f'Rewrite: "{original_text}"'
+                    }
+                ],
+                "stream": False,
+                "options": {
+                    "temperature": 0.3,
+                    "top_p": 0.95,
+                    "num_predict": max_tokens,
+                },
+            },
+            timeout=60,
+        )
+        response.raise_for_status()
+        data = response.json()
+        message = data.get("message", {})
+        return {"text": message.get("content", ""), "tokens": 0}
+    except Exception as e:
+        logger.error(f"Error calling Ollama chat API: {e}")
+        raise
+
+
 def call_openai_compatible(prompt: str, max_tokens: int = 256) -> dict:
     """Call OpenAI-compatible API (LocalAI, vLLM, etc.)."""
     try:
@@ -511,21 +546,19 @@ def improve_text():
         if len(text) > 2000:
             return jsonify({"error": "Text too long (max 2000 characters)"}), 400
 
-        # Craft a prompt for text improvement
-        if context == "resume":
-            # Use minimal arrow completion format with examples
-            prompt = f""""Worked on website" → "Developed and deployed responsive e-commerce website serving 50,000+ monthly users, increasing sales by 35%"
-"Managed projects" → "Led cross-functional teams of 8+ members to deliver 12 high-priority projects on time and 15% under budget"
-"{text}" → """
-        else:
-            prompt = f'"{text}" → "'
-
         logger.info(f"Improving text: {text[:50]}...")
 
-        # Generate improved text using completion mode (not chat)
+        # Generate improved text using chat API for better control
         if LLAMA_API_TYPE == "ollama":
-            result = call_ollama_for_completion(prompt, max_tokens=512, temperature=0.3)
+            result = call_ollama_chat_for_rewrite(text, max_tokens=512)
         else:
+            # Fallback to completion mode for other API types
+            if context == "resume":
+                prompt = f""""Worked on website" → "Developed and deployed responsive e-commerce website serving 50,000+ monthly users, increasing sales by 35%"
+"Managed projects" → "Led cross-functional teams of 8+ members to deliver 12 high-priority projects on time and 15% under budget"
+"{text}" → """
+            else:
+                prompt = f'"{text}" → "'
             result = generate_completion(prompt, max_tokens=512)
 
         improved_text = result["text"].strip()
