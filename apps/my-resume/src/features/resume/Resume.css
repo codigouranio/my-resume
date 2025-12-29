@@ -136,7 +136,9 @@
   overflow: hidden;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  margin: 1rem 0;
+  margin: 1rem 0.5rem 1rem 0;
+  display: inline-block;
+  vertical-align: top;
 }
 
 .resume-container .video-thumbnail-wrapper:hover {

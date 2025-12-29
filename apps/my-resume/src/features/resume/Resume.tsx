@@ -179,34 +179,34 @@ export default function Resume() {
             code: ({ node, inline, className, children, ...props }: any) => {
               const match = /language-(\w+)/.exec(className || '');
               const language = match ? match[1] : '';
-              
+
               if (!inline && language === 'video') {
                 const url = String(children).trim();
                 const videoId = url.match(/(?:embed\/|v=)([a-zA-Z0-9_-]+)/)?.[1];
-                
+
                 if (videoId) {
                   const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-                  
+
                   return (
-                    <div 
+                    <div
                       className="video-thumbnail-wrapper"
                       onClick={() => setExpandedVideo(url)}
                     >
-                      <img 
-                        src={thumbnailUrl} 
+                      <img
+                        src={thumbnailUrl}
                         alt="Video thumbnail"
                         className="video-thumbnail-image"
                       />
                       <div className="video-play-button">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M8 5v14l11-7z"/>
+                          <path d="M8 5v14l11-7z" />
                         </svg>
                       </div>
                     </div>
                   );
                 }
               }
-              
+
               return inline ? (
                 <code className={className} {...props}>{children}</code>
               ) : (
