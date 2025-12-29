@@ -23,6 +23,8 @@ export function EditorPage() {
   const [isLoading, setIsLoading] = useState(!isNew);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
+  const [slugError, setSlugError] = useState('');
+  const [isCheckingSlug, setIsCheckingSlug] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
   const [activeTab, setActiveTab] = useState<'content' | 'ai-context'>('content');
 
@@ -31,6 +33,16 @@ export function EditorPage() {
       fetchResume();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (!formData.slug) return;
+
+    const timeoutId = setTimeout(() => {
+      checkSlugAvailability(formData.slug);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [formData.slug]);
 
   const fetchResume = async () => {
     try {
@@ -69,7 +81,12 @@ export function EditorPage() {
       }
       alert('Resume saved successfully!');
     } catch (err: any) {
-      setError(err.message || 'Failed to save resume');
+      // Show more helpful error message for slug conflicts
+      if (err.message?.includes('Slug already exists') || err.message?.includes('slug')) {
+        setError(`The URL slug "${formData.slug}" is already taken. Please choose a different one.`);
+      } else {
+        setError(err.message || 'Failed to save resume');
+      }
     } finally {
       setIsSaving(false);
     }
@@ -80,6 +97,45 @@ export function EditorPage() {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '');
+  };
+
+  const checkSlugAvailability = async (slug: string) => {
+    if (!slug) {
+      setSlugError('');
+      return;
+    }
+
+    // If editing existing resume and slug hasn't changed, don't check
+    if (!isNew && id) {
+      const currentResume = await apiClient.getResume(id);
+      if (currentResume.slug === slug) {
+        setSlugError('');
+        return;
+      }
+    }
+
+    setIsCheckingSlug(true);
+    try {
+      // Try to fetch a resume with this slug
+      await apiClient.checkSlugAvailability(slug);
+      // If we get here, the slug exists
+      setSlugError('This URL is already taken');
+    } catch (err: any) {
+      // 404 means slug is available
+      if (err.message?.includes('404') || err.message?.includes('not found') || err.message?.includes('Resume not found')) {
+        setSlugError('');
+      } else {
+        // Other errors, just clear the slug error
+        setSlugError('');
+      }
+    } finally {
+      setIsCheckingSlug(false);
+    }
+  };
+
+  const handleSlugChange = (value: string) => {
+    const sanitized = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    setFormData({ ...formData, slug: sanitized });
   };
 
   const handleTitleChange = (value: string) => {
@@ -119,7 +175,7 @@ export function EditorPage() {
           <button
             className={`btn btn-primary gap-2 ${isSaving ? 'loading' : ''}`}
             onClick={handleSave}
-            disabled={isSaving}
+            disabled={isSaving || !!slugError || isCheckingSlug}
           >
             {isSaving ? 'Saving...' : '💾 Save'}
           </button>
@@ -154,12 +210,23 @@ export function EditorPage() {
           <div className="form-control w-full mb-4">
             <label className="label">
               <span className="label-text font-semibold">URL Slug</span>
+              {isCheckingSlug && (
+                <span className="label-text-alt">
+                  <span className="loading loading-spinner loading-xs"></span> Checking...
+                </span>
+              )}
+              {!isCheckingSlug && slugError && (
+                <span className="label-text-alt text-error">❌ {slugError}</span>
+              )}
+              {!isCheckingSlug && !slugError && formData.slug && (
+                <span className="label-text-alt text-success">✓ Available</span>
+              )}
             </label>
             <input
               type="text"
-              className="input input-bordered w-full"
+              className={`input input-bordered w-full ${slugError ? 'input-error' : ''}`}
               value={formData.slug}
-              onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+              onChange={(e) => handleSlugChange(e.target.value)}
               placeholder="my-resume"
             />
             <label className="label">

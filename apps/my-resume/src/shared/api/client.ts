@@ -170,6 +170,10 @@ class ApiClient {
     return this.request(`/resumes/public/${slug}?view=true`);
   }
 
+  async checkSlugAvailability(slug: string) {
+    return this.request(`/resumes/public/${slug}`);
+  }
+
   async getResumeForLLM(slug: string) {
     return this.request(`/resumes/llm/${slug}`);
   }
