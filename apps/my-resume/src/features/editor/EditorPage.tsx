@@ -35,6 +35,9 @@ export function EditorPage() {
   const [isImprovingText, setIsImprovingText] = useState(false);
   const [showImproveButton, setShowImproveButton] = useState(false);
   const [improveButtonPosition, setImproveButtonPosition] = useState({ top: 0, left: 0 });
+  const [improvedText, setImprovedText] = useState('');
+  const [showImproveModal, setShowImproveModal] = useState(false);
+  const [originalSelectedText, setOriginalSelectedText] = useState('');
 
   useEffect(() => {
     if (!isNew) {
@@ -235,29 +238,49 @@ export function EditorPage() {
     setIsImprovingText(true);
     try {
       const result = await apiClient.improveText(selectedText, 'resume');
-
-      // Replace selected text with improved version
-      const textarea = textareaRef.current;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const before = formData.content.substring(0, start - selectedText.length);
-      const after = formData.content.substring(end);
-
-      const newContent = before + result.improved + after;
-      setFormData({ ...formData, content: newContent });
-      setHasUnsavedChanges(true);
+      
+      // Store the improved text and show modal for review
+      setImprovedText(result.improved);
+      setOriginalSelectedText(selectedText);
+      setShowImproveModal(true);
       setShowImproveButton(false);
-      setSelectedText('');
-
-      // Show success message briefly
-      const originalError = error;
-      setError('✨ Text improved with AI!');
-      setTimeout(() => setError(originalError), 3000);
     } catch (err: any) {
       setError(err.message || 'Failed to improve text');
     } finally {
       setIsImprovingText(false);
     }
+  };
+
+  const acceptImprovedText = () => {
+    if (!textareaRef.current) return;
+
+    // Replace selected text with improved version
+    const textarea = textareaRef.current;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const before = formData.content.substring(0, start - originalSelectedText.length);
+    const after = formData.content.substring(end);
+
+    const newContent = before + improvedText + after;
+    setFormData({ ...formData, content: newContent });
+    setHasUnsavedChanges(true);
+    
+    // Reset state
+    setShowImproveModal(false);
+    setImprovedText('');
+    setOriginalSelectedText('');
+    setSelectedText('');
+
+    // Show success message briefly
+    const originalError = error;
+    setError('✨ Text improved with AI!');
+    setTimeout(() => setError(originalError), 3000);
+  };
+
+  const cancelImprovedText = () => {
+    setShowImproveModal(false);
+    setImprovedText('');
+    setOriginalSelectedText('');
   };
 
   const formatLastSaved = (date: Date) => {
@@ -530,6 +553,62 @@ export function EditorPage() {
           )}
         </div>
       </div>
+
+      {/* AI Improvement Modal */}
+      {showImproveModal && (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-4xl">
+            <h3 className="font-bold text-xl mb-4">✨ AI Text Improvement</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              {/* Original Text */}
+              <div>
+                <h4 className="font-semibold mb-2 text-sm text-base-content/70">Original:</h4>
+                <div className="p-4 bg-base-200 rounded-lg border border-base-300">
+                  <p className="whitespace-pre-wrap">{originalSelectedText}</p>
+                </div>
+              </div>
+
+              {/* Improved Text - Editable */}
+              <div>
+                <h4 className="font-semibold mb-2 text-sm text-primary">Improved (you can edit):</h4>
+                <textarea
+                  className="textarea textarea-bordered w-full h-32 font-mono text-sm"
+                  value={improvedText}
+                  onChange={(e) => setImprovedText(e.target.value)}
+                  placeholder="AI-improved text..."
+                />
+              </div>
+            </div>
+
+            <div className="alert alert-info mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span className="text-sm">You can edit the improved text before accepting it.</span>
+            </div>
+
+            <div className="modal-action">
+              <button 
+                className="btn btn-ghost"
+                onClick={cancelImprovedText}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-primary gap-2"
+                onClick={acceptImprovedText}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                Accept & Replace
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={cancelImprovedText}></div>
+        </div>
+      )}
     </div>
   );
 }
