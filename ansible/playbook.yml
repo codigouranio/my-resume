@@ -98,8 +98,34 @@
         name: postgresql
         state: started
         enabled: yes
+        - name: Check if Ollama is installed
+      command: which ollama
+      register: ollama_check
+      changed_when: false
+      failed_when: false
     
-    - name: Setup PostgreSQL database
+    - name: Display Ollama status
+      debug:
+        msg: >
+          {% if ollama_check.rc == 0 %}
+          ✅ Ollama is installed at {{ ollama_check.stdout }}
+          {% else %}
+          ⚠️  Ollama not found. Install manually: curl -fsSL https://ollama.com/install.sh | sh
+          Then pull a model: ollama pull llama3.1:latest
+          {% endif %}
+    
+    - name: Check Ollama models (if installed)
+      command: ollama list
+      register: ollama_models
+      changed_when: false
+      failed_when: false
+      when: ollama_check.rc == 0
+    
+    - name: Display available Ollama models
+      debug:
+        msg: "{{ ollama_models.stdout_lines }}"
+      when: ollama_check.rc == 0 and ollama_models.rc == 0
+        - name: Setup PostgreSQL database
       block:
         - name: Create PostgreSQL user
           postgresql_user:
@@ -206,23 +232,31 @@
     
     - name: Create conda environment for LLM service
       shell: |
-        /opt/miniconda3/bin/conda env create -f {{ llm_service_path }}/environment.yml -p {{ llm_service_path }}/conda-env --yes
+        /opt/miniconda3/bin/conda create -p {{ llm_service_path }}/conda-env python=3.14 -y
       args:
         creates: "{{ llm_service_path }}/conda-env"
       become_user: "{{ ansible_user }}"
     
-    - name: Update LLM conda environment if it exists
+    - name: Install LLM service Python dependencies
       shell: |
-        /opt/miniconda3/bin/conda env update -f {{ llm_service_path }}/environment.yml -p {{ llm_service_path }}/conda-env
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ llm_service_path }}/conda-env
+        conda install -y -c conda-forge flask flask-cors requests python-dotenv psycopg2-binary
+      args:
+        executable: /bin/bash
       become_user: "{{ ansible_user }}"
-      when: true
     
     - name: Configure LLM Service environment
       copy:
         dest: "{{ llm_service_path }}/.env"
         content: |
           PORT={{ llm_port }}
-          MODEL_PATH=/opt/models/llama
+          LLAMA_SERVER_URL=http://localhost:11434
+          LLAMA_API_TYPE=ollama
+          OLLAMA_MODEL=llama3.1:latest
+          RESUME_PATH=../../data/resume.md
+          DATABASE_URL=postgresql://{{ db_user }}:{{ db_password }}@localhost:5432/{{ db_name }}
+          ADMIN_TOKEN={{ llm_admin_token | default('change-me-in-production') }}
         owner: "{{ ansible_user }}"
         mode: '0600'
     
@@ -294,11 +328,17 @@
               {
                 name: 'llm-service',
                 cwd: '{{ llm_service_path }}',
-                interpreter: '{{ llm_service_path }}/conda-env/bin/python',
-                script: 'app.py',
+                interpreter: '{{ api_service_path }}/conda-env/bin/python',
+                script: 'app_remote.py',
                 instances: 1,
                 env: {
-                  PORT: {{ llm_port }}
+                  PORT: {{ llm_port }},
+                  LLAMA_SERVER_URL: 'http://localhost:11434',
+                  LLAMA_API_TYPE: 'ollama',
+                  OLLAMA_MODEL: 'llama3.1:latest',
+                  DATABASE_URL: 'postgresql://{{ db_user }}:{{ db_password }}@localhost:5432/{{ db_name }}',
+                  RESUME_PATH: '../../data/resume.md',
+                  ADMIN_TOKEN: '{{ llm_admin_token | default("change-me-in-production") }}'
                 }
               }
             ]

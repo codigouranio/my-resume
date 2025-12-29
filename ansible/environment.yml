@@ -1,0 +1,11 @@
+name: ansible-env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+    - ansible>=8.0.0
+    - ansible-lint
+    - jmespath  # For JSON queries in Ansible

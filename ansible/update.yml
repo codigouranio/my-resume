@@ -1,0 +1,96 @@
+---
+# Quick update playbook - Only updates code and restarts services
+- name: Update My Resume Application
+  hosts: production
+  become: yes
+  
+  tasks:
+    - name: Pull latest code
+      git:
+        repo: https://github.com/codigouranio/my-resume.git
+        dest: "{{ app_root }}"
+        version: main
+        force: yes
+      become_user: "{{ ansible_user }}"
+    
+    - name: Install/Update API dependencies
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        npm install
+      args:
+        chdir: "{{ api_service_path }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+    
+    - name: Rebuild API Service
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        npm run build
+      args:
+        chdir: "{{ api_service_path }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+    
+    - name: Sync Prisma schema to database
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        export DATABASE_URL="postgresql://{{ postgres_user }}:{{ postgres_password }}@localhost:5432/{{ postgres_db }}?schema=public"
+        npx prisma db push --accept-data-loss
+      args:
+        chdir: "{{ api_service_path }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+    
+    - name: Generate Prisma Client
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        export DATABASE_URL="postgresql://{{ postgres_user }}:{{ postgres_password }}@localhost:5432/{{ postgres_db }}?schema=public"
+        npx prisma generate
+      args:
+        chdir: "{{ api_service_path }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+    
+    - name: Update LLM conda environment
+      shell: |
+        /opt/miniconda3/bin/conda env update -f {{ llm_service_path }}/environment.yml -p {{ llm_service_path }}/conda-env
+      become_user: "{{ ansible_user }}"
+    
+    - name: Install/Update Frontend dependencies
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ frontend_path }}/conda-env
+        rm -rf node_modules package-lock.json
+        npm install
+      args:
+        chdir: "{{ frontend_path }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+    
+    - name: Rebuild Frontend
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ frontend_path }}/conda-env
+        npm run build
+      args:
+        chdir: "{{ frontend_path }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+    
+    - name: Reload PM2 services
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        which pm2 || npm install -g pm2
+        $(npm root -g)/pm2/bin/pm2 reload all
+      args:
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+    
+    - name: Display update info
+      debug:
+        msg: "✅ Application updated and restarted successfully!"

@@ -1,0 +1,38 @@
+all:
+  hosts:
+    production:
+      ansible_host: 172.16.23.127
+      ansible_user: jose
+      ansible_python_interpreter: /usr/bin/python3
+      
+  vars:
+    # Application paths
+    app_root: /opt/my-resume
+    api_service_path: "{{ app_root }}/apps/api-service"
+    llm_service_path: "{{ app_root }}/apps/llm-service"
+    frontend_path: "{{ app_root }}/apps/my-resume"
+    
+    # Service ports
+    api_port: 3000
+    llm_port: 5000
+    frontend_port: 3001
+    
+    # Database
+    postgres_version: 15
+    db_name: resume_db
+    db_user: resume_user
+    db_password: "resume_password_change_me"  # Change this in production or use ansible-vault
+    
+    # Legacy variable names for compatibility
+    postgres_db: "{{ db_name }}"
+    postgres_user: "{{ db_user }}"
+    postgres_password: "{{ db_password }}"
+    
+    # LLM Service
+    llm_admin_token: "change-me-in-production"  # Token for /api/reload-resume endpoint
+    
+    # Node.js version
+    nodejs_version: "20.x"
+    
+    # Domain (optional, for Nginx)
+    domain: myresume.example.com  # Change this
