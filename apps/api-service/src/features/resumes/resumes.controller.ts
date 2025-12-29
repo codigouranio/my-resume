@@ -55,6 +55,8 @@ export class ResumesController {
       ipAddress: req?.ip || req?.connection?.remoteAddress,
       userAgent: req?.headers?.['user-agent'],
       referrer: req?.headers?.['referer'] || req?.headers?.['referrer'],
+      country: req?.headers?.['cf-ipcountry'],
+      city: req?.headers?.['cf-ipcity'],
     } : undefined;
     
     return this.resumesService.findBySlug(slug, view === 'true', viewData);

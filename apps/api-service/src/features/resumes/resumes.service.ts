@@ -81,6 +81,8 @@ export class ResumesService {
       ipAddress?: string;
       userAgent?: string;
       referrer?: string;
+      country?: string;
+      city?: string;
     },
   ) {
     const resume = await this.prisma.resume.findUnique({
@@ -120,6 +122,8 @@ export class ResumesService {
             ipAddress: viewData.ipAddress,
             userAgent: viewData.userAgent,
             referrer: viewData.referrer,
+            country: viewData.country,
+            city: viewData.city,
           },
         }),
       ]);
