@@ -5,6 +5,12 @@ import './ChatWidget.css';
 // In Rsbuild, use PUBLIC_ prefix for environment variables
 const API_URL = import.meta.env.PUBLIC_LLM_API_URL || 'http://localhost:5000';
 
+// Get resume slug from URL
+const getResumeSlug = () => {
+  const match = window.location.pathname.match(/\/resume\/([^/]+)/);
+  return match ? match[1] : null;
+};
+
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
@@ -36,12 +42,16 @@ export default function ChatWidget() {
 
     try {
       // Call Flask API
+      const slug = getResumeSlug();
       const response = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: currentQuestion }),
+        body: JSON.stringify({
+          message: currentQuestion,
+          slug: slug
+        }),
       });
 
       if (!response.ok) {

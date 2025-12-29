@@ -9,6 +9,8 @@ from flask_cors import CORS
 import requests
 import os
 import logging
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -20,6 +22,53 @@ CORS(app)
 # Configuration for external LLAMA server
 LLAMA_SERVER_URL = os.getenv("LLAMA_SERVER_URL", "http://localhost:8080")
 LLAMA_API_TYPE = os.getenv("LLAMA_API_TYPE", "llama-cpp")  # or "ollama", "openai"
+
+# Database configuration
+DATABASE_URL = os.getenv(
+    "DATABASE_URL", "postgresql://resume_user:resume_password@localhost:5432/resume_db"
+)
+
+
+def get_db_connection():
+    """Create a database connection."""
+    return psycopg2.connect(DATABASE_URL)
+
+
+def load_resume_from_db(slug: str):
+    """Load resume context from database by slug."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Query for published resume by slug
+        cursor.execute(
+            """
+            SELECT content, "llmContext" 
+            FROM "Resume" 
+            WHERE slug = %s AND "isPublic" = true AND "isPublished" = true
+        """,
+            (slug,),
+        )
+
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if result:
+            # Use llmContext if available, otherwise use content
+            context = (
+                result["llmContext"] if result["llmContext"] else result["content"]
+            )
+            logger.info(
+                f"Loaded resume from database for slug '{slug}' ({len(context)} chars)"
+            )
+            return context
+        else:
+            logger.warning(f"No published resume found for slug '{slug}'")
+            return None
+    except Exception as e:
+        logger.error(f"Database error loading resume for slug '{slug}': {e}")
+        return None
 
 
 # Try to load resume dynamically from file if available
@@ -335,15 +384,32 @@ def health_check():
 def chat():
     """
     Chat endpoint for resume questions.
-    Expects JSON: {"message": "user question"}
+    Expects JSON: {"message": "user question", "slug": "resume-slug"}
     Returns JSON: {"response": "AI answer"}
     """
     try:
         data = request.get_json()
         user_message = data.get("message", "").strip()
+        slug = data.get("slug")
 
         if not user_message:
             return jsonify({"error": "Message is required"}), 400
+
+        # Determine which resume context to use
+        resume_context = RESUME_CONTEXT  # Default fallback
+
+        if slug:
+            # Try to load from database first
+            db_context = load_resume_from_db(slug)
+            if db_context:
+                resume_context = db_context
+                logger.info(f"Using database resume for slug: {slug}")
+            else:
+                logger.warning(
+                    f"Slug '{slug}' not found in database, using default resume"
+                )
+        else:
+            logger.info("No slug provided, using default resume context")
 
         # Build prompt with context and safety guardrails
         prompt = f"""You are a professional AI assistant helping visitors learn about Jose Blanco's career and qualifications.
@@ -351,7 +417,7 @@ def chat():
 {SAFETY_INSTRUCTIONS}
 
 PROFESSIONAL INFORMATION:
-{RESUME_CONTEXT}
+{resume_context}
 
 Instructions:
 - Answer questions accurately based only on the information provided above
@@ -376,6 +442,7 @@ Professional Answer:"""
                 "response": answer,
                 "tokens_used": result["tokens"],
                 "server": LLAMA_SERVER_URL,
+                "slug": slug,
             }
         )
 
