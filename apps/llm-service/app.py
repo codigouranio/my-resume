@@ -224,11 +224,6 @@ User Question: {user_message}
 
 Professional Answer:"""
 
-{RESUME_CONTEXT}
-
-User: {user_message}
-Assistant:"""
-
         def generate():
             for output in llm(
                 prompt,
