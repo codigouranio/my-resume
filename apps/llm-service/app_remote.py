@@ -354,12 +354,9 @@ def call_ollama_chat_for_rewrite(original_text: str, max_tokens: int = 256) -> d
                 "messages": [
                     {
                         "role": "system",
-                        "content": "You are a resume bullet point rewriter. Given a bullet point, rewrite it professionally with strong action verbs and metrics. Output ONLY the rewritten bullet point, nothing else. No explanations, no preambles, no additional text."
+                        "content": "You are a resume bullet point rewriter. Given a bullet point, rewrite it professionally with strong action verbs and metrics. Output ONLY the rewritten bullet point, nothing else. No explanations, no preambles, no additional text.",
                     },
-                    {
-                        "role": "user",
-                        "content": f'Rewrite: "{original_text}"'
-                    }
+                    {"role": "user", "content": f'Rewrite: "{original_text}"'},
                 ],
                 "stream": False,
                 "options": {

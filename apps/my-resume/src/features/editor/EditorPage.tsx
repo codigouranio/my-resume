@@ -38,6 +38,8 @@ export function EditorPage() {
   const [improvedText, setImprovedText] = useState('');
   const [showImproveModal, setShowImproveModal] = useState(false);
   const [originalSelectedText, setOriginalSelectedText] = useState('');
+  const [selectionStart, setSelectionStart] = useState(0);
+  const [selectionEnd, setSelectionEnd] = useState(0);
 
   useEffect(() => {
     if (!isNew) {
@@ -235,6 +237,13 @@ export function EditorPage() {
   const improveSelectedText = async () => {
     if (!selectedText || !textareaRef.current) return;
 
+    // Store the current selection positions before making the API call
+    const textarea = textareaRef.current;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    setSelectionStart(start);
+    setSelectionEnd(end);
+
     setIsImprovingText(true);
     try {
       const result = await apiClient.improveText(selectedText, 'resume');
@@ -254,12 +263,9 @@ export function EditorPage() {
   const acceptImprovedText = () => {
     if (!textareaRef.current) return;
 
-    // Replace selected text with improved version
-    const textarea = textareaRef.current;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const before = formData.content.substring(0, start - originalSelectedText.length);
-    const after = formData.content.substring(end);
+    // Replace selected text with improved version using stored positions
+    const before = formData.content.substring(0, selectionStart);
+    const after = formData.content.substring(selectionEnd);
 
     const newContent = before + improvedText + after;
     setFormData({ ...formData, content: newContent });
@@ -270,6 +276,8 @@ export function EditorPage() {
     setImprovedText('');
     setOriginalSelectedText('');
     setSelectedText('');
+    setSelectionStart(0);
+    setSelectionEnd(0);
 
     // Show success message briefly
     const originalError = error;
