@@ -3,7 +3,7 @@ import './ChatWidget.css';
 
 // API Configuration
 // In Rsbuild, use PUBLIC_ prefix for environment variables
-const API_URL = import.meta.env.PUBLIC_LLM_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.PUBLIC_LLM_API_URL || '/llm';
 
 // Get resume slug from URL
 const getResumeSlug = () => {
