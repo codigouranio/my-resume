@@ -24,6 +24,7 @@ export function EditorPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [showPreview, setShowPreview] = useState(true);
+  const [activeTab, setActiveTab] = useState<'content' | 'ai-context'>('content');
 
   useEffect(() => {
     if (!isNew) {
@@ -209,33 +210,44 @@ export function EditorPage() {
           {/* Markdown Editor */}
           <div className="editor-pane">
             <div className="tabs tabs-boxed mb-4">
-              <a className="tab tab-active">Content</a>
-              <a className="tab" onClick={() => document.getElementById('llm-context-tab')?.scrollIntoView()}>AI Context</a>
+              <a
+                className={`tab ${activeTab === 'content' ? 'tab-active' : ''}`}
+                onClick={() => setActiveTab('content')}
+              >
+                📝 Content
+              </a>
+              <a
+                className={`tab ${activeTab === 'ai-context' ? 'tab-active' : ''}`}
+                onClick={() => setActiveTab('ai-context')}
+              >
+                🤖 AI Context
+                <span className="badge badge-secondary badge-sm ml-2">Private</span>
+              </a>
             </div>
 
-            <textarea
-              className="textarea textarea-bordered w-full h-full font-mono text-sm"
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              placeholder="Write your resume in Markdown..."
-            ></textarea>
-
-            <div id="llm-context-tab" className="mt-4">
-              <label className="label">
-                <span className="label-text font-semibold">Hidden AI Context</span>
-                <span className="badge badge-secondary">Private</span>
-              </label>
+            {activeTab === 'content' ? (
               <textarea
-                className="textarea textarea-bordered w-full font-mono text-sm"
-                rows={8}
-                value={formData.llmContext}
-                onChange={(e) => setFormData({ ...formData, llmContext: e.target.value })}
-                placeholder="Add detailed career info, metrics, accomplishments for AI chatbot (not shown publicly)..."
+                className="textarea textarea-bordered w-full h-full font-mono text-sm"
+                value={formData.content}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                placeholder="Write your resume in Markdown..."
               ></textarea>
-              <p className="text-xs text-base-content/60 mt-2">
-                This content is only accessible to the AI chatbot for better responses
-              </p>
-            </div>
+            ) : (
+              <div className="flex flex-col h-full">
+                <div className="alert alert-info mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <span className="text-xs">This content is only accessible to the AI chatbot. It's never shown publicly.</span>
+                </div>
+                <textarea
+                  className="textarea textarea-bordered flex-1 font-mono text-sm"
+                  value={formData.llmContext}
+                  onChange={(e) => setFormData({ ...formData, llmContext: e.target.value })}
+                  placeholder="Add detailed career info, metrics, accomplishments for AI chatbot...&#10;&#10;Example:&#10;- Led team of 5 engineers, increased velocity 40%&#10;- Reduced AWS costs by $50k/year through optimization&#10;- Mentored 3 junior developers, all promoted within 6 months"
+                ></textarea>
+              </div>
+            )}
           </div>
 
           {/* Preview */}

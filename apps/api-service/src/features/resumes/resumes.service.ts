@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../../shared/database/prisma.service';
 import { CreateResumeDto } from './dto/create-resume.dto';
 import { UpdateResumeDto } from './dto/update-resume.dto';
+import { CreateRecruiterInterestDto } from './dto/create-recruiter-interest.dto';
 
 @Injectable()
 export class ResumesService {
@@ -185,6 +186,83 @@ export class ResumesService {
 
     return this.prisma.resume.delete({
       where: { id },
+    });
+  }
+
+  async createRecruiterInterest(dto: CreateRecruiterInterestDto) {
+    // Find resume by slug
+    const resume = await this.prisma.resume.findUnique({
+      where: { slug: dto.resumeSlug },
+    });
+
+    if (!resume) {
+      throw new NotFoundException('Resume not found');
+    }
+
+    if (!resume.isPublic || !resume.isPublished) {
+      throw new NotFoundException('Resume not available');
+    }
+
+    // Create recruiter interest
+    return this.prisma.recruiterInterest.create({
+      data: {
+        resumeId: resume.id,
+        name: dto.name,
+        email: dto.email,
+        company: dto.company,
+        message: dto.message,
+      },
+    });
+  }
+
+  async getRecruiterInterests(userId: string) {
+    // Get all resumes for this user
+    const resumes = await this.prisma.resume.findMany({
+      where: { userId },
+      select: { id: true },
+    });
+
+    const resumeIds = resumes.map(r => r.id);
+
+    // Get all recruiter interests for these resumes
+    return this.prisma.recruiterInterest.findMany({
+      where: {
+        resumeId: { in: resumeIds },
+      },
+      include: {
+        resume: {
+          select: {
+            id: true,
+            slug: true,
+            title: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
+  async markInterestAsRead(interestId: string, userId: string) {
+    const interest = await this.prisma.recruiterInterest.findUnique({
+      where: { id: interestId },
+      include: {
+        resume: true,
+      },
+    });
+
+    if (!interest) {
+      throw new NotFoundException('Interest not found');
+    }
+
+    if (interest.resume.userId !== userId) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    return this.prisma.recruiterInterest.update({
+      where: { id: interestId },
+      data: { isRead: true },
     });
   }
 }

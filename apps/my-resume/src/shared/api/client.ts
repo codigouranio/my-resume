@@ -210,6 +210,30 @@ class ApiClient {
     });
   }
 
+  // Recruiter Interest
+  async submitRecruiterInterest(data: {
+    resumeSlug: string;
+    name: string;
+    email: string;
+    company?: string;
+    message: string;
+  }) {
+    return this.request('/resumes/recruiter-interest', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getRecruiterInterests() {
+    return this.request('/resumes/recruiter-interest/my-interests');
+  }
+
+  async markInterestAsRead(id: string) {
+    return this.request(`/resumes/recruiter-interest/${id}/read`, {
+      method: 'PATCH',
+    });
+  }
+
   // Templates
   async getTemplates() {
     return this.request('/templates');

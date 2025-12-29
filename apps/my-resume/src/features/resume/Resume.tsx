@@ -13,6 +13,15 @@ export default function Resume() {
   const [resumeData, setResumeData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
+  const [showContactModal, setShowContactModal] = useState<boolean>(false);
+  const [contactForm, setContactForm] = useState({
+    name: '',
+    email: '',
+    company: '',
+    message: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [submitSuccess, setSubmitSuccess] = useState<boolean>(false);
 
   useEffect(() => {
     if (slug) {
@@ -49,6 +58,37 @@ export default function Resume() {
         setError('Error loading resume. Please try again later.');
         setIsLoading(false);
       });
+  };
+
+  const handleInterestClick = () => {
+    setShowContactModal(true);
+  };
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      await apiClient.submitRecruiterInterest({
+        resumeSlug: slug || '',
+        name: contactForm.name,
+        email: contactForm.email,
+        company: contactForm.company,
+        message: contactForm.message,
+      });
+
+      setSubmitSuccess(true);
+      setTimeout(() => {
+        setShowContactModal(false);
+        setSubmitSuccess(false);
+        setContactForm({ name: '', email: '', company: '', message: '' });
+      }, 2000);
+    } catch (error: any) {
+      console.error('Error submitting interest:', error);
+      alert(error.message || 'Failed to submit your interest. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isLoading) {
@@ -96,6 +136,21 @@ export default function Resume() {
 
   return (
     <div className="resume-container">
+      {/* Recruiter Interest Button */}
+      <div className="sticky top-4 z-10 mb-8">
+        <div className="flex justify-end">
+          <button
+            onClick={handleInterestClick}
+            className="btn btn-primary btn-lg shadow-lg hover:shadow-xl transition-all gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            I'm Interested - Let's Talk!
+          </button>
+        </div>
+      </div>
+
       <article className="prose prose-lg max-w-none">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
@@ -122,6 +177,106 @@ export default function Resume() {
 
             <div className="flex items-center gap-2">
               <span>Powered by</span>
+
+              {/* Contact Modal */}
+              {showContactModal && (
+                <div className="modal modal-open">
+                  <div className="modal-box max-w-2xl">
+                    <h3 className="font-bold text-2xl mb-4">Express Your Interest</h3>
+
+                    {submitSuccess ? (
+                      <div className="alert alert-success">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Thank you! Your interest has been submitted successfully.</span>
+                      </div>
+                    ) : (
+                      <form onSubmit={handleContactSubmit} className="space-y-4">
+                        <div className="form-control">
+                          <label className="label">
+                            <span className="label-text">Your Name *</span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="John Doe"
+                            className="input input-bordered"
+                            value={contactForm.name}
+                            onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                            required
+                          />
+                        </div>
+
+                        <div className="form-control">
+                          <label className="label">
+                            <span className="label-text">Email Address *</span>
+                          </label>
+                          <input
+                            type="email"
+                            placeholder="john@company.com"
+                            className="input input-bordered"
+                            value={contactForm.email}
+                            onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                            required
+                          />
+                        </div>
+
+                        <div className="form-control">
+                          <label className="label">
+                            <span className="label-text">Company</span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Your Company"
+                            className="input input-bordered"
+                            value={contactForm.company}
+                            onChange={(e) => setContactForm({ ...contactForm, company: e.target.value })}
+                          />
+                        </div>
+
+                        <div className="form-control">
+                          <label className="label">
+                            <span className="label-text">Message *</span>
+                          </label>
+                          <textarea
+                            className="textarea textarea-bordered h-32"
+                            placeholder="I'd like to discuss an opportunity with you..."
+                            value={contactForm.message}
+                            onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                            required
+                          ></textarea>
+                        </div>
+
+                        <div className="modal-action">
+                          <button
+                            type="button"
+                            className="btn btn-ghost"
+                            onClick={() => setShowContactModal(false)}
+                            disabled={isSubmitting}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            className="btn btn-primary"
+                            disabled={isSubmitting}
+                          >
+                            {isSubmitting ? (
+                              <>
+                                <span className="loading loading-spinner"></span>
+                                Sending...
+                              </>
+                            ) : (
+                              'Send Message'
+                            )}
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+                  <div className="modal-backdrop" onClick={() => !isSubmitting && setShowContactModal(false)}></div>
+                </div>
+              )}
               <a
                 href="/"
                 className="font-semibold text-primary hover:underline flex items-center gap-1"

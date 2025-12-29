@@ -58,7 +58,7 @@ def load_resume_from_db(slug: str):
             # Combine content (public resume) with llmContext (additional private context)
             # Content is always used, llmContext provides additional details if available
             context = result["content"]
-            
+
             if result["llmContext"] and result["llmContext"].strip():
                 # Append llmContext as additional information for the AI
                 context = f"{context}\n\n--- ADDITIONAL CONTEXT FOR AI ONLY ---\n{result['llmContext']}"
@@ -70,7 +70,7 @@ def load_resume_from_db(slug: str):
                 logger.info(
                     f"Loaded resume from database for slug '{slug}': {len(context)} chars (content only)"
                 )
-            
+
             return context
         else:
             logger.warning(f"No published resume found for slug '{slug}'")

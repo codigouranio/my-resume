@@ -1,0 +1,50 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Query {
+  myResume(id: String!): Resume!
+  myResumes: [Resume!]!
+  resume(slug: String!): Resume!
+}
+
+type Resume {
+  content: String!
+  createdAt: DateTime!
+  customCss: String
+  id: ID!
+  isPublic: Boolean!
+  isPublished: Boolean!
+  llmContext: String
+  metaDescription: String
+  metaTitle: String
+  slug: String!
+  template: Template
+  templateId: String
+  theme: String
+  title: String!
+  updatedAt: DateTime!
+  user: User
+  userId: String!
+  viewCount: Int!
+}
+
+type Template {
+  description: String
+  id: ID!
+  isActive: Boolean!
+  isPremium: Boolean!
+  name: String!
+  preview: String
+}
+
+type User {
+  firstName: String
+  id: ID!
+  lastName: String
+}

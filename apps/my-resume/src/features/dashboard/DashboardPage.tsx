@@ -15,15 +15,34 @@ interface Resume {
   updatedAt: string;
 }
 
+interface RecruiterInterest {
+  id: string;
+  name: string;
+  email: string;
+  company?: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+  resume: {
+    id: string;
+    slug: string;
+    title: string;
+  };
+}
+
 export function DashboardPage() {
   const { user, logout } = useAuth();
   const [resumes, setResumes] = useState<Resume[]>([]);
+  const [recruiterInterests, setRecruiterInterests] = useState<RecruiterInterest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingInterests, setIsLoadingInterests] = useState(true);
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState<'resumes' | 'interests'>('resumes');
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchResumes();
+    fetchRecruiterInterests();
   }, []);
 
   const fetchResumes = async () => {
@@ -34,6 +53,30 @@ export function DashboardPage() {
       setError(err.message || 'Failed to load resumes');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchRecruiterInterests = async () => {
+    try {
+      const data = await apiClient.getRecruiterInterests();
+      setRecruiterInterests(data);
+    } catch (err: any) {
+      console.error('Failed to load recruiter interests:', err);
+    } finally {
+      setIsLoadingInterests(false);
+    }
+  };
+
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      await apiClient.markInterestAsRead(id);
+      setRecruiterInterests(prev =>
+        prev.map(interest =>
+          interest.id === id ? { ...interest, isRead: true } : interest
+        )
+      );
+    } catch (err: any) {
+      alert(err.message || 'Failed to mark as read');
     }
   };
 
@@ -82,118 +125,238 @@ export function DashboardPage() {
 
       {/* Main Content */}
       <div className="dashboard-content">
-        <div className="dashboard-header">
-          <div>
-            <h1 className="text-4xl font-bold">My Resumes</h1>
-            <p className="text-base-content/60 mt-2">Manage and share your professional resumes</p>
-          </div>
-          <button
-            className="btn btn-primary gap-2"
-            onClick={() => navigate('/editor/new')}
+        {/* Tabs */}
+        <div className="tabs tabs-boxed mb-6 bg-base-200">
+          <a
+            className={`tab tab-lg ${activeTab === 'resumes' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('resumes')}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-            </svg>
-            Create Resume
-          </button>
+            📄 My Resumes
+            <span className="badge badge-sm ml-2">{resumes.length}</span>
+          </a>
+          <a
+            className={`tab tab-lg ${activeTab === 'interests' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('interests')}
+          >
+            💼 Recruiter Interests
+            {recruiterInterests.filter(i => !i.isRead).length > 0 && (
+              <span className="badge badge-error badge-sm ml-2">
+                {recruiterInterests.filter(i => !i.isRead).length}
+              </span>
+            )}
+          </a>
         </div>
 
-        {error && (
-          <div className="alert alert-error">
-            <span>{error}</span>
-          </div>
-        )}
-
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="card bg-base-100 shadow-xl">
-                <div className="card-body">
-                  <div className="skeleton h-6 w-3/4"></div>
-                  <div className="skeleton h-4 w-full"></div>
-                  <div className="skeleton h-4 w-2/3"></div>
-                </div>
+        {activeTab === 'resumes' ? (
+          <>
+            <div className="dashboard-header">
+              <div>
+                <h1 className="text-4xl font-bold">My Resumes</h1>
+                <p className="text-base-content/60 mt-2">Manage and share your professional resumes</p>
               </div>
-            ))}
-          </div>
-        ) : resumes.length === 0 ? (
-          <div className="empty-state">
-            <div className="text-center">
-              <svg className="mx-auto h-24 w-24 text-base-content/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <h3 className="mt-4 text-lg font-medium">No resumes yet</h3>
-              <p className="mt-2 text-sm text-base-content/60">Get started by creating your first resume</p>
               <button
-                className="btn btn-primary mt-6"
+                className="btn btn-primary gap-2"
                 onClick={() => navigate('/editor/new')}
               >
-                Create Your First Resume
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                </svg>
+                Create Resume
               </button>
             </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {resumes.map(resume => (
-              <div key={resume.id} className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
-                <div className="card-body">
-                  <h2 className="card-title">{resume.title}</h2>
-                  <p className="text-sm text-base-content/60">/{resume.slug}</p>
 
-                  <div className="flex gap-2 mt-2">
-                    {resume.isPublished ? (
-                      <div className="badge badge-success gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        Published
-                      </div>
-                    ) : (
-                      <div className="badge badge-warning">Draft</div>
-                    )}
-                    {resume.isPublic && <div className="badge badge-info">Public</div>}
-                  </div>
+            {error && (
+              <div className="alert alert-error">
+                <span>{error}</span>
+              </div>
+            )}
 
-                  <div className="flex items-center gap-2 mt-2 text-sm text-base-content/60">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                      <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                    </svg>
-                    {resume.viewCount} views
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="card bg-base-100 shadow-xl">
+                    <div className="card-body">
+                      <div className="skeleton h-6 w-3/4"></div>
+                      <div className="skeleton h-4 w-full"></div>
+                      <div className="skeleton h-4 w-2/3"></div>
+                    </div>
                   </div>
-
-                  <div className="card-actions justify-end mt-4">
-                    {resume.isPublic && resume.isPublished && (
-                      <a
-                        href={`/resume/${resume.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-sm btn-ghost gap-1"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
-                          <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
-                        </svg>
-                        View
-                      </a>
-                    )}
-                    <button
-                      className="btn btn-sm btn-primary"
-                      onClick={() => navigate(`/editor/${resume.id}`)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="btn btn-sm btn-error btn-outline"
-                      onClick={() => handleDelete(resume.id, resume.title)}
-                    >
-                      Delete
-                    </button>
-                  </div>
+                ))}
+              </div>
+            ) : resumes.length === 0 ? (
+              <div className="empty-state">
+                <div className="text-center">
+                  <svg className="mx-auto h-24 w-24 text-base-content/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <h3 className="mt-4 text-lg font-medium">No resumes yet</h3>
+                  <p className="mt-2 text-sm text-base-content/60">Get started by creating your first resume</p>
+                  <button
+                    className="btn btn-primary mt-6"
+                    onClick={() => navigate('/editor/new')}
+                  >
+                    Create Your First Resume
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {resumes.map(resume => (
+                  <div key={resume.id} className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+                    <div className="card-body">
+                      <h2 className="card-title">{resume.title}</h2>
+                      <p className="text-sm text-base-content/60">/{resume.slug}</p>
+
+                      <div className="flex gap-2 mt-2">
+                        {resume.isPublished ? (
+                          <div className="badge badge-success gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            Published
+                          </div>
+                        ) : (
+                          <div className="badge badge-warning">Draft</div>
+                        )}
+                        {resume.isPublic && <div className="badge badge-info">Public</div>}
+                      </div>
+
+                      <div className="flex items-center gap-2 mt-2 text-sm text-base-content/60">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                          <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                        </svg>
+                        {resume.viewCount} views
+                      </div>
+
+                      <div className="card-actions justify-end mt-4">
+                        {resume.isPublic && resume.isPublished && (
+                          <a
+                            href={`/resume/${resume.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-sm btn-ghost gap-1"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+                              <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
+                            </svg>
+                            View
+                          </a>
+                        )}
+                        <button
+                          className="btn btn-sm btn-primary"
+                          onClick={() => navigate(`/editor/${resume.id}`)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="btn btn-sm btn-error btn-outline"
+                          onClick={() => handleDelete(resume.id, resume.title)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <div className="dashboard-header">
+              <div>
+                <h1 className="text-4xl font-bold">Recruiter Interests</h1>
+                <p className="text-base-content/60 mt-2">See who's interested in your resume</p>
+              </div>
+            </div>
+
+            {isLoadingInterests ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="card bg-base-100 shadow-xl">
+                    <div className="card-body">
+                      <div className="skeleton h-6 w-3/4"></div>
+                      <div className="skeleton h-4 w-full"></div>
+                      <div className="skeleton h-4 w-2/3"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : recruiterInterests.length === 0 ? (
+              <div className="empty-state">
+                <div className="text-center">
+                  <svg className="mx-auto h-24 w-24 text-base-content/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <h3 className="mt-4 text-lg font-medium">No recruiter interests yet</h3>
+                  <p className="mt-2 text-sm text-base-content/60">
+                    When recruiters express interest in your resume, they'll appear here
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {recruiterInterests.map(interest => (
+                  <div
+                    key={interest.id}
+                    className={`card bg-base-100 shadow-xl ${!interest.isRead ? 'ring-2 ring-primary' : ''}`}
+                  >
+                    <div className="card-body">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h2 className="card-title">{interest.name}</h2>
+                            {!interest.isRead && (
+                              <div className="badge badge-primary">New</div>
+                            )}
+                          </div>
+                          <p className="text-sm text-base-content/60 mt-1">
+                            <a href={`mailto:${interest.email}`} className="link link-hover">
+                              {interest.email}
+                            </a>
+                            {interest.company && ` • ${interest.company}`}
+                          </p>
+                          <div className="badge badge-ghost badge-sm mt-2">
+                            Resume: {interest.resume.title}
+                          </div>
+                        </div>
+                        <div className="text-sm text-base-content/60">
+                          {new Date(interest.createdAt).toLocaleDateString()}
+                        </div>
+                      </div>
+
+                      <div className="mt-3 p-4 bg-base-200 rounded-lg">
+                        <p className="text-sm whitespace-pre-wrap">{interest.message}</p>
+                      </div>
+
+                      <div className="card-actions justify-end mt-3">
+                        <a
+                          href={`mailto:${interest.email}?subject=Re: Your interest in my resume&body=Hi ${interest.name},%0D%0A%0D%0AThank you for your interest!%0D%0A%0D%0A`}
+                          className="btn btn-sm btn-primary gap-1"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                          </svg>
+                          Reply
+                        </a>
+                        {!interest.isRead && (
+                          <button
+                            className="btn btn-sm btn-ghost"
+                            onClick={() => handleMarkAsRead(interest.id)}
+                          >
+                            Mark as Read
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

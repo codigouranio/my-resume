@@ -85,8 +85,9 @@ model Resume {
   updatedAt DateTime @updatedAt
   
   // Relations
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  template Template? @relation(fields: [templateId], references: [id])
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template          Template?           @relation(fields: [templateId], references: [id])
+  recruiterInterests RecruiterInterest[]
   
   @@index([userId])
   @@index([slug])
@@ -110,4 +111,24 @@ model Template {
   resumes Resume[]
   
   @@index([isActive, isPremium])
+}
+
+model RecruiterInterest {
+  id        String   @id @default(cuid())
+  resumeId  String
+  name      String
+  email     String
+  company   String?
+  message   String   @db.Text
+  isRead    Boolean  @default(false)
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  
+  // Relations
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  
+  @@index([resumeId])
+  @@index([createdAt])
+  @@index([isRead])
 }

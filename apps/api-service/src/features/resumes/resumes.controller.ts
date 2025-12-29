@@ -13,6 +13,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ResumesService } from './resumes.service';
 import { CreateResumeDto } from './dto/create-resume.dto';
 import { UpdateResumeDto } from './dto/update-resume.dto';
+import { CreateRecruiterInterestDto } from './dto/create-recruiter-interest.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
@@ -88,5 +89,31 @@ export class ResumesController {
   @ApiOperation({ summary: 'Delete resume' })
   remove(@Param('id') id: string, @CurrentUser() user: any) {
     return this.resumesService.remove(id, user.id);
+  }
+
+  @Post('recruiter-interest')
+  @Public()
+  @ApiOperation({ summary: 'Submit recruiter interest for a resume' })
+  submitRecruiterInterest(@Body() dto: CreateRecruiterInterestDto) {
+    return this.resumesService.createRecruiterInterest(dto);
+  }
+
+  @Get('recruiter-interest/my-interests')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get all recruiter interests for current user resumes' })
+  getMyRecruiterInterests(@CurrentUser() user: any) {
+    return this.resumesService.getRecruiterInterests(user.id);
+  }
+
+  @Patch('recruiter-interest/:id/read')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Mark recruiter interest as read' })
+  markInterestAsRead(
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.resumesService.markInterestAsRead(id, user.id);
   }
 }
