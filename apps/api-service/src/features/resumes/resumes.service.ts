@@ -224,10 +224,11 @@ export class ResumesService {
 
     const resumeIds = resumes.map(r => r.id);
 
-    // Get all recruiter interests for these resumes
+    // Get all recruiter interests for these resumes (excluding soft-deleted)
     return this.prisma.recruiterInterest.findMany({
       where: {
         resumeId: { in: resumeIds },
+        deletedAt: null,
       },
       include: {
         resume: {
@@ -263,6 +264,29 @@ export class ResumesService {
     return this.prisma.recruiterInterest.update({
       where: { id: interestId },
       data: { isRead: true },
+    });
+  }
+
+  async deleteInterest(interestId: string, userId: string) {
+    const interest = await this.prisma.recruiterInterest.findUnique({
+      where: { id: interestId },
+      include: {
+        resume: true,
+      },
+    });
+
+    if (!interest) {
+      throw new NotFoundException('Interest not found');
+    }
+
+    if (interest.resume.userId !== userId) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    // Soft delete: set deletedAt timestamp
+    return this.prisma.recruiterInterest.update({
+      where: { id: interestId },
+      data: { deletedAt: new Date() },
     });
   }
 }

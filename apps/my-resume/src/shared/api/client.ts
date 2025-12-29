@@ -234,6 +234,12 @@ class ApiClient {
     });
   }
 
+  async deleteRecruiterInterest(id: string) {
+    return this.request(`/resumes/recruiter-interest/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Templates
   async getTemplates() {
     return this.request('/templates');

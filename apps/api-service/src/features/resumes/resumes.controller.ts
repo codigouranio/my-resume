@@ -116,4 +116,15 @@ export class ResumesController {
   ) {
     return this.resumesService.markInterestAsRead(id, user.id);
   }
+
+  @Delete('recruiter-interest/:id')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Soft delete recruiter interest' })
+  deleteRecruiterInterest(
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.resumesService.deleteInterest(id, user.id);
+  }
 }
