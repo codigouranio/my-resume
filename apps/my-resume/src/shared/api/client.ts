@@ -41,6 +41,7 @@ class ApiClient {
   private async request(endpoint: string, options: RequestInit = {}) {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      ...options.headers,
     };
 
     if (this.token) {
