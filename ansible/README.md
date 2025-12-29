@@ -1,103 +1,64 @@
 # Ansible Deployment for My Resume
 
-Automated deployment to remote server using Ansible.
+Automated deployment and updates for the complete application stack.
 
 ## Prerequisites
 
 **On your local machine:**
 - Ansible installed (or use the remote server)
-- SSH access to 172.16.23.127
+- SSH access to target server
 
-**On remote server (172.16.23.127):**
-- Ansible already installed ✅
+**On remote server:**
 - Ubuntu/Debian Linux
 - Sudo access
 
 ## Quick Start
 
-### Option 1: Deploy from your local machine
+### Initial Deployment (New Server)
 
 ```bash
 cd ansible
 
-# Test connection
-ansible production -i inventory.yml -m ping
+# 1. Configure your server
+vim inventory.yml  # Set ansible_host, passwords
 
-# Run full deployment
-ansible-playbook -i inventory.yml playbook.yml
-
-# Or use the helper script
-chmod +x deploy.sh
-./deploy.sh
+# 2. Run full deployment
+./deploy_with_conda.sh
 ```
 
-### Option 2: Deploy directly on the remote server
-
-Since Ansible is already installed on 172.16.23.127:
+### Quick Updates (Existing Server)
 
 ```bash
-# SSH to the server
-ssh ubuntu@172.16.23.127
+cd ansible
 
-# Clone your repository
-git clone https://github.com/codigouranio/my-resume.git
-cd my-resume/ansible
-
-# Edit inventory to use localhost
-# Change ansible_host to 127.0.0.1
-
-# Run deployment locally
-ansible-playbook -i inventory.yml playbook.yml --connection=local
+# Pull code, rebuild, restart - handles migrations automatically
+./update.sh
 ```
 
-## Configuration
+## What Gets Automated
 
-### 1. Update Inventory
-
-Edit `inventory.yml`:
-```yaml
-ansible_user: your-ssh-user  # Change from 'ubuntu'
-domain: yourdomain.com       # Your actual domain
-```
-
-### 2. Secure Passwords
-
-Use Ansible Vault for sensitive data:
-
-```bash
-# Create encrypted password file
-ansible-vault create secrets.yml
-
-# Add:
-vault_postgres_password: your-secure-password
-
-# Run with vault
-ansible-playbook -i inventory.yml playbook.yml --ask-vault-pass
-```
-
-### 3. SSH Key Setup
-
-```bash
-# Copy your SSH key to the server
-ssh-copy-id ubuntu@172.16.23.127
-
-# Or specify key in inventory:
-ansible_ssh_private_key_file: ~/.ssh/your-key.pem
-```
-
-## Playbooks
-
-### Full Deployment (`playbook.yml`)
+### Full Deployment (`./deploy_with_conda.sh`)
 Installs everything from scratch:
-- System dependencies (Node.js, PostgreSQL, Nginx, Python)
-- PostgreSQL database setup
-- Application code
-- PM2 process manager
-- Nginx reverse proxy
+- ✅ System packages (PostgreSQL, Nginx, Git, etc.)
+- ✅ Miniconda and conda environments
+- ✅ PostgreSQL database and users
+- ✅ Code from GitHub
+- ✅ All dependencies (npm, Python, GraphQL, CQRS)
+- ✅ Database migrations
+- ✅ Frontend and backend builds
+- ✅ PM2 services with proper configs
+- ✅ Nginx reverse proxy
 
-```bash
-ansible-playbook -i inventory.yml playbook.yml
-```
+### Quick Update (`./update.sh`)
+Updates existing deployment:
+- ✅ Pull latest code from GitHub
+- ✅ Install/update dependencies (including @nestjs/graphql, @nestjs/cqrs)
+- ✅ Apply Prisma migrations (migrate deploy with fallback to db push)
+- ✅ Regenerate Prisma client with RecruiterInterest model
+- ✅ Update Python packages (Flask, psycopg2-binary)
+- ✅ Rebuild frontend and backend
+- ✅ Reload PM2 services
+- ✅ Verify database tables (including RecruiterInterest)
 
 ### Quick Update (`update.yml`)
 Only updates code and restarts services:

@@ -23,17 +23,30 @@
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
     
-    - name: Rebuild API Service
+    - name: Install/Update GraphQL and CQRS dependencies
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
         conda activate {{ api_service_path }}/conda-env
-        npm run build
+        npm install @nestjs/graphql @nestjs/apollo @nestjs/cqrs @apollo/server graphql
       args:
         chdir: "{{ api_service_path }}"
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
     
-    - name: Sync Prisma schema to database
+    - name: Apply Prisma migrations (production safe)
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        export DATABASE_URL="postgresql://{{ postgres_user }}:{{ postgres_password }}@localhost:5432/{{ postgres_db }}?schema=public"
+        npx prisma migrate deploy
+      args:
+        chdir: "{{ api_service_path }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+      register: migration_result
+      failed_when: false
+    
+    - name: Fallback to db push if no migrations found
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
         conda activate {{ api_service_path }}/conda-env
@@ -43,6 +56,7 @@
         chdir: "{{ api_service_path }}"
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
+      when: migration_result.rc != 0 or 'No migration found' in migration_result.stderr
     
     - name: Generate Prisma Client
       shell: |
@@ -55,10 +69,25 @@
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
     
-    - name: Update LLM conda environment
+    - name: Rebuild API Service
       shell: |
-        /opt/miniconda3/bin/conda env update -f {{ llm_service_path }}/environment.yml -p {{ llm_service_path }}/conda-env
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        npm run build
+      args:
+        chdir: "{{ api_service_path }}"
+        executable: /bin/bash
       become_user: "{{ ansible_user }}"
+    
+    - name: Update LLM conda environment dependencies
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        conda install -y -c conda-forge flask flask-cors requests python-dotenv psycopg2-binary
+      args:
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+      ignore_errors: yes
     
     - name: Install/Update Frontend dependencies
       shell: |
@@ -91,6 +120,15 @@
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
     
+    - name: Verify RecruiterInterest table exists
+      shell: |
+        PGPASSWORD='{{ postgres_password }}' psql -h localhost -U {{ postgres_user }} -d {{ postgres_db }} -c "\d \"RecruiterInterest\"" 2>&1 | grep -q 'Table'
+      register: recruiter_table_check
+      failed_when: false
+      changed_when: false
+    
     - name: Display update info
       debug:
-        msg: "✅ Application updated and restarted successfully!"
+        msg: 
+          - "✅ Application updated and restarted successfully!"
+          - "✅ RecruiterInterest table: {{ 'Exists' if recruiter_table_check.rc == 0 else 'Missing - may need manual migration' }}"
