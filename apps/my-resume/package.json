@@ -5,7 +5,7 @@
   "type": "module",
   "sideEffects": [
     "**/*.css",
-    "**/ChatWidget.tsx"
+    "**/features/chat/ChatWidget.tsx"
   ],
   "scripts": {
     "build": "rsbuild build",
