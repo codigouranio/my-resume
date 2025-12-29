@@ -485,28 +485,45 @@ def improve_text():
 
         # Craft a prompt for text improvement
         if context == "resume":
-            system_prompt = """You are an expert resume writer and career coach. Improve the following resume text to be more professional, impactful, and achievement-focused. 
+            # Use a more direct prompt that forces immediate output
+            prompt = f"""Rewrite this resume bullet point to be more professional and impactful. Use action verbs, quantify when possible, focus on results. Output ONLY the improved version, no preamble:
 
-Guidelines:
-- Use strong action verbs (led, developed, implemented, optimized)
-- Quantify achievements when possible
-- Be concise and professional
-- Focus on impact and results
-- Maintain technical accuracy
-- Keep the same general meaning and facts
-- Return ONLY the improved text, no explanations or meta-commentary"""
+{text}"""
         else:
-            system_prompt = """You are an expert professional writer. Improve the following text to be more clear, professional, and impactful while maintaining its meaning."""
+            prompt = f"""Rewrite this text to be more professional and clear. Output ONLY the improved version:
 
-        prompt = f"{system_prompt}\\n\\nOriginal text:\\n{text}\\n\\nImproved text:"
+{text}"""
 
         logger.info(f"Improving text: {text[:50]}...")
 
         # Generate improved text
         result = generate_completion(prompt, max_tokens=512)
         improved_text = result["text"].strip()
+        
+        # Clean up common AI preambles
+        cleanup_phrases = [
+            "Here is the revised resume text:",
+            "Here is the improved text:",
+            "Here's the improved version:",
+            "Improved text:",
+            "Revised text:",
+            "Here is my rewrite:",
+            "Here is the rewritten text:",
+            "Rewritten text:",
+        ]
+        
+        for phrase in cleanup_phrases:
+            if improved_text.lower().startswith(phrase.lower()):
+                improved_text = improved_text[len(phrase):].strip()
+                break
+        
+        # Remove quotes if wrapped
+        if improved_text.startswith('"') and improved_text.endswith('"'):
+            improved_text = improved_text[1:-1].strip()
+        if improved_text.startswith("'") and improved_text.endswith("'"):
+            improved_text = improved_text[1:-1].strip()
 
-        logger.info(f"Improved text: {improved_text[:50]}...")
+        logger.info(f"Improved text: {improved_text[:100]}...")
 
         return jsonify(
             {
