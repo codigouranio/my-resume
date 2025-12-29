@@ -126,3 +126,54 @@
 .resume-container .video-container.expanded iframe {
   pointer-events: auto;
 }
+
+/* Video thumbnail from code blocks */
+.resume-container .video-thumbnail-wrapper {
+  position: relative;
+  max-width: 200px;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  margin: 1rem 0;
+}
+
+.resume-container .video-thumbnail-wrapper:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.resume-container .video-thumbnail-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  margin: 0;
+}
+
+.resume-container .video-play-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 0, 0, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.resume-container .video-thumbnail-wrapper:hover .video-play-button {
+  background: rgba(255, 0, 0, 1);
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.resume-container .video-play-button svg {
+  width: 30px;
+  height: 30px;
+  margin-left: 4px;
+}
