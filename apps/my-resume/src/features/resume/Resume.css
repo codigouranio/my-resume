@@ -69,10 +69,10 @@
 .resume-container .video-container {
   @apply my-6;
   position: relative;
-  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  padding-bottom: 42.19%; /* 16:9 aspect ratio at 75% size */
   height: 0;
   overflow: hidden;
-  max-width: 100%;
+  max-width: 75%;
   margin-left: auto;
   margin-right: auto;
   background: #000;
