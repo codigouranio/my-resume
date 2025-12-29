@@ -499,7 +499,7 @@ def improve_text():
         # Generate improved text
         result = generate_completion(prompt, max_tokens=512)
         improved_text = result["text"].strip()
-        
+
         # Clean up common AI preambles
         cleanup_phrases = [
             "Here is the revised resume text:",
@@ -511,12 +511,12 @@ def improve_text():
             "Here is the rewritten text:",
             "Rewritten text:",
         ]
-        
+
         for phrase in cleanup_phrases:
             if improved_text.lower().startswith(phrase.lower()):
-                improved_text = improved_text[len(phrase):].strip()
+                improved_text = improved_text[len(phrase) :].strip()
                 break
-        
+
         # Remove quotes if wrapped
         if improved_text.startswith('"') and improved_text.endswith('"'):
             improved_text = improved_text[1:-1].strip()
