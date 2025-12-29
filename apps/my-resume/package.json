@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "sideEffects": [
+    "**/*.css",
+    "**/ChatWidget.tsx"
+  ],
   "scripts": {
     "build": "rsbuild build",
     "check": "biome check --write",
