@@ -175,6 +175,13 @@ export default function Resume() {
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeRaw]}
+          components={{
+            iframe: ({ node, ...props }: any) => (
+              <div className="video-container">
+                <iframe {...props} />
+              </div>
+            ),
+          }}
         >
           {markdown}
         </ReactMarkdown>
