@@ -1,16 +1,13 @@
 const API_BASE_URL = import.meta.env.PUBLIC_API_URL || '/api';
-const LLM_BASE_URL = import.meta.env.PUBLIC_LLM_URL || 'http://172.16.23.127:5000';
 
 class ApiClient {
   private baseURL: string;
-  private llmBaseUrl: string;
   private token: string | null = null;
   private refreshToken: string | null = null;
   private refreshPromise: Promise<any> | null = null;
 
-  constructor(baseURL: string, llmBaseUrl: string = LLM_BASE_URL) {
+  constructor(baseURL: string) {
     this.baseURL = baseURL;
-    this.llmBaseUrl = llmBaseUrl;
     this.token = localStorage.getItem('auth_token');
     this.refreshToken = localStorage.getItem('refresh_token');
   }
@@ -223,20 +220,10 @@ class ApiClient {
 
   // AI Text Improvement
   async improveText(text: string, context: string = 'resume') {
-    const response = await fetch(`${this.llmBaseUrl}/api/improve-text`, {
+    return this.request('/resumes/improve-text', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({ text, context }),
     });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to improve text');
-    }
-
-    return response.json();
   }
 
   // Recruiter Interest

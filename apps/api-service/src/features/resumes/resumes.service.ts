@@ -432,4 +432,27 @@ export class ResumesService {
       viewsByReferrer,
     };
   }
+
+  async improveText(text: string, context: string = 'resume') {
+    const LLM_SERVICE_URL = process.env.LLM_SERVICE_URL || 'http://localhost:5000';
+    
+    try {
+      const response = await fetch(`${LLM_SERVICE_URL}/api/improve-text`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text, context }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to improve text');
+      }
+
+      return response.json();
+    } catch (error) {
+      throw new Error(`LLM service error: ${error.message}`);
+    }
+  }
 }

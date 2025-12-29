@@ -159,4 +159,12 @@ export class ResumesController {
   ) {
     return this.resumesService.getResumeAnalytics(id, user.id);
   }
+
+  @Post('improve-text')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Improve text using AI (proxied to LLM service)' })
+  async improveText(@Body() body: { text: string; context?: string }) {
+    return this.resumesService.improveText(body.text, body.context);
+  }
 }
