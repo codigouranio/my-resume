@@ -485,34 +485,32 @@ def improve_text():
 
         # Craft a prompt for text improvement
         if context == "resume":
-            # Use a very direct prompt with examples to guide the model
-            prompt = f"""You are a professional resume writer. Rewrite the following resume bullet point to be more impactful.
+            # Use examples to show the model exactly what we want
+            prompt = f"""Task: Rewrite resume bullet points to be more professional and impactful.
 
-Rules:
-- Start with a strong action verb (Led, Developed, Implemented, Increased, etc.)
-- Add specific numbers and metrics where possible
-- Focus on achievements and results, not just duties
-- Keep it concise and professional
-- Output ONLY the improved bullet point, nothing else
-- Do NOT add explanations, preambles, or extra commentary
+Example 1:
+Input: "Worked on website"
+Output: "Developed and deployed a responsive e-commerce website serving 50,000+ monthly users, resulting in a 35% increase in online sales"
 
-Original:
-{text}
+Example 2:
+Input: "Managed projects"
+Output: "Led cross-functional teams of 8+ members to deliver 12 high-priority projects on time and 15% under budget"
 
-Improved:"""
+Now rewrite this:
+Input: "{text}"
+Output:"""
         else:
-            prompt = f"""Rewrite this text to be more professional and clear. Output ONLY the improved version, no explanations:
+            prompt = f"""Task: Rewrite this text to be more professional.
 
-{text}
-
-Improved:"""
+Input: "{text}"
+Output:"""
 
         logger.info(f"Improving text: {text[:50]}...")
 
         # Generate improved text
         result = generate_completion(prompt, max_tokens=512)
         improved_text = result["text"].strip()
-        
+
         logger.info(f"Raw AI response: {improved_text[:150]}...")
 
         # Clean up common AI preambles and conversational responses
@@ -542,10 +540,19 @@ Improved:"""
             improved_text = improved_text[1:-1].strip()
         if improved_text.startswith("'") and improved_text.endswith("'"):
             improved_text = improved_text[1:-1].strip()
-            
+
         # If the response looks like it's explaining rather than improving, try to extract the actual improvement
         # Look for common patterns where AI explains what it's doing
-        if any(word in improved_text.lower()[:100] for word in ["i rewrote", "i improved", "i changed", "this version", "the improved"]):
+        if any(
+            word in improved_text.lower()[:100]
+            for word in [
+                "i rewrote",
+                "i improved",
+                "i changed",
+                "this version",
+                "the improved",
+            ]
+        ):
             # Try to find text after a colon or newline
             if ":" in improved_text:
                 parts = improved_text.split(":", 1)
@@ -554,7 +561,12 @@ Improved:"""
             elif "\n" in improved_text:
                 lines = [l.strip() for l in improved_text.split("\n") if l.strip()]
                 # Take the longest line that looks like a bullet point
-                bullet_lines = [l for l in lines if len(l) > 20 and not l.lower().startswith(("here", "i ", "the ", "this "))]
+                bullet_lines = [
+                    l
+                    for l in lines
+                    if len(l) > 20
+                    and not l.lower().startswith(("here", "i ", "the ", "this "))
+                ]
                 if bullet_lines:
                     improved_text = bullet_lines[0]
 
