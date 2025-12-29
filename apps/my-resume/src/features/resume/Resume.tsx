@@ -22,6 +22,7 @@ export default function Resume() {
   });
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitSuccess, setSubmitSuccess] = useState<boolean>(false);
+  const [expandedVideo, setExpandedVideo] = useState<string | null>(null);
 
   useEffect(() => {
     if (slug) {
@@ -90,6 +91,25 @@ export default function Resume() {
       setIsSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    // Handle video thumbnail clicks
+    const handleVideoClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const videoContainer = target.closest('.video-container');
+
+      if (videoContainer && !videoContainer.classList.contains('expanded')) {
+        e.preventDefault();
+        const iframe = videoContainer.querySelector('iframe');
+        if (iframe) {
+          setExpandedVideo(iframe.src);
+        }
+      }
+    };
+
+    document.addEventListener('click', handleVideoClick);
+    return () => document.removeEventListener('click', handleVideoClick);
+  }, []);
 
   if (isLoading) {
     return (
@@ -292,6 +312,28 @@ export default function Resume() {
       )}
 
       <ChatWidget />
+
+      {/* Video Modal */}
+      {expandedVideo && (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-5xl w-full p-0">
+            <button
+              className="btn btn-sm btn-circle absolute right-2 top-2 z-10"
+              onClick={() => setExpandedVideo(null)}
+            >
+              ✕
+            </button>
+            <div className="video-container expanded" style={{ maxWidth: '100%', paddingBottom: '56.25%' }}>
+              <iframe
+                src={expandedVideo}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => setExpandedVideo(null)} />
+        </div>
+      )}
     </div>
   );
 }

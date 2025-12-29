@@ -67,16 +67,50 @@
 }
 
 .resume-container .video-container {
-  @apply my-6;
+  @apply my-2;
   position: relative;
-  padding-bottom: 28.125%; /* 16:9 aspect ratio at 50% size */
-  height: 0;
+  padding-bottom: 84px; /* Thumbnail height */
+  height: 84px;
   overflow: hidden;
-  max-width: 50%;
-  margin-left: auto;
-  margin-right: auto;
+  max-width: 150px;
   background: #000;
   border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  float: left;
+  margin-right: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.resume-container .video-container:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transform: scale(1.05);
+}
+
+.resume-container .video-container::after {
+  content: '▶';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2rem;
+  color: white;
+  opacity: 0.9;
+  pointer-events: none;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.resume-container .video-container.expanded {
+  float: none;
+  max-width: 100%;
+  height: 0;
+  padding-bottom: 56.25%;
+  margin: 0;
+  cursor: default;
+}
+
+.resume-container .video-container.expanded::after {
+  content: none;
 }
 
 .resume-container .video-container iframe {
@@ -86,4 +120,9 @@
   width: 100%;
   height: 100%;
   border: 0;
+  pointer-events: none;
+}
+
+.resume-container .video-container.expanded iframe {
+  pointer-events: auto;
 }
