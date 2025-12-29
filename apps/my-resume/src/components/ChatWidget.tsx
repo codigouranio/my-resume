@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import './ChatWidget.css';
 
 // API Configuration
 // In Rsbuild, use PUBLIC_ prefix for environment variables
