@@ -1,0 +1,197 @@
+---
+# Database Setup Playbook
+# Creates PostgreSQL database, user, and configures access
+
+- name: PostgreSQL Database Setup
+  hosts: all
+  become: yes
+  
+  tasks:
+    - name: Ensure PostgreSQL is running
+      service:
+        name: postgresql
+        state: started
+        enabled: yes
+    
+    - name: Create PostgreSQL user
+      postgresql_user:
+        name: "{{ db_user }}"
+        password: "{{ db_password }}"
+        role_attr_flags: LOGIN,CREATEDB
+        state: present
+      become_user: postgres
+    
+    - name: Create PostgreSQL database
+      postgresql_db:
+        name: "{{ db_name }}"
+        owner: "{{ db_user }}"
+        encoding: UTF8
+        lc_collate: en_US.UTF-8
+        lc_ctype: en_US.UTF-8
+        template: template0
+        state: present
+      become_user: postgres
+    
+    - name: Grant all privileges on database
+      postgresql_privs:
+        database: "{{ db_name }}"
+        state: present
+        privs: ALL
+        type: database
+        role: "{{ db_user }}"
+      become_user: postgres
+    
+    - name: Configure PostgreSQL for local connections
+      lineinfile:
+        path: "/etc/postgresql/{{ postgres_version }}/main/pg_hba.conf"
+        line: "host    {{ db_name }}    {{ db_user }}    127.0.0.1/32    md5"
+        insertafter: "# IPv4 local connections:"
+        state: present
+      notify: Restart PostgreSQL
+    
+    - name: Configure PostgreSQL to listen on localhost
+      lineinfile:
+        path: "/etc/postgresql/{{ postgres_version }}/main/postgresql.conf"
+        regexp: "^#?listen_addresses"
+        line: "listen_addresses = 'localhost'"
+        state: present
+      notify: Restart PostgreSQL
+    
+    - name: Set max_connections
+      lineinfile:
+        path: "/etc/postgresql/{{ postgres_version }}/main/postgresql.conf"
+        regexp: "^#?max_connections"
+        line: "max_connections = {{ postgres_max_connections }}"
+        state: present
+      notify: Restart PostgreSQL
+    
+    - name: Set shared_buffers (25% of RAM)
+      lineinfile:
+        path: "/etc/postgresql/{{ postgres_version }}/main/postgresql.conf"
+        regexp: "^#?shared_buffers"
+        line: "shared_buffers = {{ (ansible_memtotal_mb * 0.25) | int }}MB"
+        state: present
+      notify: Restart PostgreSQL
+    
+    - name: Enable PostgreSQL extensions
+      postgresql_ext:
+        name: "{{ item }}"
+        db: "{{ db_name }}"
+        state: present
+      become_user: postgres
+      loop:
+        - pg_trgm
+        - btree_gin
+      ignore_errors: yes
+    
+    - name: Test database connection
+      postgresql_query:
+        db: "{{ db_name }}"
+        login_user: "{{ db_user }}"
+        login_password: "{{ db_password }}"
+        login_host: localhost
+        query: SELECT version();
+      register: db_version
+      become_user: postgres
+    
+    - name: Display database version
+      debug:
+        msg: "✅ PostgreSQL connection successful: {{ db_version.query_result[0].version }}"
+    
+    - name: Create database backup script
+      copy:
+        dest: "{{ backup_path }}/backup-database.sh"
+        content: |
+          #!/bin/bash
+          # Database backup script
+          BACKUP_DIR="{{ backup_path }}/database"
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          BACKUP_FILE="${BACKUP_DIR}/{{ db_name }}_${TIMESTAMP}.sql.gz"
+          
+          mkdir -p "${BACKUP_DIR}"
+          
+          PGPASSWORD='{{ db_password }}' pg_dump -h localhost -U {{ db_user }} {{ db_name }} | gzip > "${BACKUP_FILE}"
+          
+          echo "Backup created: ${BACKUP_FILE}"
+          
+          # Remove backups older than {{ backup_retention_days }} days
+          find "${BACKUP_DIR}" -name "{{ db_name }}_*.sql.gz" -mtime +{{ backup_retention_days }} -delete
+          
+          echo "Old backups cleaned up (retention: {{ backup_retention_days }} days)"
+        mode: '0750'
+        owner: "{{ ansible_user }}"
+      when: enable_backups
+    
+    - name: Create database restore script
+      copy:
+        dest: "{{ backup_path }}/restore-database.sh"
+        content: |
+          #!/bin/bash
+          # Database restore script
+          if [ -z "$1" ]; then
+            echo "Usage: $0 <backup_file.sql.gz>"
+            echo "Available backups:"
+            ls -lh {{ backup_path }}/database/{{ db_name }}_*.sql.gz 2>/dev/null || echo "No backups found"
+            exit 1
+          fi
+          
+          BACKUP_FILE="$1"
+          
+          if [ ! -f "${BACKUP_FILE}" ]; then
+            echo "Error: Backup file not found: ${BACKUP_FILE}"
+            exit 1
+          fi
+          
+          echo "Restoring database from: ${BACKUP_FILE}"
+          echo "This will overwrite the current database!"
+          read -p "Are you sure? (yes/no): " confirm
+          
+          if [ "$confirm" != "yes" ]; then
+            echo "Restore cancelled"
+            exit 0
+          fi
+          
+          # Drop and recreate database
+          PGPASSWORD='{{ db_password }}' dropdb -h localhost -U {{ db_user }} {{ db_name }} --if-exists
+          PGPASSWORD='{{ db_password }}' createdb -h localhost -U {{ db_user }} {{ db_name }}
+          
+          # Restore backup
+          gunzip -c "${BACKUP_FILE}" | PGPASSWORD='{{ db_password }}' psql -h localhost -U {{ db_user }} {{ db_name }}
+          
+          echo "Database restored successfully"
+        mode: '0750'
+        owner: "{{ ansible_user }}"
+      when: enable_backups
+    
+    - name: Setup daily database backup cron job
+      cron:
+        name: "My Resume Database Backup"
+        minute: "0"
+        hour: "2"
+        job: "{{ backup_path }}/backup-database.sh >> {{ backup_path }}/backup.log 2>&1"
+        user: "{{ ansible_user }}"
+        state: present
+      when: enable_backups
+    
+    - name: Display completion message
+      debug:
+        msg:
+          - "✅ Database setup completed successfully!"
+          - ""
+          - "Database Details:"
+          - "  Name: {{ db_name }}"
+          - "  User: {{ db_user }}"
+          - "  Port: {{ postgres_port }}"
+          - ""
+          - "Backup scripts created:"
+          - "  Backup:  {{ backup_path }}/backup-database.sh"
+          - "  Restore: {{ backup_path }}/restore-database.sh"
+          - "  Daily backup scheduled at 2:00 AM"
+          - ""
+          - "Next step: Run 03-application-deploy.yml"
+  
+  handlers:
+    - name: Restart PostgreSQL
+      service:
+        name: postgresql
+        state: restarted

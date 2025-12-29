@@ -1,0 +1,49 @@
+module.exports = {
+  apps: [
+    {
+      name: 'api-service',
+      cwd: '{{ api_service_path }}',
+      interpreter: '{{ api_service_path }}/conda-env/bin/node',
+      script: 'dist/main.js',
+      instances: {{ pm2_instances_api }},
+      exec_mode: 'cluster',
+      max_memory_restart: '{{ pm2_max_memory_restart }}',
+      env: {
+        NODE_ENV: '{{ node_env }}',
+        PORT: {{ api_port }}
+      },
+      error_file: '{{ app_root }}/logs/api-error.log',
+      out_file: '{{ app_root }}/logs/api-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      merge_logs: true,
+      autorestart: true,
+      watch: false,
+      max_restarts: 10,
+      min_uptime: '10s'
+    },
+    {
+      name: 'llm-service',
+      cwd: '{{ llm_service_path }}',
+      interpreter: '{{ api_service_path }}/conda-env/bin/python',
+      script: 'app_remote.py',
+      instances: 1,
+      max_memory_restart: '1G',
+      env: {
+        PORT: {{ llm_port }},
+        LLAMA_SERVER_URL: '{{ llama_server_url }}',
+        LLAMA_API_TYPE: 'ollama',
+        OLLAMA_MODEL: '{{ ollama_model }}',
+        DATABASE_URL: 'postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}',
+        RESUME_PATH: '../../data/resume.md',
+        ADMIN_TOKEN: '{{ llm_admin_token }}'
+      },
+      error_file: '{{ app_root }}/logs/llm-error.log',
+      out_file: '{{ app_root }}/logs/llm-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      autorestart: true,
+      watch: false,
+      max_restarts: 10,
+      min_uptime: '10s'
+    }
+  ]
+};

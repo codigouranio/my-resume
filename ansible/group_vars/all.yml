@@ -1,0 +1,83 @@
+---
+# Global variables for all hosts
+# Override these in inventory.yml or host_vars/
+
+# Application Configuration
+app_name: my-resume
+app_root: /opt/my-resume
+repo_url: https://github.com/codigouranio/my-resume.git
+repo_branch: main
+
+# Application Paths
+api_service_path: "{{ app_root }}/apps/api-service"
+llm_service_path: "{{ app_root }}/apps/llm-service"
+frontend_path: "{{ app_root }}/apps/my-resume"
+
+# Service Ports
+api_port: 3000
+llm_port: 5000
+frontend_port: 3001
+
+# Node.js Configuration
+nodejs_version: "20"
+
+# PostgreSQL Configuration
+postgres_version: 15
+postgres_port: 5432
+postgres_max_connections: 100
+
+# Database Configuration (use ansible-vault for passwords!)
+db_name: resume_db
+db_user: resume_user
+# CHANGE THIS - or better, use ansible-vault encrypt_string
+db_password: "{{ vault_db_password | default('CHANGE_ME_IN_PRODUCTION') }}"
+
+# Legacy compatibility
+postgres_db: "{{ db_name }}"
+postgres_user: "{{ db_user }}"
+postgres_password: "{{ db_password }}"
+
+# JWT Configuration
+# CHANGE THIS - or use ansible-vault
+jwt_secret: "{{ vault_jwt_secret | default('CHANGE_ME_IN_PRODUCTION_USE_LONG_RANDOM_STRING') }}"
+
+# LLM Service Configuration
+llm_admin_token: "{{ vault_llm_admin_token | default('CHANGE_ME_IN_PRODUCTION') }}"
+ollama_model: "llama3.1:latest"
+llama_server_url: "http://localhost:11434"
+
+# PM2 Configuration
+pm2_instances_api: 2
+pm2_max_memory_restart: "512M"
+
+# Nginx Configuration
+enable_ssl: false  # Set to true for Let's Encrypt SSL
+domain: "{{ ansible_host }}"  # Override with your domain
+
+# CloudFlare Configuration (optional)
+enable_cloudflare: false
+cloudflare_real_ip: false
+
+# Backup Configuration
+enable_backups: true
+backup_retention_days: 7
+backup_path: /opt/backups/my-resume
+
+# Monitoring Configuration
+enable_monitoring: false
+monitoring_port: 9090
+
+# Security
+enable_firewall: true
+allowed_ssh_ips: []  # Empty = allow all, or specify IPs like ['1.2.3.4']
+fail2ban_enabled: true
+
+# Application Environment
+node_env: production
+enable_source_maps: true
+enable_debug_logging: false
+
+# CORS Configuration
+cors_origins: 
+  - "http://{{ ansible_host }}"
+  - "https://{{ domain }}"

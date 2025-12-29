@@ -1,0 +1,302 @@
+---
+# Application Deployment Playbook
+# Deploys the full application stack
+
+- name: Deploy My Resume Application
+  hosts: all
+  become: yes
+  
+  tasks:
+    - name: Clone/Update repository
+      git:
+        repo: "{{ repo_url }}"
+        dest: "{{ app_root }}"
+        version: "{{ repo_branch }}"
+        force: yes
+      become_user: "{{ ansible_user }}"
+    
+    - name: Create conda environment for API service
+      shell: |
+        /opt/miniconda3/bin/conda create -p {{ api_service_path }}/conda-env nodejs={{ nodejs_version }} -y
+      args:
+        creates: "{{ api_service_path }}/conda-env"
+      become_user: "{{ ansible_user }}"
+    
+    - name: Create conda environment for Frontend
+      shell: |
+        /opt/miniconda3/bin/conda create -p {{ frontend_path }}/conda-env nodejs={{ nodejs_version }} -y
+      args:
+        creates: "{{ frontend_path }}/conda-env"
+      become_user: "{{ ansible_user }}"
+    
+    - name: Install PM2 in API conda environment
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        npm install -g pm2
+      args:
+        creates: "{{ api_service_path }}/conda-env/bin/pm2"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+    
+    - name: Configure API Service environment
+      copy:
+        dest: "{{ api_service_path }}/.env"
+        content: |
+          DATABASE_URL="postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}?schema=public"
+          JWT_SECRET="{{ jwt_secret }}"
+          PORT={{ api_port }}
+          NODE_ENV={{ node_env }}
+          LLM_SERVICE_URL="http://localhost:{{ llm_port }}"
+          CORS_ORIGINS="{{ cors_origins | join(',') }}"
+        owner: "{{ ansible_user }}"
+        mode: '0600'
+    
+    - name: Install API Service dependencies
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        npm install
+      args:
+        chdir: "{{ api_service_path }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+    
+    - name: Install required NestJS packages
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        npm install @nestjs/graphql @nestjs/apollo @nestjs/cqrs @apollo/server graphql
+      args:
+        chdir: "{{ api_service_path }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+    
+    - name: Generate Prisma Client
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        export DATABASE_URL="postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}?schema=public"
+        npx prisma generate
+      args:
+        chdir: "{{ api_service_path }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+    
+    - name: Check if migrations exist
+      stat:
+        path: "{{ api_service_path }}/prisma/migrations"
+      register: migrations_dir
+    
+    - name: Apply Prisma migrations (production safe)
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        export DATABASE_URL="postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}?schema=public"
+        npx prisma migrate deploy
+      args:
+        chdir: "{{ api_service_path }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+      register: migration_result
+      failed_when: false
+      when: migrations_dir.stat.exists
+    
+    - name: Fallback to db push if no migrations
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        export DATABASE_URL="postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}?schema=public"
+        npx prisma db push --accept-data-loss
+      args:
+        chdir: "{{ api_service_path }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+      when: not migrations_dir.stat.exists or migration_result.rc != 0
+    
+    - name: Verify database tables
+      postgresql_query:
+        db: "{{ db_name }}"
+        login_user: "{{ db_user }}"
+        login_password: "{{ db_password }}"
+        login_host: localhost
+        query: |
+          SELECT table_name 
+          FROM information_schema.tables 
+          WHERE table_schema = 'public'
+          ORDER BY table_name;
+      register: db_tables
+      become_user: postgres
+    
+    - name: Display created tables
+      debug:
+        msg: "Database tables: {{ db_tables.query_result | map(attribute='table_name') | list }}"
+    
+    - name: Build API Service
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        npm run build
+      args:
+        chdir: "{{ api_service_path }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+    
+    - name: Install LLM service Python dependencies
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        conda install -y -c conda-forge flask flask-cors requests python-dotenv psycopg2-binary
+      args:
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+    
+    - name: Configure LLM Service environment
+      copy:
+        dest: "{{ llm_service_path }}/.env"
+        content: |
+          PORT={{ llm_port }}
+          LLAMA_SERVER_URL={{ llama_server_url }}
+          LLAMA_API_TYPE=ollama
+          OLLAMA_MODEL={{ ollama_model }}
+          RESUME_PATH=../../data/resume.md
+          DATABASE_URL=postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}
+          ADMIN_TOKEN={{ llm_admin_token }}
+        owner: "{{ ansible_user }}"
+        mode: '0600'
+    
+    - name: Configure Frontend environment
+      copy:
+        dest: "{{ frontend_path }}/.env"
+        content: |
+          PUBLIC_API_URL=http://{{ domain }}:{{ api_port }}/api
+          PUBLIC_LLM_API_URL=http://{{ domain }}:{{ llm_port }}
+        owner: "{{ ansible_user }}"
+        mode: '0644'
+    
+    - name: Install Frontend dependencies
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ frontend_path }}/conda-env
+        npm install
+      args:
+        chdir: "{{ frontend_path }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+    
+    - name: Build Frontend
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ frontend_path }}/conda-env
+        npm run build
+      args:
+        chdir: "{{ frontend_path }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+    
+    - name: Verify Frontend build
+      stat:
+        path: "{{ frontend_path }}/dist/index.html"
+      register: frontend_build
+    
+    - name: Assert Frontend build succeeded
+      assert:
+        that: frontend_build.stat.exists
+        fail_msg: "Frontend build failed - dist/index.html not found"
+        success_msg: "✅ Frontend built successfully"
+    
+    - name: Create PM2 ecosystem file
+      template:
+        src: ../templates/ecosystem.config.js.j2
+        dest: "{{ app_root }}/ecosystem.config.js"
+        owner: "{{ ansible_user }}"
+        mode: '0644'
+    
+    - name: Stop existing PM2 services
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        $(npm root -g)/pm2/bin/pm2 delete all || true
+      args:
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+      ignore_errors: yes
+    
+    - name: Start services with PM2
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        $(npm root -g)/pm2/bin/pm2 start ecosystem.config.js
+      args:
+        chdir: "{{ app_root }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+    
+    - name: Save PM2 configuration
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        $(npm root -g)/pm2/bin/pm2 save --force
+      args:
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+    
+    - name: Setup PM2 startup script
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        $(npm root -g)/pm2/bin/pm2 startup systemd -u {{ ansible_user }} --hp /home/{{ ansible_user }}
+      args:
+        executable: /bin/bash
+      register: pm2_startup
+      become_user: "{{ ansible_user }}"
+    
+    - name: Execute PM2 startup command
+      shell: "{{ pm2_startup.stdout_lines | select('match', '^sudo.*') | first }}"
+      when: pm2_startup.stdout_lines | select('match', '^sudo.*') | list | length > 0
+    
+    - name: Wait for services to start
+      wait_for:
+        port: "{{ item }}"
+        delay: 5
+        timeout: 30
+      loop:
+        - "{{ api_port }}"
+        - "{{ llm_port }}"
+    
+    - name: Check PM2 services status
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        $(npm root -g)/pm2/bin/pm2 list
+      args:
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+      register: pm2_status
+    
+    - name: Display PM2 status
+      debug:
+        msg: "{{ pm2_status.stdout_lines }}"
+    
+    - name: Test API health endpoint
+      uri:
+        url: "http://localhost:{{ api_port }}/api/health"
+        method: GET
+        status_code: [200, 404]
+      register: api_health
+      ignore_errors: yes
+    
+    - name: Display API health status
+      debug:
+        msg: "API Service: {{ 'HEALTHY' if api_health.status == 200 else 'STARTED (health endpoint may not exist)' }}"
+    
+    - name: Display completion message
+      debug:
+        msg:
+          - "✅ Application deployment completed successfully!"
+          - ""
+          - "Services Status:"
+          - "  API Service: Running on port {{ api_port }}"
+          - "  LLM Service: Running on port {{ llm_port }}"
+          - ""
+          - "Next step: Run 04-nginx-setup.yml to configure web server"

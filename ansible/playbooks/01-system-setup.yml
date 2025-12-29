@@ -1,0 +1,244 @@
+---
+# System Setup Playbook
+# Installs all system dependencies and base software
+
+- name: System Setup and Base Dependencies
+  hosts: all
+  become: yes
+  
+  pre_tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+  
+  tasks:
+    - name: Set hostname
+      hostname:
+        name: "{{ inventory_hostname }}"
+      when: inventory_hostname != ansible_hostname
+    
+    - name: Install essential system packages
+      apt:
+        name:
+          - git
+          - curl
+          - wget
+          - build-essential
+          - ca-certificates
+          - software-properties-common
+          - apt-transport-https
+          - gnupg
+          - lsb-release
+          - unzip
+          - vim
+          - htop
+          - tree
+          - net-tools
+        state: present
+    
+    - name: Install PostgreSQL
+      apt:
+        name:
+          - postgresql
+          - postgresql-contrib
+          - python3-psycopg2
+          - libpq-dev
+        state: present
+    
+    - name: Ensure PostgreSQL is running
+      service:
+        name: postgresql
+        state: started
+        enabled: yes
+    
+    - name: Install Nginx
+      apt:
+        name:
+          - nginx
+        state: present
+    
+    - name: Ensure Nginx is stopped initially
+      service:
+        name: nginx
+        state: stopped
+    
+    - name: Install SSL certificates tools
+      apt:
+        name:
+          - certbot
+          - python3-certbot-nginx
+        state: present
+      when: enable_ssl
+    
+    - name: Install Fail2ban
+      apt:
+        name: fail2ban
+        state: present
+      when: fail2ban_enabled
+    
+    - name: Start and enable Fail2ban
+      service:
+        name: fail2ban
+        state: started
+        enabled: yes
+      when: fail2ban_enabled
+    
+    - name: Configure UFW firewall
+      block:
+        - name: Install UFW
+          apt:
+            name: ufw
+            state: present
+        
+        - name: Allow SSH
+          ufw:
+            rule: allow
+            port: '22'
+            proto: tcp
+        
+        - name: Allow SSH from specific IPs only
+          ufw:
+            rule: allow
+            port: '22'
+            proto: tcp
+            from_ip: "{{ item }}"
+          loop: "{{ allowed_ssh_ips }}"
+          when: allowed_ssh_ips | length > 0
+        
+        - name: Deny SSH from all other IPs
+          ufw:
+            rule: deny
+            port: '22'
+            proto: tcp
+          when: allowed_ssh_ips | length > 0
+        
+        - name: Allow HTTP
+          ufw:
+            rule: allow
+            port: '80'
+            proto: tcp
+        
+        - name: Allow HTTPS
+          ufw:
+            rule: allow
+            port: '443'
+            proto: tcp
+          when: enable_ssl
+        
+        - name: Enable UFW
+          ufw:
+            state: enabled
+            policy: deny
+      when: enable_firewall
+    
+    - name: Check if Miniconda is installed
+      stat:
+        path: /opt/miniconda3
+      register: miniconda_check
+    
+    - name: Download Miniconda installer
+      get_url:
+        url: https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+        dest: /tmp/miniconda.sh
+        mode: '0755'
+      when: not miniconda_check.stat.exists
+    
+    - name: Install Miniconda
+      shell: bash /tmp/miniconda.sh -b -p /opt/miniconda3
+      args:
+        creates: /opt/miniconda3
+      when: not miniconda_check.stat.exists
+    
+    - name: Remove Miniconda installer
+      file:
+        path: /tmp/miniconda.sh
+        state: absent
+    
+    - name: Initialize conda for bash
+      shell: /opt/miniconda3/bin/conda init bash
+      args:
+        creates: /root/.bashrc
+      when: not miniconda_check.stat.exists
+    
+    - name: Create conda profile script
+      copy:
+        dest: /etc/profile.d/conda.sh
+        content: |
+          # Conda initialization
+          export PATH="/opt/miniconda3/bin:$PATH"
+          
+          # >>> conda initialize >>>
+          __conda_setup="$('/opt/miniconda3/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
+          if [ $? -eq 0 ]; then
+              eval "$__conda_setup"
+          else
+              if [ -f "/opt/miniconda3/etc/profile.d/conda.sh" ]; then
+                  . "/opt/miniconda3/etc/profile.d/conda.sh"
+              else
+                  export PATH="/opt/miniconda3/bin:$PATH"
+              fi
+          fi
+          unset __conda_setup
+          # <<< conda initialize <<<
+        mode: '0644'
+    
+    - name: Update conda
+      shell: /opt/miniconda3/bin/conda update -n base -c defaults conda -y
+      when: not miniconda_check.stat.exists
+    
+    - name: Create application root directory
+      file:
+        path: "{{ app_root }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+    
+    - name: Create backup directory
+      file:
+        path: "{{ backup_path }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0750'
+      when: enable_backups
+    
+    - name: Create systemd service for Ollama (if not exists)
+      copy:
+        dest: /etc/systemd/system/ollama.service
+        content: |
+          [Unit]
+          Description=Ollama Service
+          After=network.target
+          
+          [Service]
+          Type=simple
+          User={{ ansible_user }}
+          ExecStart=/usr/local/bin/ollama serve
+          Restart=always
+          RestartSec=3
+          
+          [Install]
+          WantedBy=multi-user.target
+        mode: '0644'
+      when: ansible_check_mode == false
+      register: ollama_service
+    
+    - name: Reload systemd if Ollama service was created
+      systemd:
+        daemon_reload: yes
+      when: ollama_service.changed
+    
+    - name: Display completion message
+      debug:
+        msg:
+          - "✅ System setup completed successfully!"
+          - ""
+          - "Installed:"
+          - "  - PostgreSQL {{ postgres_version }}"
+          - "  - Nginx"
+          - "  - Miniconda3"
+          - "  - Essential build tools"
+          - ""
+          - "Next step: Run 02-database-setup.yml"

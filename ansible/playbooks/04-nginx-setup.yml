@@ -1,0 +1,165 @@
+---
+# Nginx Configuration Playbook
+# Sets up Nginx as reverse proxy with optional SSL
+
+- name: Configure Nginx
+  hosts: all
+  become: yes
+  
+  tasks:
+    - name: Ensure Nginx is installed
+      apt:
+        name: nginx
+        state: present
+    
+    - name: Create Nginx configuration from template
+      template:
+        src: ../templates/nginx.conf.j2
+        dest: /etc/nginx/sites-available/{{ app_name }}
+        mode: '0644'
+      notify: Test Nginx config
+    
+    - name: Enable Nginx site
+      file:
+        src: /etc/nginx/sites-available/{{ app_name }}
+        dest: /etc/nginx/sites-enabled/{{ app_name }}
+        state: link
+      notify: Test Nginx config
+    
+    - name: Remove default Nginx site
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: Test Nginx config
+    
+    - name: Configure Nginx for CloudFlare (if enabled)
+      blockinfile:
+        path: /etc/nginx/nginx.conf
+        insertafter: "http {"
+        block: |
+          # CloudFlare Real IP configuration
+          set_real_ip_from 103.21.244.0/22;
+          set_real_ip_from 103.22.200.0/22;
+          set_real_ip_from 103.31.4.0/22;
+          set_real_ip_from 104.16.0.0/13;
+          set_real_ip_from 104.24.0.0/14;
+          set_real_ip_from 108.162.192.0/18;
+          set_real_ip_from 131.0.72.0/22;
+          set_real_ip_from 141.101.64.0/18;
+          set_real_ip_from 162.158.0.0/15;
+          set_real_ip_from 172.64.0.0/13;
+          set_real_ip_from 173.245.48.0/20;
+          set_real_ip_from 188.114.96.0/20;
+          set_real_ip_from 190.93.240.0/20;
+          set_real_ip_from 197.234.240.0/22;
+          set_real_ip_from 198.41.128.0/17;
+          set_real_ip_from 2400:cb00::/32;
+          set_real_ip_from 2606:4700::/32;
+          set_real_ip_from 2803:f800::/32;
+          set_real_ip_from 2405:b500::/32;
+          set_real_ip_from 2405:8100::/32;
+          set_real_ip_from 2a06:98c0::/29;
+          set_real_ip_from 2c0f:f248::/32;
+          
+          real_ip_header CF-Connecting-IP;
+        marker: "# {mark} ANSIBLE MANAGED CLOUDFLARE CONFIG"
+      when: cloudflare_real_ip
+      notify: Test Nginx config
+    
+    - name: Increase Nginx upload size limit
+      lineinfile:
+        path: /etc/nginx/nginx.conf
+        regexp: "^\\s*client_max_body_size"
+        line: "\tclient_max_body_size 10M;"
+        insertafter: "http {"
+      notify: Test Nginx config
+    
+    - name: Enable Nginx gzip compression
+      lineinfile:
+        path: /etc/nginx/nginx.conf
+        regexp: "^\\s*gzip on;"
+        line: "\tgzip on;"
+        insertafter: "http {"
+      notify: Test Nginx config
+    
+    - name: Start and enable Nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+    
+    - name: Obtain SSL certificate with Certbot
+      block:
+        - name: Check if certificate already exists
+          stat:
+            path: "/etc/letsencrypt/live/{{ domain }}/fullchain.pem"
+          register: cert_exists
+        
+        - name: Obtain SSL certificate
+          command: >
+            certbot --nginx
+            --non-interactive
+            --agree-tos
+            --email admin@{{ domain }}
+            --domains {{ domain }}
+            --redirect
+          when: not cert_exists.stat.exists
+        
+        - name: Setup automatic certificate renewal
+          cron:
+            name: "Renew Let's Encrypt certificates"
+            minute: "0"
+            hour: "3"
+            job: "certbot renew --quiet && systemctl reload nginx"
+            state: present
+      when: enable_ssl
+    
+    - name: Create Nginx log rotation configuration
+      copy:
+        dest: /etc/logrotate.d/{{ app_name }}
+        content: |
+          /var/log/nginx/{{ app_name }}-*.log {
+            daily
+            rotate 14
+            compress
+            delaycompress
+            notifempty
+            create 0640 www-data adm
+            sharedscripts
+            postrotate
+              [ -f /var/run/nginx.pid ] && kill -USR1 `cat /var/run/nginx.pid`
+            endscript
+          }
+        mode: '0644'
+    
+    - name: Test Nginx configuration
+      command: nginx -t
+      register: nginx_test
+      changed_when: false
+    
+    - name: Display Nginx test result
+      debug:
+        msg: "{{ nginx_test.stdout_lines }}"
+    
+    - name: Display completion message
+      debug:
+        msg:
+          - "✅ Nginx configuration completed successfully!"
+          - ""
+          - "Access URLs:"
+          - "  Frontend: http://{{ domain }}"
+          - "  API: http://{{ domain }}/api"
+          - "  GraphQL: http://{{ domain }}/graphql"
+          - "  API Docs: http://{{ domain }}/api/docs"
+          - ""
+          - "{% if enable_ssl %}SSL: Enabled with Let's Encrypt{% else %}SSL: Not enabled (set enable_ssl: true to enable){% endif %}"
+          - "{% if cloudflare_real_ip %}CloudFlare: Real IP forwarding enabled{% endif %}"
+  
+  handlers:
+    - name: Test Nginx config
+      command: nginx -t
+    
+    - name: Reload Nginx
+      service:
+        name: nginx
+        state: reloaded

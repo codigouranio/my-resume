@@ -1,0 +1,58 @@
+---
+# Production Inventory Example
+# Copy this file and customize for your environment
+
+all:
+  children:
+    production:
+      hosts:
+        prod-server-1:
+          ansible_host: 172.16.23.127
+          ansible_user: jose
+          ansible_python_interpreter: /usr/bin/python3
+          # Override domain for this specific server
+          domain: my-resume.paskot.com
+          enable_cloudflare: true
+          cloudflare_real_ip: true
+          
+        # Add more production servers as needed
+        # prod-server-2:
+        #   ansible_host: 172.16.23.128
+        #   ansible_user: deploy
+        #   domain: my-resume-backup.example.com
+    
+    staging:
+      hosts:
+        staging-server:
+          ansible_host: 192.168.1.100
+          ansible_user: deploy
+          ansible_python_interpreter: /usr/bin/python3
+          domain: staging.my-resume.example.com
+          node_env: staging
+          enable_debug_logging: true
+          pm2_instances_api: 1
+    
+    # Database servers (if separate from app servers)
+    # database:
+    #   hosts:
+    #     db-server:
+    #       ansible_host: 172.16.23.130
+    #       ansible_user: postgres
+    #       postgres_max_connections: 200
+
+  vars:
+    # Global variables that apply to all hosts
+    # These can be overridden in group_vars/all.yml or per-host above
+    
+    # Security - USE ANSIBLE-VAULT FOR PRODUCTION!
+    # Run: ansible-vault encrypt_string 'your_password' --name 'vault_db_password'
+    # Then paste the output here
+    vault_db_password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          # EXAMPLE - Replace with your encrypted value
+          # Use: ansible-vault encrypt_string 'actual_password' --name 'vault_db_password'
+    
+    # Or for development/testing, use plain text (NOT RECOMMENDED for production)
+    db_password: "change_me_in_production"
+    jwt_secret: "change_me_use_long_random_string_min_32_chars"
+    llm_admin_token: "change_me_in_production"

@@ -1,0 +1,149 @@
+---
+# Quick Update Playbook
+# Updates code and restarts services without full redeployment
+
+- name: Update Application
+  hosts: all
+  become: yes
+  
+  tasks:
+    - name: Pull latest code
+      git:
+        repo: "{{ repo_url }}"
+        dest: "{{ app_root }}"
+        version: "{{ repo_branch }}"
+        force: yes
+      become_user: "{{ ansible_user }}"
+      register: git_pull
+    
+    - name: Display update status
+      debug:
+        msg: |
+          {% if git_pull.changed %}
+          ✅ Code updated from {{ git_pull.before }} to {{ git_pull.after }}
+          {% else %}
+          ℹ️  Already up to date
+          {% endif %}
+    
+    - name: Install/Update API dependencies
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        npm install
+      args:
+        chdir: "{{ api_service_path }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+      when: git_pull.changed
+    
+    - name: Apply Prisma migrations
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        export DATABASE_URL="postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}?schema=public"
+        npx prisma migrate deploy
+      args:
+        chdir: "{{ api_service_path }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+      when: git_pull.changed
+      register: migration_result
+      failed_when: false
+    
+    - name: Fallback to db push if needed
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        export DATABASE_URL="postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}?schema=public"
+        npx prisma db push
+      args:
+        chdir: "{{ api_service_path }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+      when: git_pull.changed and migration_result.rc != 0
+    
+    - name: Generate Prisma Client
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        export DATABASE_URL="postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}?schema=public"
+        npx prisma generate
+      args:
+        chdir: "{{ api_service_path }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+      when: git_pull.changed
+    
+    - name: Rebuild API Service
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        npm run build
+      args:
+        chdir: "{{ api_service_path }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+      when: git_pull.changed
+    
+    - name: Update Frontend dependencies
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ frontend_path }}/conda-env
+        npm install
+      args:
+        chdir: "{{ frontend_path }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+      when: git_pull.changed
+    
+    - name: Rebuild Frontend
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ frontend_path }}/conda-env
+        npm run build
+      args:
+        chdir: "{{ frontend_path }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+      when: git_pull.changed
+    
+    - name: Restart PM2 services
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        $(npm root -g)/pm2/bin/pm2 restart all
+      args:
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+      when: git_pull.changed
+    
+    - name: Wait for services to be ready
+      wait_for:
+        port: "{{ item }}"
+        delay: 3
+        timeout: 30
+      loop:
+        - "{{ api_port }}"
+        - "{{ llm_port }}"
+      when: git_pull.changed
+    
+    - name: Check PM2 status
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        $(npm root -g)/pm2/bin/pm2 list
+      args:
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+      register: pm2_status
+    
+    - name: Display PM2 status
+      debug:
+        msg: "{{ pm2_status.stdout_lines }}"
+    
+    - name: Display completion message
+      debug:
+        msg:
+          - "✅ Update completed successfully!"
+          - ""
+          - "{% if git_pull.changed %}Changes deployed and services restarted{% else %}No changes detected{% endif %}"

@@ -1,0 +1,162 @@
+---
+# Prerequisites Check Playbook
+# Run this first to verify all requirements are met
+
+- name: Check Prerequisites
+  hosts: all
+  become: no
+  gather_facts: yes
+  
+  tasks:
+    - name: Display target information
+      debug:
+        msg:
+          - "Target Host: {{ ansible_hostname }}"
+          - "IP Address: {{ ansible_host }}"
+          - "OS: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+          - "Architecture: {{ ansible_architecture }}"
+          - "Python: {{ ansible_python_version }}"
+    
+    - name: Check SSH connectivity
+      ping:
+    
+    - name: Check sudo access
+      become: yes
+      command: whoami
+      register: sudo_check
+      changed_when: false
+    
+    - name: Verify sudo works
+      assert:
+        that: sudo_check.stdout == "root"
+        fail_msg: "Sudo access is required but user {{ ansible_user }} cannot become root"
+        success_msg: "✅ Sudo access verified"
+    
+    - name: Check if system is Debian-based
+      assert:
+        that: ansible_os_family == "Debian"
+        fail_msg: "This playbook requires Debian/Ubuntu. Detected: {{ ansible_os_family }}"
+        success_msg: "✅ Debian-based system detected"
+    
+    - name: Check available disk space
+      shell: df -h / | awk 'NR==2 {print $4}'
+      register: disk_space
+      changed_when: false
+    
+    - name: Display disk space
+      debug:
+        msg: "Available disk space: {{ disk_space.stdout }}"
+    
+    - name: Check available memory
+      debug:
+        msg: "Total memory: {{ ansible_memtotal_mb }} MB"
+    
+    - name: Warn if low memory
+      debug:
+        msg: "⚠️  WARNING: Low memory detected. Recommended: 2GB+, Available: {{ ansible_memtotal_mb }}MB"
+      when: ansible_memtotal_mb < 2048
+    
+    - name: Check if ports are available
+      wait_for:
+        port: "{{ item }}"
+        state: stopped
+        timeout: 1
+      register: port_check
+      failed_when: false
+      changed_when: false
+      loop:
+        - "{{ api_port }}"
+        - "{{ llm_port }}"
+        - 80
+        - 443
+    
+    - name: Display port availability
+      debug:
+        msg: "Port {{ item.item }} is {{ 'available' if item.failed else 'IN USE' }}"
+      loop: "{{ port_check.results }}"
+      loop_control:
+        label: "Port {{ item.item }}"
+
+- name: Check Ollama Installation
+  hosts: all
+  become: yes
+  gather_facts: no
+  
+  tasks:
+    - name: Check if Ollama is installed
+      command: which ollama
+      register: ollama_installed
+      changed_when: false
+      failed_when: false
+    
+    - name: Ollama installation status
+      debug:
+        msg: |
+          {% if ollama_installed.rc == 0 %}
+          ✅ Ollama is installed at {{ ollama_installed.stdout }}
+          {% else %}
+          ⚠️  Ollama NOT installed
+          
+          Installation required:
+          curl -fsSL https://ollama.com/install.sh | sh
+          
+          After installation, pull a model:
+          ollama pull {{ ollama_model }}
+          {% endif %}
+    
+    - name: Check if Ollama is running
+      command: systemctl is-active ollama
+      register: ollama_running
+      changed_when: false
+      failed_when: false
+      when: ollama_installed.rc == 0
+    
+    - name: Ollama service status
+      debug:
+        msg: "Ollama service is {{ ollama_running.stdout }}"
+      when: ollama_installed.rc == 0
+    
+    - name: List available Ollama models
+      command: ollama list
+      register: ollama_models
+      changed_when: false
+      failed_when: false
+      when: ollama_installed.rc == 0
+    
+    - name: Display Ollama models
+      debug:
+        msg: "{{ ollama_models.stdout_lines }}"
+      when: ollama_installed.rc == 0 and ollama_models.rc == 0
+    
+    - name: Check if required model is available
+      debug:
+        msg: |
+          {% if ollama_models.stdout is search(ollama_model) %}
+          ✅ Required model '{{ ollama_model }}' is available
+          {% else %}
+          ⚠️  Model '{{ ollama_model }}' NOT found
+          
+          Download it with:
+          ollama pull {{ ollama_model }}
+          {% endif %}
+      when: ollama_installed.rc == 0 and ollama_models.rc == 0
+
+- name: Prerequisites Summary
+  hosts: all
+  gather_facts: no
+  
+  tasks:
+    - name: Display summary
+      debug:
+        msg:
+          - ""
+          - "═══════════════════════════════════════════════════════"
+          - "  PREREQUISITES CHECK COMPLETE"
+          - "═══════════════════════════════════════════════════════"
+          - ""
+          - "Next steps:"
+          - "1. If Ollama is not installed, install it on all target servers"
+          - "2. Review and update inventory file with your settings"
+          - "3. Consider using ansible-vault for sensitive data"
+          - "4. Run: ansible-playbook -i inventory.yml playbooks/01-system-setup.yml"
+          - ""
