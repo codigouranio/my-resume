@@ -181,30 +181,41 @@ export default function Resume() {
               const language = match ? match[1] : '';
 
               if (!inline && language === 'video') {
-                const url = String(children).trim();
-                const videoId = url.match(/(?:embed\/|v=)([a-zA-Z0-9_-]+)/)?.[1];
+                const content = String(children).trim();
+                const urls = content.split('\n').filter(url => url.trim());
 
-                if (videoId) {
-                  const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+                return (
+                  <>
+                    {urls.map((url, index) => {
+                      const videoId = url.match(/(?:embed\/|v=|youtu\.be\/)([a-zA-Z0-9_-]+)/)?.[1];
 
-                  return (
-                    <div
-                      className="video-thumbnail-wrapper"
-                      onClick={() => setExpandedVideo(url)}
-                    >
-                      <img
-                        src={thumbnailUrl}
-                        alt="Video thumbnail"
-                        className="video-thumbnail-image"
-                      />
-                      <div className="video-play-button">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M8 5v14l11-7z" />
-                        </svg>
-                      </div>
-                    </div>
-                  );
-                }
+                      if (videoId) {
+                        const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+                        const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+
+                        return (
+                          <div
+                            key={index}
+                            className="video-thumbnail-wrapper"
+                            onClick={() => setExpandedVideo(embedUrl)}
+                          >
+                            <img
+                              src={thumbnailUrl}
+                              alt="Video thumbnail"
+                              className="video-thumbnail-image"
+                            />
+                            <div className="video-play-button">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M8 5v14l11-7z" />
+                              </svg>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })}
+                  </>
+                );
               }
 
               return inline ? (
