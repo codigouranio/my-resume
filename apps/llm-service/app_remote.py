@@ -55,16 +55,16 @@ def load_resume_from_db(slug: str):
         conn.close()
 
         if result:
-            # Combine content (public resume) with llmContext (additional private context)
+            # Combine content (public resume) with llmContext (additional details for answering questions)
             # Content is always used, llmContext provides additional details if available
             context = result["content"]
 
             if result["llmContext"] and result["llmContext"].strip():
-                # Append llmContext as additional information for the AI
-                context = f"{context}\n\n--- ADDITIONAL CONTEXT FOR AI ONLY ---\n{result['llmContext']}"
+                # Append llmContext as additional information
+                context = f"{context}\n\n{result['llmContext']}"
                 logger.info(
                     f"Loaded resume from database for slug '{slug}': "
-                    f"{len(result['content'])} chars content + {len(result['llmContext'])} chars AI context"
+                    f"{len(result['content'])} chars content + {len(result['llmContext'])} chars additional context"
                 )
             else:
                 logger.info(
@@ -429,11 +429,13 @@ PROFESSIONAL INFORMATION:
 {resume_context}
 
 Instructions:
-- Answer questions accurately based only on the information provided above
+- Answer questions accurately using ALL the information provided above
+- All information provided is meant to be shared when relevant to the question
 - Be professional, positive, and helpful
-- If information is not available, say "I don't have that specific information in Jose's profile"
+- If asked about specific details (salary expectations, preferences, etc.), provide the information if it's included above
+- Only say "I don't have that information" if it's truly not mentioned anywhere in the context
 - Focus on his accomplishments, skills, and professional experience
-- Never speculate or make up information
+- Never speculate or make up information that isn't provided
 
 User Question: {user_message}
 
