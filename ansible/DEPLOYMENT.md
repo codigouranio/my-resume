@@ -158,16 +158,78 @@ curl -X POST http://localhost:5000/api/chat \
 ### 4. Test Database Connection
 ```bash
 PGPASSWORD=your-password psql -h localhost -U resume_user -d resume_db -c "\dt"
-# Should show: Resume, User, RefreshToken tables
+# Should show: Resume, User, RefreshToken, RecruiterInterest tables
+
+# Verify RecruiterInterest table
+PGPASSWORD=your-password psql -h localhost -U resume_user -d resume_db -c "\d \"RecruiterInterest\""
 ```
 
-### 5. Check Frontend Build
+### 5. Test Recruiter Interest Submission
+```bash
+# Submit a test recruiter interest
+curl -X POST http://localhost:3000/api/resumes/recruiter-interest \
+  -H "Content-Type: application/json" \
+  -d '{
+    "resumeSlug": "your-slug",
+    "name": "Test Recruiter",
+    "email": "recruiter@test.com",
+    "company": "Test Company",
+    "message": "I would like to discuss an opportunity."
+  }'
+
+# Should return JSON with id, name, email, etc.
+```
+
+### 6. Check Frontend Build
 ```bash
 ls -lh /opt/my-resume/apps/my-resume/dist/static/js/*.map
 # Should show 4-5 .map files for debugging
 ```
 
 ## Troubleshooting
+
+### API Service Fails with "Cannot find module '@nestjs/graphql'"
+
+**Solution:**
+```bash
+ssh user@server
+source /opt/miniconda3/etc/profile.d/conda.sh
+conda activate /opt/my-resume/apps/api-service/conda-env
+cd /opt/my-resume/apps/api-service
+npm install @nestjs/graphql @nestjs/apollo @nestjs/cqrs @apollo/server graphql
+npm run build
+pm2 restart api-service
+```
+
+### Prisma Client Missing RecruiterInterest
+
+**Solution:**
+```bash
+cd /opt/my-resume/apps/api-service
+source /opt/miniconda3/etc/profile.d/conda.sh
+conda activate /opt/my-resume/apps/api-service/conda-env
+npx prisma generate
+pm2 restart api-service
+```
+
+### Database Table Missing
+
+**Solution:**
+```bash
+cd /opt/my-resume/apps/api-service
+source /opt/miniconda3/etc/profile.d/conda.sh
+conda activate /opt/my-resume/apps/api-service/conda-env
+
+# Apply migrations
+npx prisma migrate deploy
+
+# If no migrations, force schema sync
+npx prisma db push --accept-data-loss
+
+# Regenerate client
+npx prisma generate
+pm2 restart api-service
+```
 
 ### LLM Service Fails with "ModuleNotFoundError: No module named 'psycopg2'"
 
@@ -196,12 +258,42 @@ pm2 restart llm-service
 curl -fsSL https://ollama.com/install.sh | sh
 ollama pull llama3.1:latest
 systemctl status ollama
+``Update dependencies if needed
+cd apps/api-service
+npm install
+
+# Apply new migrations
+npx prisma migrate deploy
+npx prisma generate
+
+# Rebuild backend
+npm run build
+
+# Rebuild frontend
+cd ../my-resume
+npm run build
+
+# Restart services
+pm2 restart all
 ```
 
-### Database Connection Refused
-
-**Solution:**
+### Schema Updates
+When Prisma schema changes:
 ```bash
+cd /opt/my-resume/apps/api-service
+source /opt/miniconda3/etc/profile.d/conda.sh
+conda activate /opt/my-resume/apps/api-service/conda-env
+
+# Apply migrations (recommended for production)
+npx prisma migrate deploy
+
+# OR use db push (only if no migrations exist)
+npx prisma db push
+
+# Always regenerate client after schema changes
+npx prisma generate
+npm run build
+pm2 restart api-service
 sudo systemctl start postgresql
 sudo systemctl enable postgresql
 

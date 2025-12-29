@@ -165,6 +165,16 @@
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
     
+    - name: Install GraphQL and CQRS dependencies
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        npm install @nestjs/graphql @nestjs/apollo @nestjs/cqrs @apollo/server graphql
+      args:
+        chdir: "{{ api_service_path }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+    
     - name: Build API Service
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
@@ -185,16 +195,61 @@
       become_user: "{{ ansible_user }}"
       ignore_errors: yes
     
-    - name: Sync Prisma schema to database
+    - name: Check if migrations directory exists
+      stat:
+        path: "{{ api_service_path }}/prisma/migrations"
+      register: migrations_dir
+    
+    - name: Create migrations directory if missing
+      file:
+        path: "{{ api_service_path }}/prisma/migrations"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+      when: not migrations_dir.stat.exists
+    
+    - name: Apply Prisma migrations (production safe)
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
         conda activate {{ api_service_path }}/conda-env
         export DATABASE_URL="postgresql://{{ postgres_user }}:{{ postgres_password }}@localhost:5432/{{ postgres_db }}?schema=public"
+        npx prisma migrate deploy
+      args:
+        chdir: "{{ api_service_path }}"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+      register: migration_resulth localhost -U {{ postgres_user }} -d {{ postgres_db }} -c "\dt" | grep -E 'User|Resume|RecruiterInterest'
+      register: db_check
+      failed_when: false
+      changed_when: false
+    
+    - name: Display database verification result
+      debug:
+        msg: "Database tables {{ 'exist' if db_check.rc == 0 else 'DO NOT EXIST - check migrations!' }}"
+    
+    - name: Check RecruiterInterest table
+      shell: |
+        PGPASSWORD='{{ postgres_password }}' psql -h localhost -U {{ postgres_user }} -d {{ postgres_db }} -c "\d \"RecruiterInterest\"" 2>&1 | grep -q 'Table'
+      register: recruiter_table_check
+      failed_when: false
+      changed_when: false
+    
+    - name: Display RecruiterInterest table status
+      debug:
+        msg: "✅ RecruiterInterest table exists and is properly configured"
+      when: recruiter_table_check.rc == 0
+    
+    - name: Warn if RecruiterInterest table missing
+      debug:
+        msg: "⚠️  WARNING: RecruiterInterest table not found - migration may have failed"
+      when: recruiter_table_check.rc != 0postgres_db }}?schema=public"
         npx prisma db push --accept-data-loss
       args:
         chdir: "{{ api_service_path }}"
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
+      when: migration_result.rc != 0 or 'No migration found' in migration_result.stderr
     
     - name: Generate Prisma Client
       shell: |
