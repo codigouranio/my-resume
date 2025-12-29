@@ -316,6 +316,32 @@ def call_ollama_server(prompt: str, max_tokens: int = 256) -> dict:
         raise
 
 
+def call_ollama_for_completion(prompt: str, max_tokens: int = 256, temperature: float = 0.3) -> dict:
+    """Call Ollama API with specific settings for text completion (not chat)."""
+    try:
+        response = requests.post(
+            f"{LLAMA_SERVER_URL}/api/generate",
+            json={
+                "model": os.getenv("OLLAMA_MODEL", "llama2"),
+                "prompt": prompt,
+                "stream": False,
+                "options": {
+                    "temperature": temperature,
+                    "top_p": 0.95,
+                    "num_predict": max_tokens,
+                    "stop": ["\n\nExample:", "\n\nRewrite:", "Example:", "Rewrite:"],
+                },
+            },
+            timeout=60,
+        )
+        response.raise_for_status()
+        data = response.json()
+        return {"text": data.get("response", ""), "tokens": 0}
+    except Exception as e:
+        logger.error(f"Error calling Ollama server: {e}")
+        raise
+
+
 def call_openai_compatible(prompt: str, max_tokens: int = 256) -> dict:
     """Call OpenAI-compatible API (LocalAI, vLLM, etc.)."""
     try:
@@ -485,33 +511,34 @@ def improve_text():
 
         # Craft a prompt for text improvement
         if context == "resume":
-            # Use examples to show the model exactly what we want
-            prompt = f"""Task: Rewrite resume bullet points to be more professional and impactful.
+            # Use examples in completion format (not chat)
+            prompt = f"""Rewrite resume bullet points professionally with strong verbs and metrics.
 
-Example 1:
-Input: "Worked on website"
-Output: "Developed and deployed a responsive e-commerce website serving 50,000+ monthly users, resulting in a 35% increase in online sales"
+Example: "Worked on website" → "Developed and deployed a responsive e-commerce website serving 50,000+ monthly users, increasing online sales by 35%"
 
-Example 2:
-Input: "Managed projects"
-Output: "Led cross-functional teams of 8+ members to deliver 12 high-priority projects on time and 15% under budget"
+Example: "Managed projects" → "Led cross-functional teams of 8+ members to deliver 12 high-priority projects on time and 15% under budget"
 
-Now rewrite this:
-Input: "{text}"
-Output:"""
+Rewrite: "{text}" →"""
         else:
-            prompt = f"""Task: Rewrite this text to be more professional.
-
-Input: "{text}"
-Output:"""
+            prompt = f"""Rewrite professionally: "{text}" →"""
 
         logger.info(f"Improving text: {text[:50]}...")
 
-        # Generate improved text
-        result = generate_completion(prompt, max_tokens=512)
+        # Generate improved text using completion mode (not chat)
+        if LLAMA_API_TYPE == "ollama":
+            result = call_ollama_for_completion(prompt, max_tokens=512, temperature=0.3)
+        else:
+            result = generate_completion(prompt, max_tokens=512)
+        
         improved_text = result["text"].strip()
 
         logger.info(f"Raw AI response: {improved_text[:150]}...")
+
+        # Clean up the response - strip quotes first
+        if improved_text.startswith('"') and improved_text.endswith('"'):
+            improved_text = improved_text[1:-1].strip()
+        if improved_text.startswith("'") and improved_text.endswith("'"):
+            improved_text = improved_text[1:-1].strip()
 
         # Clean up common AI preambles and conversational responses
         cleanup_phrases = [
@@ -528,6 +555,7 @@ Output:"""
             "Certainly,",
             "Of course,",
             "Improved:",
+            "Output:",
         ]
 
         for phrase in cleanup_phrases:
@@ -535,7 +563,7 @@ Output:"""
                 improved_text = improved_text[len(phrase) :].strip()
                 break
 
-        # Remove quotes if wrapped
+        # Strip quotes again after cleanup
         if improved_text.startswith('"') and improved_text.endswith('"'):
             improved_text = improved_text[1:-1].strip()
         if improved_text.startswith("'") and improved_text.endswith("'"):
