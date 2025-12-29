@@ -214,7 +214,10 @@ export function EditorPage() {
     const end = textarea.selectionEnd;
     const selected = textarea.value.substring(start, end).trim();
 
+    console.log('Text selection:', { length: selected.length, text: selected.substring(0, 50) });
+
     if (selected && selected.length > 10 && selected.length < 500) {
+      console.log('Showing improve button');
       setSelectedText(selected);
       setShowImproveButton(true);
 
@@ -229,6 +232,7 @@ export function EditorPage() {
         left: rect.right + 10
       });
     } else {
+      console.log('Hiding improve button - length:', selected.length);
       setSelectedText('');
       setShowImproveButton(false);
     }
