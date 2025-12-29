@@ -469,6 +469,59 @@ def get_resume():
     return jsonify({"context": RESUME_CONTEXT})
 
 
+@app.route("/api/improve-text", methods=["POST"])
+def improve_text():
+    """Improve selected text using AI for resume enhancement."""
+    try:
+        data = request.get_json()
+        text = data.get("text", "").strip()
+        context = data.get("context", "resume")  # resume, cover_letter, etc.
+
+        if not text:
+            return jsonify({"error": "No text provided"}), 400
+
+        if len(text) > 2000:
+            return jsonify({"error": "Text too long (max 2000 characters)"}), 400
+
+        # Craft a prompt for text improvement
+        if context == "resume":
+            system_prompt = """You are an expert resume writer and career coach. Improve the following resume text to be more professional, impactful, and achievement-focused. 
+
+Guidelines:
+- Use strong action verbs (led, developed, implemented, optimized)
+- Quantify achievements when possible
+- Be concise and professional
+- Focus on impact and results
+- Maintain technical accuracy
+- Keep the same general meaning and facts
+- Return ONLY the improved text, no explanations or meta-commentary"""
+        else:
+            system_prompt = """You are an expert professional writer. Improve the following text to be more clear, professional, and impactful while maintaining its meaning."""
+
+        prompt = f"{system_prompt}\\n\\nOriginal text:\\n{text}\\n\\nImproved text:"
+
+        logger.info(f"Improving text: {text[:50]}...")
+
+        # Generate improved text
+        result = generate_completion(prompt, max_tokens=512)
+        improved_text = result["text"].strip()
+
+        logger.info(f"Improved text: {improved_text[:50]}...")
+
+        return jsonify(
+            {
+                "original": text,
+                "improved": improved_text,
+                "tokens_used": result["tokens"],
+                "server": LLAMA_SERVER_URL,
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Error improving text: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/api/reload-resume", methods=["POST"])
 def reload_resume():
     """Reload resume context from file. Requires admin authorization."""

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -10,6 +10,7 @@ export function EditorPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isNew = id === 'new';
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -30,6 +31,10 @@ export function EditorPage() {
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [selectedText, setSelectedText] = useState('');
+  const [isImprovingText, setIsImprovingText] = useState(false);
+  const [showImproveButton, setShowImproveButton] = useState(false);
+  const [improveButtonPosition, setImproveButtonPosition] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
     if (!isNew) {
@@ -194,6 +199,65 @@ export function EditorPage() {
   const handleContentChange = (field: string, value: any) => {
     setFormData({ ...formData, [field]: value });
     setHasUnsavedChanges(true);
+  };
+
+  const handleTextSelection = () => {
+    if (!textareaRef.current) return;
+
+    const textarea = textareaRef.current;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = textarea.value.substring(start, end).trim();
+
+    if (selected && selected.length > 10 && selected.length < 500) {
+      setSelectedText(selected);
+      setShowImproveButton(true);
+
+      // Calculate button position
+      const rect = textarea.getBoundingClientRect();
+      const textBeforeSelection = textarea.value.substring(0, start);
+      const lines = textBeforeSelection.split('\n').length;
+      const lineHeight = 24; // approximate line height
+
+      setImproveButtonPosition({
+        top: rect.top + (lines * lineHeight) - textarea.scrollTop,
+        left: rect.right + 10
+      });
+    } else {
+      setSelectedText('');
+      setShowImproveButton(false);
+    }
+  };
+
+  const improveSelectedText = async () => {
+    if (!selectedText || !textareaRef.current) return;
+
+    setIsImprovingText(true);
+    try {
+      const result = await apiClient.improveText(selectedText, 'resume');
+
+      // Replace selected text with improved version
+      const textarea = textareaRef.current;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const before = formData.content.substring(0, start - selectedText.length);
+      const after = formData.content.substring(end);
+
+      const newContent = before + result.improved + after;
+      setFormData({ ...formData, content: newContent });
+      setHasUnsavedChanges(true);
+      setShowImproveButton(false);
+      setSelectedText('');
+
+      // Show success message briefly
+      const originalError = error;
+      setError('✨ Text improved with AI!');
+      setTimeout(() => setError(originalError), 3000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to improve text');
+    } finally {
+      setIsImprovingText(false);
+    }
   };
 
   const formatLastSaved = (date: Date) => {
@@ -381,12 +445,60 @@ export function EditorPage() {
             </div>
 
             {activeTab === 'content' ? (
-              <textarea
-                className="textarea textarea-bordered w-full h-full font-mono text-sm"
-                value={formData.content}
-                onChange={(e) => handleContentChange('content', e.target.value)}
-                placeholder="Write your resume in Markdown..."
-              ></textarea>
+              <div className="relative h-full">
+                <textarea
+                  ref={textareaRef}
+                  className="textarea textarea-bordered w-full h-full font-mono text-sm"
+                  value={formData.content}
+                  onChange={(e) => handleContentChange('content', e.target.value)}
+                  onMouseUp={handleTextSelection}
+                  onKeyUp={handleTextSelection}
+                  placeholder="Write your resume in Markdown...&#10;&#10;💡 Tip: Select text and use AI to improve it!"
+                ></textarea>
+
+                {/* AI Improve Button - Fixed position at bottom right */}
+                {showImproveButton && selectedText && (
+                  <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="card bg-base-100 shadow-2xl border border-primary/20">
+                      <div className="card-body p-4 gap-3">
+                        <p className="text-sm flex items-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-primary" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                          </svg>
+                          <strong>{selectedText.length}</strong> characters selected
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            className={`btn btn-primary btn-sm gap-2 ${isImprovingText ? 'loading' : ''}`}
+                            onClick={improveSelectedText}
+                            disabled={isImprovingText}
+                          >
+                            {isImprovingText ? (
+                              <>
+                                <span className="loading loading-spinner loading-xs"></span>
+                                Improving...
+                              </>
+                            ) : (
+                              <>
+                                ✨ Improve with AI
+                              </>
+                            )}
+                          </button>
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => {
+                              setShowImproveButton(false);
+                              setSelectedText('');
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="flex flex-col h-full">
                 <div className="alert alert-info mb-4">

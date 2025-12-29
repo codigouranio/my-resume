@@ -218,6 +218,24 @@ class ApiClient {
     return this.request(`/resumes/${id}/analytics`);
   }
 
+  // AI Text Improvement
+  async improveText(text: string, context: string = 'resume') {
+    const response = await fetch(`${this.llmBaseUrl}/api/improve-text`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text, context }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to improve text');
+    }
+
+    return response.json();
+  }
+
   // Recruiter Interest
   async submitRecruiterInterest(data: {
     resumeSlug: string;
