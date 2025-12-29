@@ -114,14 +114,15 @@ model Template {
 }
 
 model RecruiterInterest {
-  id        String    @id @default(cuid())
-  resumeId  String
-  name      String
-  email     String
-  company   String?
-  message   String    @db.Text
-  isRead    Boolean   @default(false)
-  deletedAt DateTime?
+  id         String    @id @default(cuid())
+  resumeId   String
+  name       String
+  email      String
+  company    String?
+  message    String    @db.Text
+  isRead     Boolean   @default(false)
+  isFavorite Boolean   @default(false)
+  deletedAt  DateTime?
   
   // Metadata
   createdAt DateTime @default(now())
@@ -132,5 +133,6 @@ model RecruiterInterest {
   @@index([resumeId])
   @@index([createdAt])
   @@index([isRead])
+  @@index([isFavorite])
   @@index([deletedAt])
 }

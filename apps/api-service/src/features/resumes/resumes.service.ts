@@ -289,4 +289,26 @@ export class ResumesService {
       data: { deletedAt: new Date() },
     });
   }
+
+  async toggleFavorite(interestId: string, userId: string) {
+    const interest = await this.prisma.recruiterInterest.findUnique({
+      where: { id: interestId },
+      include: {
+        resume: true,
+      },
+    });
+
+    if (!interest) {
+      throw new NotFoundException('Interest not found');
+    }
+
+    if (interest.resume.userId !== userId) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    return this.prisma.recruiterInterest.update({
+      where: { id: interestId },
+      data: { isFavorite: !interest.isFavorite },
+    });
+  }
 }

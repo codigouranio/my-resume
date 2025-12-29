@@ -234,6 +234,12 @@ class ApiClient {
     });
   }
 
+  async toggleFavoriteInterest(id: string) {
+    return this.request(`/resumes/recruiter-interest/${id}/favorite`, {
+      method: 'PATCH',
+    });
+  }
+
   async deleteRecruiterInterest(id: string) {
     return this.request(`/resumes/recruiter-interest/${id}`, {
       method: 'DELETE',

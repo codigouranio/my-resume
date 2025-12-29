@@ -127,4 +127,15 @@ export class ResumesController {
   ) {
     return this.resumesService.deleteInterest(id, user.id);
   }
+
+  @Patch('recruiter-interest/:id/favorite')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Toggle recruiter interest favorite status' })
+  toggleFavorite(
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.resumesService.toggleFavorite(id, user.id);
+  }
 }
