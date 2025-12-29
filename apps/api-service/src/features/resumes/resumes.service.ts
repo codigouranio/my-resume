@@ -382,7 +382,7 @@ export class ResumesService {
         this.prisma.$queryRaw`
           SELECT 
             DATE("viewedAt") as date,
-            COUNT(*) as views
+            COUNT(*)::int as views
           FROM "ResumeView"
           WHERE "resumeId" = ${resumeId}
             AND "viewedAt" >= NOW() - INTERVAL '30 days'
@@ -393,7 +393,7 @@ export class ResumesService {
         this.prisma.$queryRaw`
           SELECT 
             COALESCE(country, 'Unknown') as country,
-            COUNT(*) as views
+            COUNT(*)::int as views
           FROM "ResumeView"
           WHERE "resumeId" = ${resumeId}
           GROUP BY country
@@ -411,7 +411,7 @@ export class ResumesService {
               WHEN referrer LIKE '%twitter%' THEN 'Twitter'
               ELSE 'Other'
             END as source,
-            COUNT(*) as views
+            COUNT(*)::int as views
           FROM "ResumeView"
           WHERE "resumeId" = ${resumeId}
           GROUP BY source
