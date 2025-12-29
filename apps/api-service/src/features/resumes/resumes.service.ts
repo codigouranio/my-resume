@@ -381,12 +381,12 @@ export class ResumesService {
         // Views by day (last 30 days)
         this.prisma.$queryRaw`
           SELECT 
-            DATE(viewed_at) as date,
+            DATE("viewedAt") as date,
             COUNT(*) as views
           FROM "ResumeView"
-          WHERE resume_id = ${resumeId}
-            AND viewed_at >= NOW() - INTERVAL '30 days'
-          GROUP BY DATE(viewed_at)
+          WHERE "resumeId" = ${resumeId}
+            AND "viewedAt" >= NOW() - INTERVAL '30 days'
+          GROUP BY DATE("viewedAt")
           ORDER BY date DESC
         `,
         // Views by country
@@ -395,7 +395,7 @@ export class ResumesService {
             COALESCE(country, 'Unknown') as country,
             COUNT(*) as views
           FROM "ResumeView"
-          WHERE resume_id = ${resumeId}
+          WHERE "resumeId" = ${resumeId}
           GROUP BY country
           ORDER BY views DESC
           LIMIT 10
@@ -413,7 +413,7 @@ export class ResumesService {
             END as source,
             COUNT(*) as views
           FROM "ResumeView"
-          WHERE resume_id = ${resumeId}
+          WHERE "resumeId" = ${resumeId}
           GROUP BY source
           ORDER BY views DESC
         `,
