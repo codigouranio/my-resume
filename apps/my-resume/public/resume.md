@@ -98,5 +98,32 @@ PostgreSQL, MongoDB, Redis, MySQL
 Microservices, REST APIs, OAuth2, LDAP, Performance Optimization, Distributed Systems
 
 ---
+```coursera 
+name: Functional Program Design in Scala
+issuing organization: EPFL
+issue date: August 2016
+credential id: 3UQYMMJWLKCR
+credential url: https://www.coursera.org/account/accomplishments/verify/3UQYMMJWLKCR
+```
+
+```coursera 
+name: Functional Programming Principles in Scala
+issuing organization: EPFL
+issue date: July 2016
+credential id: XJKL5M9PQRST
+credential url: https://www.coursera.org/account/accomplishments/verify/XJKL5M9PQRST
+```
+
+```coursera 
+name: Parallel Programming
+issuing organization: EPFL
+issue date: September 2016
+credential id: ABCD1234EFGH
+credential url: https://www.coursera.org/account/accomplishments/verify/ABCD1234EFGH
+```
+
+![GitHub Stats](github?username=codigouranio&theme=dark)
+
+---
 
 **References available upon request**

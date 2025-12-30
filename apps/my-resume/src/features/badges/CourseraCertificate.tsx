@@ -107,10 +107,10 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
   const verifyUrl = credentialUrl || (certId ? `https://www.coursera.org/account/accomplishments/verify/${certId}` : '#');
 
   return (
-    <div ref={componentRef} className="my-3">
+    <div ref={componentRef} className="inline-block m-2">
       <div
         ref={cardRef}
-        className={`card bg-gradient-to-br from-blue-600 to-indigo-700 shadow-md w-full max-w-md border border-blue-400 transition-all duration-300 ease-out relative overflow-hidden ${isVisible ? 'animate-fadeInUp' : 'opacity-0'
+        className={`card bg-gradient-to-br from-blue-600 to-indigo-700 shadow-xl w-64 h-96 border-2 border-blue-400 transition-all duration-300 ease-out relative overflow-hidden ${isVisible ? 'animate-fadeInUp' : 'opacity-0'
           }`}
         style={{
           transformStyle: 'preserve-3d',
@@ -142,73 +142,78 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
           />
         )}
 
-        <div className="card-body p-2.5 relative z-10">
-          {/* Header */}
-          <div
-            className={`flex items-start justify-between gap-2 ${isVisible ? 'animate-fadeIn' : 'opacity-0'
-              }`}
-            style={{ animationDelay: '0.1s' }}
-          >
-            <div className="flex-1 min-w-0 pr-2">
-              <div className="flex items-center gap-1.5 mb-1">
-                <svg
-                  className="flex-shrink-0"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <rect width="24" height="24" rx="4" fill="#ffffff" />
-                  <path
-                    d="M12 4L7 9L12 14L17 9L12 4Z"
-                    fill="#0056D2"
-                    opacity="0.9"
-                  />
-                  <path
-                    d="M12 10L7 15L12 20L17 15L12 10Z"
-                    fill="#0056D2"
-                    opacity="0.6"
-                  />
-                </svg>
-                <span className="text-xs text-blue-100 font-medium">{organization}</span>
-              </div>
-              <h3 className="text-sm font-bold text-white leading-snug mb-0.5 break-words overflow-wrap-anywhere">
-                {title}
-              </h3>
-              {credentialId && (
-                <div className="text-xs text-blue-200 break-all">
-                  ID: {credentialId}
-                </div>
-              )}
+        <div className="card-body p-6 relative z-10 flex flex-col h-full justify-between">
+          {/* Top Section - Logo and Organization */}
+          <div className="text-center">
+            <div className="flex justify-center mb-4">
+              <svg
+                className="flex-shrink-0"
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect width="24" height="24" rx="4" fill="#ffffff" />
+                <path
+                  d="M12 4L7 9L12 14L17 9L12 4Z"
+                  fill="#0056D2"
+                  opacity="0.9"
+                />
+                <path
+                  d="M12 10L7 15L12 20L17 15L12 10Z"
+                  fill="#0056D2"
+                  opacity="0.6"
+                />
+              </svg>
             </div>
+            <span className="text-sm text-blue-100 font-semibold uppercase tracking-wide">{organization}</span>
+          </div>
 
-            {/* Right side actions */}
-            <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-              {date && (
-                <span className="text-xs text-gray-600 font-semibold">{date}</span>
-              )}
-              <div className="flex items-center gap-1.5">
-                <span className="inline-flex items-center gap-0.5 bg-blue-100 text-blue-800 text-xs font-medium px-1.5 py-0.5 rounded">
-                  <svg
-                    width="9"
-                    height="9"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
-                  </svg>
-                  Verified
-                </span>
-                <a
-                  href={verifyUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-xs btn-primary bg-blue-600 hover:bg-blue-700 border-blue-600 text-white min-h-0 h-auto py-1 px-2"
-                >
-                  View
-                </a>
+          {/* Middle Section - Certificate Title */}
+          <div className="flex-1 flex items-center justify-center">
+            <h3 className="text-lg font-bold text-white leading-tight text-center px-2">
+              {title}
+            </h3>
+          </div>
+
+          {/* Bottom Section - Details and Actions */}
+          <div className="space-y-3">
+            {date && (
+              <div className="text-center">
+                <p className="text-xs text-blue-200 uppercase tracking-wider mb-1">Issued</p>
+                <p className="text-sm text-white font-semibold">{date}</p>
               </div>
+            )}
+
+            {credentialId && (
+              <div className="text-center">
+                <p className="text-xs text-blue-200 break-all">
+                  ID: {credentialId}
+                </p>
+              </div>
+            )}
+
+            <div className="flex flex-col items-center gap-2">
+              <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-xs font-medium px-3 py-1.5 rounded-full">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                </svg>
+                Verified Certificate
+              </span>
+              <a
+                href={verifyUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-sm bg-white text-blue-700 hover:bg-blue-50 border-0 w-full font-semibold"
+              >
+                View Certificate →
+              </a>
             </div>
           </div>
         </div>
