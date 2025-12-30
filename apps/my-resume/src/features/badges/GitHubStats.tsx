@@ -20,7 +20,39 @@ export function GitHubStats({ username, theme = 'dark' }: GitHubStatsProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    setMousePosition({ x, y });
+
+    // Calculate rotation based on mouse position
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = ((y - centerY) / centerY) * -10; // Max 10 degrees
+    const rotateY = ((x - centerX) / centerX) * 10;
+
+    containerRef.current.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
+  };
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    if (containerRef.current) {
+      containerRef.current.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+    }
+  };
 
   useEffect(() => {
     const fetchGitHubData = async () => {
@@ -148,69 +180,103 @@ export function GitHubStats({ username, theme = 'dark' }: GitHubStatsProps) {
       className={`card ${bgColor} shadow-md ${borderColor} border my-3 not-prose max-w-md ${isVisible ? 'animate-[fadeInUp_0.6s_ease-out]' : 'opacity-0'
         }`}
     >
-      <div className="card-body p-2">
-        {/* Header */}
-        <div className={`flex items-center gap-1.5 mb-1.5 ${isVisible ? 'animate-[fadeIn_0.5s_ease-out]' : 'opacity-0'}`}>
-          <svg className="w-6 h-6 flex-shrink-0 self-center text-white" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
-          </svg>
-          <h3 className={`text-sm font-bold ${textColor} leading-none`}>
-            {username}'s GitHub
-          </h3>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-3 gap-1.5 text-center">
-          <div className={`bg-base-100/50 rounded p-1.5 ${isVisible ? 'animate-[fadeInScale_0.5s_ease-out_0.1s_backwards]' : 'opacity-0'
-            }`}>
-            <div className="text-xs opacity-70">Repos</div>
-            <div className="text-base font-bold">📦 {data.repos}</div>
-          </div>
-
-          <div className={`bg-base-100/50 rounded p-1.5 ${isVisible ? 'animate-[fadeInScale_0.5s_ease-out_0.2s_backwards]' : 'opacity-0'
-            }`}>
-            <div className="text-xs opacity-70">Stars</div>
-            <div className="text-base font-bold">⭐ {data.stars}</div>
-          </div>
-
-          <div className={`bg-base-100/50 rounded p-1.5 ${isVisible ? 'animate-[fadeInScale_0.5s_ease-out_0.3s_backwards]' : 'opacity-0'
-            }`}>
-            <div className="text-xs opacity-70">Forks</div>
-            <div className="text-base font-bold">🔀 {data.forks}</div>
-          </div>
-        </div>
-
-        {/* Top Languages */}
-        {topLanguages.length > 0 && (
-          <div className={`mt-1.5 ${isVisible ? 'animate-[fadeIn_0.5s_ease-out_0.4s_backwards]' : 'opacity-0'}`}>
-            <div className="flex flex-wrap gap-1 justify-center">
-              {topLanguages.map(([language, count], index) => (
-                <div
-                  key={language}
-                  className={`badge badge-sm badge-primary ${isVisible ? 'animate-[fadeInScale_0.4s_ease-out_backwards]' : 'opacity-0'
-                    }`}
-                  style={{ animationDelay: isVisible ? `${0.5 + index * 0.1}s` : '0s' }}
-                >
-                  {language} ({count})
-                </div>
-              ))}
-            </div>
-          </div>
+      <div
+        ref={containerRef}
+        className="card-body p-2 relative overflow-hidden"
+        style={{
+          transformStyle: 'preserve-3d',
+          transition: 'transform 0.1s ease-out',
+        }}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        {/* Spotlight effect */}
+        {isHovered && (
+          <div
+            className="absolute inset-0 pointer-events-none z-0"
+            style={{
+              background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(255,255,255,0.2) 0%, transparent 50%)`,
+              mixBlendMode: 'overlay',
+            }}
+          />
         )}
 
-        {/* Footer */}
-        <div className={`mt-1.5 text-center ${isVisible ? 'animate-[fadeIn_0.5s_ease-out_0.7s_backwards]' : 'opacity-0'}`}>
-          <a
-            href={`https://github.com/${username}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-xs btn-outline gap-1"
-          >
-            <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor">
+        {/* Shine effect */}
+        {isHovered && (
+          <div
+            className="absolute inset-0 pointer-events-none z-0"
+            style={{
+              background: `linear-gradient(115deg, transparent ${(mousePosition.x / (containerRef.current?.offsetWidth || 1)) * 100 - 20}%, rgba(255,255,255,0.3) ${(mousePosition.x / (containerRef.current?.offsetWidth || 1)) * 100}%, transparent ${(mousePosition.x / (containerRef.current?.offsetWidth || 1)) * 100 + 20}%)`,
+              mixBlendMode: 'overlay',
+            }}
+          />
+        )}
+
+        <div className="relative z-10">
+          {/* Header */}
+          <div className={`flex items-center gap-1.5 mb-1.5 ${isVisible ? 'animate-[fadeIn_0.5s_ease-out]' : 'opacity-0'}`}>
+            <svg className="w-6 h-6 flex-shrink-0 self-center text-white" viewBox="0 0 16 16" fill="currentColor">
               <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
             </svg>
-            GitHub
-          </a>
+            <h3 className={`text-sm font-bold ${textColor} leading-none`}>
+              {username}'s GitHub
+            </h3>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-3 gap-1.5 text-center">
+            <div className={`bg-base-100/50 rounded p-1.5 ${isVisible ? 'animate-[fadeInScale_0.5s_ease-out_0.1s_backwards]' : 'opacity-0'
+              }`}>
+              <div className="text-xs opacity-70">Repos</div>
+              <div className="text-base font-bold">📦 {data.repos}</div>
+            </div>
+
+            <div className={`bg-base-100/50 rounded p-1.5 ${isVisible ? 'animate-[fadeInScale_0.5s_ease-out_0.2s_backwards]' : 'opacity-0'
+              }`}>
+              <div className="text-xs opacity-70">Stars</div>
+              <div className="text-base font-bold">⭐ {data.stars}</div>
+            </div>
+
+            <div className={`bg-base-100/50 rounded p-1.5 ${isVisible ? 'animate-[fadeInScale_0.5s_ease-out_0.3s_backwards]' : 'opacity-0'
+              }`}>
+              <div className="text-xs opacity-70">Forks</div>
+              <div className="text-base font-bold">🔀 {data.forks}</div>
+            </div>
+          </div>
+
+          {/* Top Languages */}
+          {topLanguages.length > 0 && (
+            <div className={`mt-1.5 ${isVisible ? 'animate-[fadeIn_0.5s_ease-out_0.4s_backwards]' : 'opacity-0'}`}>
+              <div className="flex flex-wrap gap-1 justify-center">
+                {topLanguages.map(([language, count], index) => (
+                  <div
+                    key={language}
+                    className={`badge badge-sm badge-primary ${isVisible ? 'animate-[fadeInScale_0.4s_ease-out_backwards]' : 'opacity-0'
+                      }`}
+                    style={{ animationDelay: isVisible ? `${0.5 + index * 0.1}s` : '0s' }}
+                  >
+                    {language} ({count})
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Footer */}
+          <div className={`mt-1.5 text-center ${isVisible ? 'animate-[fadeIn_0.5s_ease-out_0.7s_backwards]' : 'opacity-0'}`}>
+            <a
+              href={`https://github.com/${username}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-xs btn-outline gap-1"
+            >
+              <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+              </svg>
+              GitHub
+            </a>
+          </div>
         </div>
       </div>
     </div>

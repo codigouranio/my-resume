@@ -27,19 +27,19 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!cardRef.current) return;
-    
+
     const rect = cardRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
+
     setMousePosition({ x, y });
-    
+
     // Calculate rotation based on mouse position
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
     const rotateX = ((y - centerY) / centerY) * -10; // Max 10 degrees
     const rotateY = ((x - centerX) / centerX) * 10;
-    
+
     cardRef.current.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
   };
 
@@ -130,7 +130,7 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
             }}
           />
         )}
-        
+
         {/* Shine effect */}
         {isHovered && (
           <div
@@ -141,7 +141,7 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
             }}
           />
         )}
-        
+
         <div className="card-body p-2.5 relative z-10">
           {/* Header */}
           <div
