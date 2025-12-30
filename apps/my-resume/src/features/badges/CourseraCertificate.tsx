@@ -108,7 +108,7 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
   const verifyUrl = credentialUrl || (certId ? getCourseraVerifyUrl(certId) : '#');
 
   return (
-    <div ref={componentRef} className="inline-block m-1.5">
+    <div ref={componentRef} className="inline-block mx-1.5 my-1">
       <div
         ref={cardRef}
         className={`card bg-gradient-to-br from-blue-600 to-indigo-700 shadow-lg w-52 h-72 border border-blue-400 transition-all duration-300 ease-out relative overflow-hidden ${isVisible ? 'animate-fadeInUp' : 'opacity-0'
