@@ -41,7 +41,7 @@ export default function Resume() {
       const data = await apiClient.getPublicResume(slug);
       setResumeData(data);
       setMarkdown(data.content);
-      
+
       // Fetch view count
       try {
         const stats = await apiClient.getPublicResumeStats(slug);

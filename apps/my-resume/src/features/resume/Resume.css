@@ -18,7 +18,6 @@
   @apply text-xl font-semibold mt-8 mb-3 text-accent;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
 }
 
 .resume-container .prose h3 img {
@@ -198,6 +197,21 @@
   z-index: 10;
 }
 
+.resume-container .prose .coursera-certificate-card h3 {
+  @apply mt-2 text-lg font-bold;
+  line-height: 1.2;
+}
+
+.resume-container .prose .coursera-certificate-card p {
+  @apply text-xs text-white mt-1;
+  flex-grow: 1;
+}
+
+/* .resume-container .prose .coursera-certificate-card h3 {
+  @apply text-white text-lg font-bold;
+  line-height: 1.2;
+  margin-top: 0.5rem;
+} */
 
 .resume-container .prose .github-card a {
   @apply underline text-white hover:text-white;
