@@ -250,3 +250,74 @@
     transform: scale(1);
   }
 }
+
+/* Print Styles for PDF Generation */
+@media print {
+  body {
+    background: white;
+  }
+
+  .resume-container {
+    @apply shadow-none p-0 m-0 max-w-none;
+    background: white;
+    box-shadow: none;
+  }
+
+  /* Hide interactive elements */
+  .sticky,
+  button,
+  .chat-widget,
+  footer,
+  .modal,
+  .video-thumbnail-wrapper,
+  .video-container {
+    display: none !important;
+  }
+
+  /* Optimize text for print */
+  .resume-container .prose {
+    color: black;
+  }
+
+  .resume-container .prose h1,
+  .resume-container .prose h2,
+  .resume-container .prose h3,
+  .resume-container .prose strong {
+    color: black;
+  }
+
+  /* Ensure page breaks don't split content awkwardly */
+  .resume-container .prose h2,
+  .resume-container .prose h3 {
+    page-break-after: avoid;
+  }
+
+  .resume-container .prose ul,
+  .resume-container .prose ol {
+    page-break-inside: avoid;
+  }
+
+  /* Make certificate cards print-friendly */
+  .coursera-certificate-card {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Simplify links for print */
+  .resume-container .prose a {
+    color: black;
+    text-decoration: underline;
+  }
+
+  /* Show link URLs after text */
+  .resume-container .prose a[href]:after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #666;
+  }
+
+  /* Don't show URLs for image links */
+  .resume-container .prose a[href] img:after {
+    content: none;
+  }
+}
