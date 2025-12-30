@@ -143,14 +143,14 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
           />
         )}
 
-        <div className="card-body p-3 relative z-10 flex flex-col h-full justify-between">
+        <div className="card-body p-2 relative z-10 flex flex-col h-full justify-between">
           {/* Top Section - Logo and Organization */}
           <div className="text-center">
-            <div className="flex justify-center mb-1.5">
+            <div className="flex justify-center mb-1">
               <svg
                 className="flex-shrink-0"
-                width="24"
-                height="24"
+                width="20"
+                height="20"
                 viewBox="0 0 24 24"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -172,17 +172,17 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
           </div>
 
           {/* Middle Section - Certificate Title */}
-          <div className="flex-1 flex items-center justify-center py-2">
-            <h3 className="text-xs font-bold text-white leading-snug text-center px-1">
+          <div className="flex-1 flex items-center justify-center py-1">
+            <h3 className="text-xs font-bold text-white leading-tight text-center px-1">
               {title}
             </h3>
           </div>
 
           {/* Bottom Section - Details and Actions */}
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             {date && (
               <div className="text-center">
-                <p className="text-[9px] text-blue-200 uppercase tracking-wider">Issued</p>
+                <p className="text-[9px] text-blue-200 uppercase tracking-wider mb-0">Issued</p>
                 <p className="text-[10px] text-white font-semibold">{date}</p>
               </div>
             )}
@@ -195,7 +195,7 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
               </div>
             )}
 
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-center gap-0.5">
               <span className="inline-flex items-center gap-0.5 bg-blue-100 text-blue-800 text-[9px] font-medium px-1.5 py-0.5 rounded-full">
                 <svg
                   width="8"
