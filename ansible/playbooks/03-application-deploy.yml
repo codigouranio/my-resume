@@ -169,8 +169,8 @@
       copy:
         dest: "{{ frontend_path }}/.env"
         content: |
-          PUBLIC_API_URL=http://{{ domain }}:{{ api_port }}/api
-          PUBLIC_LLM_API_URL=http://{{ domain }}:{{ llm_port }}
+          PUBLIC_API_URL=/api
+          PUBLIC_LLM_API_URL=/llm
         owner: "{{ ansible_user }}"
         mode: '0644'
     
