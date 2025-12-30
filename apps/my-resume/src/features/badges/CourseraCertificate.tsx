@@ -75,10 +75,13 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
   const verifyUrl = credentialUrl || (certId ? `https://www.coursera.org/account/accomplishments/verify/${certId}` : '#');
 
   return (
-    <div ref={componentRef} className="my-3">
+    <div ref={componentRef} className="my-3 perspective-1000">
       <div
-        className={`card bg-gradient-to-br from-blue-50 to-indigo-50 shadow-md w-full max-w-md border border-blue-200 ${isVisible ? 'animate-fadeInUp' : 'opacity-0'
+        className={`card bg-gradient-to-br from-blue-50 to-indigo-50 shadow-md w-full max-w-md border border-blue-200 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 hover:scale-[1.02] transform-gpu ${isVisible ? 'animate-fadeInUp' : 'opacity-0'
           }`}
+        style={{
+          transformStyle: 'preserve-3d',
+        }}
       >
         <div className="card-body p-2.5">
           {/* Header */}

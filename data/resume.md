@@ -87,8 +87,6 @@ Microservices, REST APIs, OAuth2, LDAP, Performance Optimization, Distributed Sy
 
 ---
 ![GitHub Stats](github?username=codigouranio&theme=dark)
-![Coursera Certificate](coursera?accomplishments=3ZQF6UNYMFW7&title=Functional%20Programming%20Principles%20in%20Scala&date=Oct%202016)
-![Coursera Certificate](coursera?accomplishments=BKQ777C62BXZ&title=Big%20Data%20Analysis%20with%20Scala%20and%20Spark&date=Dec%202016)
 ![LeetCode Stats](https://leetcard.jacoblin.cool/blancosj)
 ```coursera 
 name: Functional Program Design in Scala
