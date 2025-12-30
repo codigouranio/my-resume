@@ -77,7 +77,7 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
   return (
     <div ref={componentRef} className="my-3">
       <div
-        className={`card bg-gradient-to-br from-blue-50 to-indigo-50 shadow-md max-w-md border border-blue-200 ${isVisible ? 'animate-fadeInUp' : 'opacity-0'
+        className={`card bg-gradient-to-br from-blue-50 to-indigo-50 shadow-md max-w-md border border-blue-200 h-auto ${isVisible ? 'animate-fadeInUp' : 'opacity-0'
           }`}
       >
         <div className="card-body p-2.5">
@@ -87,7 +87,7 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
               }`}
             style={{ animationDelay: '0.1s' }}
           >
-            <div className="flex-1 min-w-0 overflow-hidden">
+            <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 mb-1">
                 <svg
                   className="flex-shrink-0"
@@ -111,7 +111,7 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
                 </svg>
                 <span className="text-xs text-blue-700 font-medium">{organization}</span>
               </div>
-              <h3 className="text-sm font-bold text-gray-900 leading-tight mb-0.5 break-words overflow-wrap-anywhere">
+              <h3 className="text-sm font-bold text-gray-900 leading-snug mb-0.5 break-words">
                 {title}
               </h3>
               {credentialId && (
