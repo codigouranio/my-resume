@@ -20,39 +20,7 @@ export function GitHubStats({ username, theme = 'dark' }: GitHubStatsProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [isHovered, setIsHovered] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
-
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    setMousePosition({ x, y });
-
-    // Calculate rotation based on mouse position
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const rotateX = ((y - centerY) / centerY) * -10; // Max 10 degrees
-    const rotateY = ((x - centerX) / centerX) * 10;
-
-    containerRef.current.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
-  };
-
-  const handleMouseEnter = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-    if (containerRef.current) {
-      containerRef.current.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
-    }
-  };
 
   useEffect(() => {
     const fetchGitHubData = async () => {
@@ -180,39 +148,7 @@ export function GitHubStats({ username, theme = 'dark' }: GitHubStatsProps) {
       className={`card ${bgColor} shadow-md ${borderColor} border my-3 not-prose max-w-md ${isVisible ? 'animate-[fadeInUp_0.6s_ease-out]' : 'opacity-0'
         }`}
     >
-      <div
-        ref={containerRef}
-        className="card-body p-2 relative overflow-hidden"
-        style={{
-          transformStyle: 'preserve-3d',
-          transition: 'transform 0.1s ease-out',
-        }}
-        onMouseMove={handleMouseMove}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      >
-        {/* Spotlight effect */}
-        {isHovered && (
-          <div
-            className="absolute inset-0 pointer-events-none z-0"
-            style={{
-              background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(255,255,255,0.2) 0%, transparent 50%)`,
-              mixBlendMode: 'overlay',
-            }}
-          />
-        )}
-
-        {/* Shine effect */}
-        {isHovered && (
-          <div
-            className="absolute inset-0 pointer-events-none z-0"
-            style={{
-              background: `linear-gradient(115deg, transparent ${(mousePosition.x / (containerRef.current?.offsetWidth || 1)) * 100 - 20}%, rgba(255,255,255,0.3) ${(mousePosition.x / (containerRef.current?.offsetWidth || 1)) * 100}%, transparent ${(mousePosition.x / (containerRef.current?.offsetWidth || 1)) * 100 + 20}%)`,
-              mixBlendMode: 'overlay',
-            }}
-          />
-        )}
-
+      <div className="card-body p-2">
         <div className="relative z-10">
           {/* Header */}
           <div className={`flex items-center gap-1.5 mb-1.5 ${isVisible ? 'animate-[fadeIn_0.5s_ease-out]' : 'opacity-0'}`}>
