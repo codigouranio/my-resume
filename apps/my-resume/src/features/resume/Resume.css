@@ -18,6 +18,7 @@
   @apply text-xl font-semibold mt-8 mb-3 text-accent;
   display: flex;
   align-items: center;
+  gap: 0.5rem;
 }
 
 .resume-container .prose h3 img {
