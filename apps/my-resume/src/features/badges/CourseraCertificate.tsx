@@ -36,16 +36,14 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({ certId
   return (
     <div ref={componentRef} className="my-8">
       <div
-        className={`card bg-gradient-to-br from-blue-50 to-indigo-50 shadow-xl max-w-md border border-blue-200 ${
-          isVisible ? 'animate-fadeInUp' : 'opacity-0'
-        }`}
+        className={`card bg-gradient-to-br from-blue-50 to-indigo-50 shadow-xl max-w-md border border-blue-200 ${isVisible ? 'animate-fadeInUp' : 'opacity-0'
+          }`}
       >
         <div className="card-body p-6">
           {/* Header */}
           <div
-            className={`flex items-center gap-3 mb-4 ${
-              isVisible ? 'animate-fadeIn' : 'opacity-0'
-            }`}
+            className={`flex items-center gap-3 mb-4 ${isVisible ? 'animate-fadeIn' : 'opacity-0'
+              }`}
             style={{ animationDelay: '0.1s' }}
           >
             <svg
@@ -78,9 +76,8 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({ certId
 
           {/* Certificate Info */}
           <div
-            className={`bg-white rounded-lg p-4 mb-4 border border-blue-100 ${
-              isVisible ? 'animate-fadeInScale' : 'opacity-0'
-            }`}
+            className={`bg-white rounded-lg p-4 mb-4 border border-blue-100 ${isVisible ? 'animate-fadeInScale' : 'opacity-0'
+              }`}
             style={{ animationDelay: '0.2s' }}
           >
             <div className="flex items-center gap-3">
@@ -122,9 +119,8 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({ certId
 
           {/* Footer */}
           <div
-            className={`flex items-center justify-between ${
-              isVisible ? 'animate-fadeIn' : 'opacity-0'
-            }`}
+            className={`flex items-center justify-between ${isVisible ? 'animate-fadeIn' : 'opacity-0'
+              }`}
             style={{ animationDelay: '0.3s' }}
           >
             <div className="flex items-center gap-2">

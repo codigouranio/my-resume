@@ -247,10 +247,10 @@ export default function Resume() {
               }
 
               // Handle Coursera Certificate component
-              if (src?.startsWith('coursera?') || src?.includes('cert=')) {
+              if (src?.startsWith('coursera?') || src?.includes('accomplishments=')) {
                 try {
                   const urlParams = new URLSearchParams(src.replace('coursera?', ''));
-                  const certId = urlParams.get('cert');
+                  const certId = urlParams.get('accomplishments');
 
                   if (certId) {
                     return <CourseraCertificate certId={certId} />;
