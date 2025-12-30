@@ -62,6 +62,13 @@ export class ResumesController {
     return this.resumesService.findBySlug(slug, view === 'true', viewData);
   }
 
+  @Get('public/:slug/stats')
+  @Public()
+  @ApiOperation({ summary: 'Get public resume view statistics' })
+  async getPublicStats(@Param('slug') slug: string) {
+    return this.resumesService.getPublicStats(slug);
+  }
+
   @Get('llm/:slug')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)

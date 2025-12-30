@@ -141,6 +141,27 @@ export class ResumesService {
     return publicResume;
   }
 
+  async getPublicStats(slug: string) {
+    const resume = await this.prisma.resume.findUnique({
+      where: { slug },
+      select: {
+        viewCount: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!resume) {
+      throw new NotFoundException('Resume not found');
+    }
+
+    return {
+      viewCount: resume.viewCount,
+      createdAt: resume.createdAt,
+      updatedAt: resume.updatedAt,
+    };
+  }
+
   async getResumeForLLM(slug: string) {
     const resume = await this.prisma.resume.findUnique({
       where: { slug },
