@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { getCourseraVerifyUrl } from './constants';
 
 interface CourseraCertificateProps {
   certId?: string;
@@ -81,7 +82,7 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
     // Only fetch date if not provided and certificate ID is BKQ777C62BXZ
     if (!date && certId && certId === 'BKQ777C62BXZ') {
       setIsLoading(true);
-      fetch(`https://www.coursera.org/account/accomplishments/verify/${certId}`)
+      fetch(getCourseraVerifyUrl(certId))
         .then(response => response.text())
         .then(html => {
           // Try to extract date from meta tags or structured data
@@ -104,7 +105,7 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
   }, [certId, date]);
 
   // Use credentialUrl if provided, otherwise construct from certId
-  const verifyUrl = credentialUrl || (certId ? `https://www.coursera.org/account/accomplishments/verify/${certId}` : '#');
+  const verifyUrl = credentialUrl || (certId ? getCourseraVerifyUrl(certId) : '#');
 
   return (
     <div ref={componentRef} className="inline-block m-1.5">
