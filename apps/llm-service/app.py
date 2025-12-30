@@ -54,9 +54,11 @@ def get_resume_content():
         response = requests.get(url, timeout=10)
         response.raise_for_status()
         data = response.json()
-        
-        resume_content = data.get('content', '')
-        logger.info(f"Successfully fetched resume content ({len(resume_content)} characters)")
+
+        resume_content = data.get("content", "")
+        logger.info(
+            f"Successfully fetched resume content ({len(resume_content)} characters)"
+        )
         return resume_content
     except Exception as e:
         logger.error(f"Failed to fetch resume: {e}")
@@ -221,7 +223,12 @@ def refresh_cache():
     try:
         get_resume_content.cache_clear()
         logger.info("Resume cache cleared")
-        return jsonify({"status": "success", "message": "Cache cleared, next request will fetch fresh content"})
+        return jsonify(
+            {
+                "status": "success",
+                "message": "Cache cleared, next request will fetch fresh content",
+            }
+        )
     except Exception as e:
         logger.error(f"Error clearing cache: {e}")
         return jsonify({"error": str(e)}), 500
