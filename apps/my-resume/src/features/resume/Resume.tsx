@@ -8,6 +8,18 @@ import { ChatWidget } from '../chat';
 import { GitHubStats, CourseraCertificate } from '../badges';
 import './Resume.css';
 
+// Type definition for certificate data parsed from markdown
+interface CourseraCertificateData {
+  name?: string;
+  issuing_organization?: string;
+  issue_date?: string;
+  credential_id?: string;
+  credential_url?: string;
+}
+
+// Regex pattern for extracting credential ID from Coursera URL
+const CREDENTIAL_ID_REGEX = /verify\/([^/?]+)/;
+
 export default function Resume() {
   const { slug } = useParams<{ slug?: string }>();
   const [markdown, setMarkdown] = useState<string>('');
@@ -222,20 +234,20 @@ export default function Resume() {
               if (!inline && language === 'coursera') {
                 const content = String(children).trim();
                 const lines = content.split('\n');
-                const certData: any = {};
+                const certData: CourseraCertificateData = {};
 
                 lines.forEach((line) => {
                   const [key, ...valueParts] = line.split(':');
                   if (key && valueParts.length > 0) {
                     const value = valueParts.join(':').trim();
                     const normalizedKey = key.trim().toLowerCase().replace(/\s+/g, '_');
-                    certData[normalizedKey] = value;
+                    certData[normalizedKey as keyof CourseraCertificateData] = value;
                   }
                 });
 
                 // Extract the credential ID from the URL if provided
                 const credentialId = certData.credential_id || 
-                  certData.credential_url?.match(/verify\/([^/?]+)/)?.[1] || '';
+                  certData.credential_url?.match(CREDENTIAL_ID_REGEX)?.[1] || '';
 
                 if (certData.name || certData.credential_url) {
                   return (
