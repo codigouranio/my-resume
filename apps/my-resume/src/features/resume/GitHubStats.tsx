@@ -84,7 +84,7 @@ export function GitHubStats({ username, theme = 'dark' }: GitHubStatsProps) {
 
   if (loading) {
     return (
-      <div className={`card ${bgColor} shadow-lg ${borderColor} border my-4 max-w-md mx-auto`}>
+      <div className={`card ${bgColor} shadow-lg ${borderColor} border my-4 max-w-md`}>
         <div className="card-body p-3">
           <div className="flex items-center gap-2">
             <div className="skeleton h-4 w-4 rounded-full"></div>
@@ -102,7 +102,7 @@ export function GitHubStats({ username, theme = 'dark' }: GitHubStatsProps) {
 
   if (error) {
     return (
-      <div className="alert alert-warning my-4 max-w-md mx-auto text-xs py-2">
+      <div className="alert alert-warning my-4 max-w-md text-xs py-2">
         <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
@@ -116,14 +116,14 @@ export function GitHubStats({ username, theme = 'dark' }: GitHubStatsProps) {
   const topLanguages = Object.entries(data.languages).slice(0, 3);
 
   return (
-    <div className={`card ${bgColor} shadow-lg ${borderColor} border my-4 not-prose max-w-md mx-auto`}>
+    <div className={`card ${bgColor} shadow-lg ${borderColor} border my-4 not-prose max-w-md`}>
       <div className="card-body p-3">
         {/* Header */}
         <div className="flex items-center gap-2 mb-2">
-          <svg className="w-4 h-4" viewBox="0 0 16 16" fill="currentColor">
+          <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
           </svg>
-          <h3 className={`text-sm font-bold ${textColor}`}>
+          <h3 className={`text-sm font-bold ${textColor} leading-none`}>
             {username}'s GitHub
           </h3>
         </div>
