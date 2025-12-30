@@ -325,6 +325,41 @@
   .coursera-certificate-card {
     page-break-inside: avoid;
     break-inside: avoid;
+    background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%) !important;
+    border: 2px solid #1e40af !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .coursera-certificate-card * {
+    color: white !important;
+  }
+
+  /* GitHub stats card for print */
+  .github-card,
+  .github-stats-card {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    border: 2px solid #e5e7eb !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Ensure images and badges are visible */
+  .resume-container .prose img {
+    display: block !important;
+    max-width: 100%;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Make badges visible */
+  .badge,
+  [class*="badge"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    border: 1px solid #d1d5db !important;
   }
 
   /* Simplify links for print */
