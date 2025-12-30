@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, isValidElement } from 'react';
 import { useParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -179,10 +179,12 @@ export default function Resume() {
           components={{
             pre: ({ node, children, ...props }: any) => {
               // Check if the child is a coursera code block
-              const child = children?.[0];
-              if (child?.props?.className?.includes('language-coursera')) {
-                // Return just the child without the pre wrapper
-                return <>{children}</>;
+              if (isValidElement(children)) {
+                const childProps = children.props as any;
+                if (childProps?.className?.includes('language-coursera')) {
+                  // Return just the child without the pre wrapper
+                  return <>{children}</>;
+                }
               }
               // For all other code blocks, keep the pre tag
               return <pre {...props}>{children}</pre>;
