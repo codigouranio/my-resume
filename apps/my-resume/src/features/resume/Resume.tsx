@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { apiClient } from '../../shared/api/client';
 import { ChatWidget } from '../chat';
+import { GitHubStats } from './GitHubStats';
 import './Resume.css';
 
 export default function Resume() {
@@ -230,6 +231,21 @@ export default function Resume() {
               </div>
             ),
             img: ({ node, src, alt, ...props }: any) => {
+              // Handle GitHub Stats component
+              if (src?.startsWith('github?') || src?.includes('username=')) {
+                try {
+                  const urlParams = new URLSearchParams(src.replace('github?', ''));
+                  const username = urlParams.get('username');
+                  const theme = urlParams.get('theme') || 'dark';
+                  
+                  if (username) {
+                    return <GitHubStats username={username} theme={theme as 'light' | 'dark'} />;
+                  }
+                } catch (error) {
+                  console.error('Error parsing GitHub stats URL:', error);
+                }
+              }
+              
               // Handle badge images from our API
               if (src?.startsWith('/badges/')) {
                 return (
@@ -241,6 +257,7 @@ export default function Resume() {
                   />
                 );
               }
+              
               // Default image rendering
               return <img src={src} alt={alt} {...props} />;
             },

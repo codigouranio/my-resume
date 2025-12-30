@@ -3,7 +3,7 @@
 ## Professional Summary
 Senior Full-Stack Software Engineer with expertise in building robust, production-grade solutions across distributed systems, cloud infrastructure, and enterprise applications.
 
-![GitHub Stats](/badges/github?username=codigouranio&theme=dark)
+![GitHub Stats](github?username=codigouranio&theme=dark)
 
 ## Professional Experience
 
