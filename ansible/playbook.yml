@@ -98,7 +98,8 @@
         name: postgresql
         state: started
         enabled: yes
-        - name: Check if Ollama is installed
+    
+    - name: Check if Ollama is installed
       command: which ollama
       register: ollama_check
       changed_when: false
@@ -125,7 +126,8 @@
       debug:
         msg: "{{ ollama_models.stdout_lines }}"
       when: ollama_check.rc == 0 and ollama_models.rc == 0
-        - name: Setup PostgreSQL database
+    
+    - name: Setup PostgreSQL database
       block:
         - name: Create PostgreSQL user
           postgresql_user:
@@ -134,6 +136,8 @@
             role_attr_flags: LOGIN
             state: present
           become_user: postgres
+          environment:
+            ANSIBLE_PIPELINING: "1"
         
         - name: Create PostgreSQL database
           postgresql_db:
@@ -141,6 +145,8 @@
             owner: "{{ postgres_user }}"
             state: present
           become_user: postgres
+          environment:
+            ANSIBLE_PIPELINING: "1"
     
     - name: Configure API Service environment
       copy:
@@ -219,7 +225,13 @@
         chdir: "{{ api_service_path }}"
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
-      register: migration_resulth localhost -U {{ postgres_user }} -d {{ postgres_db }} -c "\dt" | grep -E 'User|Resume|RecruiterInterest'
+      register: migration_result
+      failed_when: false
+      changed_when: false
+    
+    - name: Verify database tables exist
+      shell: |
+        psql -h localhost -U {{ postgres_user }} -d {{ postgres_db }} -c "\dt" | grep -E 'User|Resume|RecruiterInterest'
       register: db_check
       failed_when: false
       changed_when: false
@@ -243,7 +255,13 @@
     - name: Warn if RecruiterInterest table missing
       debug:
         msg: "⚠️  WARNING: RecruiterInterest table not found - migration may have failed"
-      when: recruiter_table_check.rc != 0postgres_db }}?schema=public"
+      when: recruiter_table_check.rc != 0
+    
+    - name: Force schema sync if migration failed
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        export DATABASE_URL="postgresql://{{ postgres_user }}:{{ postgres_password }}@localhost:5432/{{ postgres_db }}?schema=public"
         npx prisma db push --accept-data-loss
       args:
         chdir: "{{ api_service_path }}"

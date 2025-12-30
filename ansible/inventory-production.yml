@@ -47,12 +47,13 @@ all:
     # Security - USE ANSIBLE-VAULT FOR PRODUCTION!
     # Run: ansible-vault encrypt_string 'your_password' --name 'vault_db_password'
     # Then paste the output here
-    vault_db_password: !vault |
-          $ANSIBLE_VAULT;1.1;AES256
-          # EXAMPLE - Replace with your encrypted value
-          # Use: ansible-vault encrypt_string 'actual_password' --name 'vault_db_password'
+    # vault_db_password: !vault |
+    #       $ANSIBLE_VAULT;1.1;AES256
+    #       # EXAMPLE - Replace with your encrypted value
+    #       # Use: ansible-vault encrypt_string 'actual_password' --name 'vault_db_password'
     
     # Or for development/testing, use plain text (NOT RECOMMENDED for production)
-    db_password: "change_me_in_production"
+    vault_db_password: "secure_db_password_change_me"
+    db_password: "secure_db_password_change_me"
     jwt_secret: "change_me_use_long_random_string_min_32_chars"
     llm_admin_token: "change_me_in_production"

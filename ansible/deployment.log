@@ -1,0 +1,81 @@
+
+PLAY [Deploy My Resume Application] ********************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [prod-server-1]
+
+TASK [Update apt cache] ********************************************************
+ok: [prod-server-1]
+
+TASK [Install system dependencies] *********************************************
+ok: [prod-server-1]
+
+TASK [Check if Miniconda is installed] *****************************************
+ok: [prod-server-1]
+
+TASK [Download Miniconda installer] ********************************************
+skipping: [prod-server-1]
+
+TASK [Install Miniconda] *******************************************************
+skipping: [prod-server-1]
+
+TASK [Initialize conda for all users] ******************************************
+skipping: [prod-server-1]
+
+TASK [Add conda to PATH] *******************************************************
+ok: [prod-server-1]
+
+TASK [Create application directory] ********************************************
+ok: [prod-server-1]
+
+TASK [Clone/Update repository] *************************************************
+ok: [prod-server-1]
+
+TASK [Create conda environment for API service] ********************************
+ok: [prod-server-1]
+
+TASK [Create conda environment for Frontend] ***********************************
+ok: [prod-server-1]
+
+TASK [Install PM2 in API conda environment] ************************************
+ok: [prod-server-1]
+
+TASK [Ensure PostgreSQL is running] ********************************************
+ok: [prod-server-1]
+
+TASK [Check if Ollama is installed] ********************************************
+ok: [prod-server-1]
+
+TASK [Display Ollama status] ***************************************************
+ok: [prod-server-1] => {
+    "msg": " ✅ Ollama is installed at /usr/local/bin/ollama \n"
+}
+
+TASK [Check Ollama models (if installed)] **************************************
+ok: [prod-server-1]
+
+TASK [Display available Ollama models] *****************************************
+ok: [prod-server-1] => {
+    "msg": [
+        "NAME               ID              SIZE      MODIFIED     ",
+        "gemma3:27b         a418f5838eaf    17 GB     2 months ago    ",
+        "llama3.1:latest    46e0c10c039e    4.9 GB    2 months ago    "
+    ]
+}
+
+TASK [Create PostgreSQL user] **************************************************
+[ERROR]: Task failed: Failed to set permissions on the temporary files Ansible needs to create when becoming an unprivileged user (rc: 1, err: chmod: invalid mode: ‘A+user:postgres:rx:allow’
+Try 'chmod --help' for more information.
+}). For information on working around this, see https://docs.ansible.com/ansible-core/2.20/playbook_guide/playbooks_privilege_escalation.html#risks-of-becoming-an-unprivileged-user
+Origin: /Users/joseblanco/data/dev/my-resume/ansible/playbook.yml:132:11
+
+130     - name: Setup PostgreSQL database
+131       block:
+132         - name: Create PostgreSQL user
+              ^ column 11
+
+fatal: [prod-server-1]: FAILED! => {"changed": false, "msg": "Task failed: Failed to set permissions on the temporary files Ansible needs to create when becoming an unprivileged user (rc: 1, err: chmod: invalid mode: ‘A+user:postgres:rx:allow’\nTry 'chmod --help' for more information.\n}). For information on working around this, see https://docs.ansible.com/ansible-core/2.20/playbook_guide/playbooks_privilege_escalation.html#risks-of-becoming-an-unprivileged-user"}
+
+PLAY RECAP *********************************************************************
+prod-server-1              : ok=15   changed=0    unreachable=0    failed=1    skipped=3    rescued=0    ignored=0   
+
