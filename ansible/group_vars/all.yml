@@ -81,3 +81,4 @@ enable_debug_logging: false
 cors_origins: 
   - "http://{{ ansible_host }}"
   - "https://{{ domain }}"
+  - "https://my-resume.paskot.com"
