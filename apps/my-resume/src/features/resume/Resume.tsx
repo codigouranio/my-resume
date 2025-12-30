@@ -170,18 +170,19 @@ export default function Resume() {
 
   return (
     <div className="resume-container">
-      {/* Recruiter Interest Button */}
+      {/* Action Buttons */}
       <div className="sticky top-4 z-10 mb-8">
-        <div className="flex justify-end gap-2">
-          <button
-            onClick={handleDownloadPDF}
-            className="btn btn-secondary btn-lg shadow-lg hover:shadow-xl transition-all gap-2"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Download PDF
-          </button>
+        <div className="flex justify-end gap-3 items-center">
+          <div className="tooltip tooltip-left" data-tip="Download as PDF">
+            <button
+              onClick={handleDownloadPDF}
+              className="btn btn-circle btn-ghost hover:btn-secondary transition-all"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </button>
+          </div>
           <button
             onClick={handleInterestClick}
             className="btn btn-primary btn-lg shadow-lg hover:shadow-xl transition-all gap-2"

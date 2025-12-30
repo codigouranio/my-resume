@@ -253,6 +253,10 @@
 
 /* Print Styles for PDF Generation */
 @media print {
+  @page {
+    margin: 0.75in;
+  }
+
   body {
     background: white;
   }
@@ -266,6 +270,7 @@
   /* Hide interactive elements */
   .sticky,
   button,
+  .tooltip,
   .chat-widget,
   footer,
   .modal,
@@ -286,15 +291,34 @@
     color: black;
   }
 
-  /* Ensure page breaks don't split content awkwardly */
-  .resume-container .prose h2,
-  .resume-container .prose h3 {
+  /* Minimize page breaks - keep content together */
+  .resume-container .prose h2 {
     page-break-after: avoid;
+    break-after: avoid;
   }
 
-  .resume-container .prose ul,
-  .resume-container .prose ol {
+  .resume-container .prose h3 {
+    page-break-after: avoid;
+    break-after: avoid;
     page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .resume-container .prose h4 {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  /* Keep list items together when possible */
+  .resume-container .prose li {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Prevent orphans and widows */
+  .resume-container .prose p {
+    orphans: 3;
+    widows: 3;
   }
 
   /* Make certificate cards print-friendly */
@@ -305,19 +329,12 @@
 
   /* Simplify links for print */
   .resume-container .prose a {
-    color: black;
-    text-decoration: underline;
+    color: #0066cc;
+    text-decoration: none;
   }
 
-  /* Show link URLs after text */
+  /* Don't show URLs - keep it clean */
   .resume-container .prose a[href]:after {
-    content: " (" attr(href) ")";
-    font-size: 0.8em;
-    color: #666;
-  }
-
-  /* Don't show URLs for image links */
-  .resume-container .prose a[href] img:after {
     content: none;
   }
 }
