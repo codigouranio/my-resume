@@ -53,93 +53,93 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({ certId
           }
         })
         .catch((date || fetchedDate) && (
-                <span className="text-xs text-gray-600 font-semibold ml-2 flex-shrink-0">
-                  {date || fetchedDate}
-                  {isLoading && <span className="loading loading-spinner loading-xs ml-1"></span>}
+          <span className="text-xs text-gray-600 font-semibold ml-2 flex-shrink-0">
+            {date || fetchedDate}
+            {isLoading && <span className="loading loading-spinner loading-xs ml-1"></span>}
                 
         })
         .finally(() => {
-          setIsLoading(false);
+              setIsLoading(false);
         });
     }
   }, [certId, date]);
 
-  const verifyUrl = `https://www.coursera.org/account/accomplishments/verify/${certId}`;
+            const verifyUrl = `https://www.coursera.org/account/accomplishments/verify/${certId}`;
 
-  return (
-    <div ref={componentRef} className="my-6">
-      <div
-        className={`card bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg max-w-sm border border-blue-200 ${isVisible ? 'animate-fadeInUp' : 'opacity-0'
-          }`}
-      >
-        <div className="card-body p-4">
-          {/* Header */}
-          <div
-            className={`mb-3 ${isVisible ? 'animate-fadeIn' : 'opacity-0'
-              }`}
-            style={{ animationDelay: '0.1s' }}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="text-base font-bold text-gray-900 leading-tight">
-                {title}
-              </h3>
-              {date && (
-                <span className="text-xs text-gray-600 font-semibold ml-2 flex-shrink-0">{date}</span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <svg
-                className="flex-shrink-0"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+            return (
+            <div ref={componentRef} className="my-6">
+              <div
+                className={`card bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg max-w-sm border border-blue-200 ${isVisible ? 'animate-fadeInUp' : 'opacity-0'
+                  }`}
               >
-                <rect width="24" height="24" rx="4" fill="#0056D2" />
-                <path
-                  d="M12 4L7 9L12 14L17 9L12 4Z"
-                  fill="white"
-                  opacity="0.9"
-                />
-                <path
-                  d="M12 10L7 15L12 20L17 15L12 10Z"
-                  fill="white"
-                  opacity="0.6"
-                />
-              </svg>
-              <p className="text-xs text-blue-700">Coursera Certificate</p>
-            </div>
-          </div>
+                <div className="card-body p-4">
+                  {/* Header */}
+                  <div
+                    className={`mb-3 ${isVisible ? 'animate-fadeIn' : 'opacity-0'
+                      }`}
+                    style={{ animationDelay: '0.1s' }}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="text-base font-bold text-gray-900 leading-tight">
+                        {title}
+                      </h3>
+                      {date && (
+                        <span className="text-xs text-gray-600 font-semibold ml-2 flex-shrink-0">{date}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg
+                        className="flex-shrink-0"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <rect width="24" height="24" rx="4" fill="#0056D2" />
+                        <path
+                          d="M12 4L7 9L12 14L17 9L12 4Z"
+                          fill="white"
+                          opacity="0.9"
+                        />
+                        <path
+                          d="M12 10L7 15L12 20L17 15L12 10Z"
+                          fill="white"
+                          opacity="0.6"
+                        />
+                      </svg>
+                      <p className="text-xs text-blue-700">Coursera Certificate</p>
+                    </div>
+                  </div>
 
-          {/* Footer */}
-          <div
-            className={`flex items-center justify-between ${isVisible ? 'animate-fadeIn' : 'opacity-0'
-              }`}
-            style={{ animationDelay: '0.2s' }}
-          >
-            <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded">
-              <svg
-                width="10"
-                height="10"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
-              </svg>
-              Verified
-            </span>
-            <a
-              href={verifyUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-xs btn-primary bg-blue-600 hover:bg-blue-700 border-blue-600 text-white"
-            >
-              View
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+                  {/* Footer */}
+                  <div
+                    className={`flex items-center justify-between ${isVisible ? 'animate-fadeIn' : 'opacity-0'
+                      }`}
+                    style={{ animationDelay: '0.2s' }}
+                  >
+                    <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded">
+                      <svg
+                        width="10"
+                        height="10"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                      </svg>
+                      Verified
+                    </span>
+                    <a
+                      href={verifyUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-xs btn-primary bg-blue-600 hover:bg-blue-700 border-blue-600 text-white"
+                    >
+                      View
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            );
 };
