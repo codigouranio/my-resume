@@ -66,7 +66,7 @@ Provider of enterprise endpoint security and threat detection solutions
 - **BS in Mathematics** (in progress), UNED (National Distance Education University), Spain
 - LeetCode, AlgoMonster, Scala/Spark (Coursera/EPFL), System Design
 
-![Coursera Certificate](coursera?accomplishments=3ZQF6UNYMFW7)
+![Coursera Certificate](coursera?accomplishments=3ZQF6UNYMFW7&year=2016)
 
 ## Technical Skills
 

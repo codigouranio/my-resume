@@ -2,9 +2,10 @@ import React, { useEffect, useState, useRef } from 'react';
 
 interface CourseraCertificateProps {
   certId: string;
+  year?: string;
 }
 
-export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({ certId }) => {
+export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({ certId, year }) => {
   const [isVisible, setIsVisible] = useState(false);
   const componentRef = useRef<HTMLDivElement>(null);
 
@@ -46,9 +47,14 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({ certId
               }`}
             style={{ animationDelay: '0.1s' }}
           >
-            <h3 className="text-base font-bold text-gray-900 leading-tight mb-1">
-              Functional Programming Principles in Scala
-            </h3>
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-base font-bold text-gray-900 leading-tight">
+                Functional Programming Principles in Scala
+              </h3>
+              {year && (
+                <span className="text-xs text-gray-600 font-semibold ml-2 flex-shrink-0">{year}</span>
+              )}
+            </div>
             <div className="flex items-center gap-2">
               <svg
                 className="flex-shrink-0"

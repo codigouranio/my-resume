@@ -251,9 +251,10 @@ export default function Resume() {
                 try {
                   const urlParams = new URLSearchParams(src.replace('coursera?', ''));
                   const certId = urlParams.get('accomplishments');
+                  const year = urlParams.get('year');
 
                   if (certId) {
-                    return <CourseraCertificate certId={certId} />;
+                    return <CourseraCertificate certId={certId} year={year || undefined} />;
                   }
                 } catch (error) {
                   console.error('Error parsing Coursera certificate URL:', error);
