@@ -89,6 +89,22 @@
       become_user: "{{ ansible_user }}"
       ignore_errors: yes
     
+    - name: Configure LLM Service environment
+      copy:
+        dest: "{{ llm_service_path }}/.env"
+        content: |
+          PORT={{ llm_port }}
+          LLAMA_SERVER_URL={{ llama_server_url }}
+          LLAMA_API_TYPE=ollama
+          OLLAMA_MODEL={{ ollama_model }}
+          RESUME_PATH=../../data/resume.md
+          DATABASE_URL=postgresql://{{ postgres_user }}:{{ postgres_password }}@localhost:5432/{{ postgres_db }}
+          ADMIN_TOKEN={{ llm_admin_token }}
+          API_BASE_URL=http://localhost:{{ api_port }}/api
+          RESUME_SLUG=jose-blanco-swe
+        owner: "{{ ansible_user }}"
+        mode: '0600'
+    
     - name: Configure Frontend environment
       copy:
         dest: "{{ frontend_path }}/.env"
