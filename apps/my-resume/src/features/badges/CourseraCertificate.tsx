@@ -8,6 +8,8 @@ interface CourseraCertificateProps {
 
 export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({ certId, title, date }) => {
   const [isVisible, setIsVisible] = useState(false);
+  const [fetchedDate, setFetchedDate] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const componentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,6 +34,35 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({ certId
       }
     };
   }, []);
+
+  useEffect(() => {
+    // Only fetch date if not provided and certificate ID is BKQ777C62BXZ
+    if (!date && certId === 'BKQ777C62BXZ') {
+      setIsLoading(true);
+      fetch(`https://www.coursera.org/account/accomplishments/verify/${certId}`)
+        .then(response => response.text())
+        .then(html => {
+          // Try to extract date from meta tags or structured data
+          const dateMatch = html.match(/"datePublished":"([^"]+)"/);
+          if (dateMatch) {
+            const dateStr = new Date(dateMatch[1]).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short'
+            });
+            setFetchedDate(dateStr);
+          }
+        })
+        .catch((date || fetchedDate) && (
+                <span className="text-xs text-gray-600 font-semibold ml-2 flex-shrink-0">
+                  {date || fetchedDate}
+                  {isLoading && <span className="loading loading-spinner loading-xs ml-1"></span>}
+                
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    }
+  }, [certId, date]);
 
   const verifyUrl = `https://www.coursera.org/account/accomplishments/verify/${certId}`;
 
