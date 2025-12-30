@@ -66,8 +66,29 @@ https://youtu.be/jkHeMk08aQ8?si=jkHeMk08aQ8
 - LeetCode, AlgoMonster, Scala/Spark (Coursera/EPFL), System Design
 
 ![GitHub Stats](github?username=codigouranio&theme=dark)
-![Coursera Certificate](coursera?accomplishments=3ZQF6UNYMFW7&title=Functional%20Programming%20Principles%20in%20Scala&date=Oct%202016)
-![Coursera Certificate](coursera?accomplishments=BKQ777C62BXZ&title=Big%20Data%20Analysis%20with%20Scala%20and%20Spark)
+
+```coursera
+name: Functional Program Design in Scala
+issuing organization: EPFL
+issue date: August 2016
+credential id: 3UQYMMJWLKCR
+credential url: https://www.coursera.org/account/accomplishments/verify/3UQYMMJWLKCR
+```
+
+```coursera
+name: Functional Programming Principles in Scala
+issuing organization: EPFL
+issue date: October 2016
+credential id: 3ZQF6UNYMFW7
+credential url: https://www.coursera.org/account/accomplishments/verify/3ZQF6UNYMFW7
+```
+
+```coursera
+name: Big Data Analysis with Scala and Spark
+issuing organization: EPFL
+credential id: BKQ777C62BXZ
+credential url: https://www.coursera.org/account/accomplishments/verify/BKQ777C62BXZ
+```
 
 ## Technical Skills
 

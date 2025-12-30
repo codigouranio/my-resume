@@ -219,6 +219,37 @@ export default function Resume() {
                 );
               }
 
+              if (!inline && language === 'coursera') {
+                const content = String(children).trim();
+                const lines = content.split('\n');
+                const certData: any = {};
+
+                lines.forEach((line) => {
+                  const [key, ...valueParts] = line.split(':');
+                  if (key && valueParts.length > 0) {
+                    const value = valueParts.join(':').trim();
+                    const normalizedKey = key.trim().toLowerCase().replace(/\s+/g, '_');
+                    certData[normalizedKey] = value;
+                  }
+                });
+
+                // Extract the credential ID from the URL if provided
+                const credentialId = certData.credential_id || 
+                  certData.credential_url?.match(/verify\/([^/?]+)/)?.[1] || '';
+
+                if (certData.name || certData.credential_url) {
+                  return (
+                    <CourseraCertificate
+                      name={certData.name || 'Certificate'}
+                      issuingOrganization={certData.issuing_organization}
+                      issueDate={certData.issue_date}
+                      credentialId={credentialId}
+                      credentialUrl={certData.credential_url || `https://www.coursera.org/account/accomplishments/verify/${credentialId}`}
+                    />
+                  );
+                }
+              }
+
               return inline ? (
                 <code className={className} {...props}>{children}</code>
               ) : (
