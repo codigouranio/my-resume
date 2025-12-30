@@ -92,16 +92,17 @@ export function GitHubStats({ username, theme = 'dark' }: GitHubStatsProps) {
       { threshold: 0.1 } // Trigger when 10% of the element is visible
     );
 
-    if (cardRef.current) {
-      observer.observe(cardRef.current);
+    const currentRef = cardRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
     }
 
     return () => {
-      if (cardRef.current) {
-        observer.unobserve(cardRef.current);
+      if (currentRef) {
+        observer.unobserve(currentRef);
       }
     };
-  }, []);
+  }, [data]); // Re-run when data loads to check visibility
 
   const isDark = theme === 'dark';
   const bgColor = isDark ? 'bg-base-300' : 'bg-base-100';
@@ -160,23 +161,20 @@ export function GitHubStats({ username, theme = 'dark' }: GitHubStatsProps) {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-2 text-center">
-          <div className={`bg-base-100/50 rounded p-2 ${
-            isVisible ? 'animate-[fadeInScale_0.5s_ease-out_0.1s_backwards]' : 'opacity-0'
-          }`}>
+          <div className={`bg-base-100/50 rounded p-2 ${isVisible ? 'animate-[fadeInScale_0.5s_ease-out_0.1s_backwards]' : 'opacity-0'
+            }`}>
             <div className="text-xs opacity-70">Repos</div>
             <div className="text-lg font-bold">📦 {data.repos}</div>
           </div>
 
-          <div className={`bg-base-100/50 rounded p-2 ${
-            isVisible ? 'animate-[fadeInScale_0.5s_ease-out_0.2s_backwards]' : 'opacity-0'
-          }`}>
+          <div className={`bg-base-100/50 rounded p-2 ${isVisible ? 'animate-[fadeInScale_0.5s_ease-out_0.2s_backwards]' : 'opacity-0'
+            }`}>
             <div className="text-xs opacity-70">Stars</div>
             <div className="text-lg font-bold">⭐ {data.stars}</div>
           </div>
 
-          <div className={`bg-base-100/50 rounded p-2 ${
-            isVisible ? 'animate-[fadeInScale_0.5s_ease-out_0.3s_backwards]' : 'opacity-0'
-          }`}>
+          <div className={`bg-base-100/50 rounded p-2 ${isVisible ? 'animate-[fadeInScale_0.5s_ease-out_0.3s_backwards]' : 'opacity-0'
+            }`}>
             <div className="text-xs opacity-70">Forks</div>
             <div className="text-lg font-bold">🔀 {data.forks}</div>
           </div>
@@ -189,9 +187,8 @@ export function GitHubStats({ username, theme = 'dark' }: GitHubStatsProps) {
               {topLanguages.map(([language, count], index) => (
                 <div
                   key={language}
-                  className={`badge badge-sm badge-primary ${
-                    isVisible ? 'animate-[fadeInScale_0.4s_ease-out_backwards]' : 'opacity-0'
-                  }`}
+                  className={`badge badge-sm badge-primary ${isVisible ? 'animate-[fadeInScale_0.4s_ease-out_backwards]' : 'opacity-0'
+                    }`}
                   style={{ animationDelay: isVisible ? `${0.5 + index * 0.1}s` : '0s' }}
                 >
                   {language} ({count})
