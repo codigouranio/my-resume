@@ -20,7 +20,39 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
   const [isVisible, setIsVisible] = useState(false);
   const [fetchedDate, setFetchedDate] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
   const componentRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+    
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    setMousePosition({ x, y });
+    
+    // Calculate rotation based on mouse position
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = ((y - centerY) / centerY) * -10; // Max 10 degrees
+    const rotateY = ((x - centerX) / centerX) * 10;
+    
+    cardRef.current.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
+  };
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    if (cardRef.current) {
+      cardRef.current.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+    }
+  };
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -75,15 +107,42 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
   const verifyUrl = credentialUrl || (certId ? `https://www.coursera.org/account/accomplishments/verify/${certId}` : '#');
 
   return (
-    <div ref={componentRef} className="my-3 perspective-1000">
+    <div ref={componentRef} className="my-3">
       <div
-        className={`card bg-gradient-to-br from-blue-50 to-indigo-50 shadow-md w-full max-w-md border border-blue-200 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 hover:scale-[1.02] transform-gpu ${isVisible ? 'animate-fadeInUp' : 'opacity-0'
+        ref={cardRef}
+        className={`card bg-gradient-to-br from-blue-50 to-indigo-50 shadow-md w-full max-w-md border border-blue-200 transition-all duration-300 ease-out relative overflow-hidden ${isVisible ? 'animate-fadeInUp' : 'opacity-0'
           }`}
         style={{
           transformStyle: 'preserve-3d',
+          transition: 'transform 0.1s ease-out, box-shadow 0.3s ease-out',
         }}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
-        <div className="card-body p-2.5">
+        {/* Spotlight effect */}
+        {isHovered && (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(255,255,255,0.3) 0%, transparent 50%)`,
+              mixBlendMode: 'overlay',
+            }}
+          />
+        )}
+        
+        {/* Shine effect */}
+        {isHovered && (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: `linear-gradient(115deg, transparent ${(mousePosition.x / (cardRef.current?.offsetWidth || 1)) * 100 - 20}%, rgba(255,255,255,0.5) ${(mousePosition.x / (cardRef.current?.offsetWidth || 1)) * 100}%, transparent ${(mousePosition.x / (cardRef.current?.offsetWidth || 1)) * 100 + 20}%)`,
+              mixBlendMode: 'overlay',
+            }}
+          />
+        )}
+        
+        <div className="card-body p-2.5 relative z-10">
           {/* Header */}
           <div
             className={`flex items-start justify-between gap-2 ${isVisible ? 'animate-fadeIn' : 'opacity-0'
