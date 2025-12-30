@@ -120,7 +120,7 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
                 </div>
               )}
             </div>
-            
+
             {/* Right side actions */}
             <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
               {date && (
