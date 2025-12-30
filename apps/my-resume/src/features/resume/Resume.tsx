@@ -237,7 +237,7 @@ export default function Resume() {
                   const urlParams = new URLSearchParams(src.replace('github?', ''));
                   const username = urlParams.get('username');
                   const theme = urlParams.get('theme') || 'dark';
-                  
+
                   if (username) {
                     return <GitHubStats username={username} theme={theme as 'light' | 'dark'} />;
                   }
@@ -245,7 +245,7 @@ export default function Resume() {
                   console.error('Error parsing GitHub stats URL:', error);
                 }
               }
-              
+
               // Handle badge images from our API
               if (src?.startsWith('/badges/')) {
                 return (
@@ -257,7 +257,7 @@ export default function Resume() {
                   />
                 );
               }
-              
+
               // Default image rendering
               return <img src={src} alt={alt} {...props} />;
             },
