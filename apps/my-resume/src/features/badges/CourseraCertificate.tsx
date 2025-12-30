@@ -1,12 +1,22 @@
 import React, { useEffect, useState, useRef } from 'react';
 
 interface CourseraCertificateProps {
-  certId: string;
+  certId?: string;
   title: string;
   date?: string;
+  organization?: string;
+  credentialId?: string;
+  credentialUrl?: string;
 }
 
-export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({ certId, title, date }) => {
+export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
+  certId,
+  title,
+  date,
+  organization = 'Coursera',
+  credentialId,
+  credentialUrl
+}) => {
   const [isVisible, setIsVisible] = useState(false);
   const [fetchedDate, setFetchedDate] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,7 +47,7 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({ certId
 
   useEffect(() => {
     // Only fetch date if not provided and certificate ID is BKQ777C62BXZ
-    if (!date && certId === 'BKQ777C62BXZ') {
+    if (!date && certId && certId === 'BKQ777C62BXZ') {
       setIsLoading(true);
       fetch(`https://www.coursera.org/account/accomplishments/verify/${certId}`)
         .then(response => response.text())
@@ -52,21 +62,20 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({ certId
             setFetchedDate(dateStr);
           }
         })
-        .catch((date || fetchedDate) && (
-          <span className="text-xs text-gray-600 font-semibold ml-2 flex-shrink-0">
-            {date || fetchedDate}
-            {isLoading && <span className="loading loading-spinner loading-xs ml-1"></span>}
-                
+        .catch(error => {
+          console.error('Error fetching certificate date:', error);
         })
         .finally(() => {
-              setIsLoading(false);
+          setIsLoading(false);
         });
     }
   }, [certId, date]);
 
-            const verifyUrl = `https://www.coursera.org/account/accomplishments/verify/${certId}`;
+  // Use credentialUrl if provided, otherwise construct from certId
+  const verifyUrl = credentialUrl || (certId ? `https://www.coursera.org/account/accomplishments/verify/${certId}` : '#');
 
-            return (
+  return (
+    <div ref={componentRef} className="my-6">
             <div ref={componentRef} className="my-6">
               <div
                 className={`card bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg max-w-sm border border-blue-200 ${isVisible ? 'animate-fadeInUp' : 'opacity-0'
@@ -87,6 +96,11 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({ certId
                         <span className="text-xs text-gray-600 font-semibold ml-2 flex-shrink-0">{date}</span>
                       )}
                     </div>
+                    {credentialId && (
+                      <div className="text-xs text-gray-500 mb-2">
+                        Credential ID: {credentialId}
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       <svg
                         className="flex-shrink-0"
@@ -108,7 +122,7 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({ certId
                           opacity="0.6"
                         />
                       </svg>
-                      <p className="text-xs text-blue-700">Coursera Certificate</p>
+                      <p className="text-xs text-blue-700">{organization}</p>
                     </div>
                   </div>
 
