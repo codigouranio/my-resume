@@ -5,7 +5,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { apiClient } from '../../shared/api/client';
 import { ChatWidget } from '../chat';
-import { GitHubStats } from '../badges';
+import { GitHubStats, CourseraCertificate } from '../badges';
 import './Resume.css';
 
 export default function Resume() {
@@ -243,6 +243,20 @@ export default function Resume() {
                   }
                 } catch (error) {
                   console.error('Error parsing GitHub stats URL:', error);
+                }
+              }
+
+              // Handle Coursera Certificate component
+              if (src?.startsWith('coursera?') || src?.includes('cert=')) {
+                try {
+                  const urlParams = new URLSearchParams(src.replace('coursera?', ''));
+                  const certId = urlParams.get('cert');
+
+                  if (certId) {
+                    return <CourseraCertificate certId={certId} />;
+                  }
+                } catch (error) {
+                  console.error('Error parsing Coursera certificate URL:', error);
                 }
               }
 
