@@ -229,6 +229,21 @@ export default function Resume() {
                 <iframe {...props} />
               </div>
             ),
+            img: ({ node, src, alt, ...props }: any) => {
+              // Handle badge images from our API
+              if (src?.startsWith('/badges/')) {
+                return (
+                  <img
+                    src={src}
+                    alt={alt}
+                    {...props}
+                    className="inline-block max-w-full h-auto"
+                  />
+                );
+              }
+              // Default image rendering
+              return <img src={src} alt={alt} {...props} />;
+            },
           }}
         >
           {markdown}

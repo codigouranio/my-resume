@@ -8,6 +8,7 @@ import { AuthModule } from './features/auth/auth.module';
 import { UsersModule } from './features/users/users.module';
 import { ResumesModule } from './features/resumes/resumes.module';
 import { TemplatesModule } from './features/templates/templates.module';
+import { BadgesModule } from './features/badges/badges.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { TemplatesModule } from './features/templates/templates.module';
     UsersModule,
     ResumesModule,
     TemplatesModule,
+    BadgesModule,
   ],
 })
 export class AppModule {}
