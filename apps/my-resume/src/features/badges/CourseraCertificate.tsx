@@ -111,11 +111,11 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
                 </svg>
                 <span className="text-xs text-blue-700 font-medium">{organization}</span>
               </div>
-              <h3 className="text-sm font-bold text-gray-900 leading-tight mb-0.5">
+              <h3 className="text-sm font-bold text-gray-900 leading-tight mb-0.5 break-words">
                 {title}
               </h3>
               {credentialId && (
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-gray-500 break-all">
                   ID: {credentialId}
                 </div>
               )}

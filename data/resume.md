@@ -51,9 +51,9 @@ https://youtu.be/jkHeMk08aQ8?si=jkHeMk08aQ8
 
 - Developed C++-based macro-driven Android QA automation for Verizon, reducing testing cycles and enabling cross-device compatibility.
 - Built reusable test frameworks, increasing throughput for telecom clients.
-### Earlier Experience (2000-2010)
 
-**<img src="https://www.google.com/s2/favicons?domain=pg.com&sz=64" alt="P&G"> P&G, Zasylogic S.A, Madrid, Spain**
+### <img src="https://www.google.com/s2/favicons?domain=us.pg.com/&sz=64" alt="P&G"> Earlier Experience (1997-2010) Madrid, Spain
+**P&G and Zasylogic S.A, Madrid, Spain**
 
 - Pioneered AibeNet, a pre-Node.js distributed JavaScript framework enabling real-time execution, P2P service discovery, and message-based communication.
 - Modernized legacy Clipper app into a JavaScript/web browser/cloud-based SaaS platform, improving call center efficiency.
@@ -64,18 +64,6 @@ https://youtu.be/jkHeMk08aQ8?si=jkHeMk08aQ8
 - **AS in Electronic Products Development**, IES San Fernando, Spain, 1997
 - **BS in Mathematics** (in progress), UNED (National Distance Education University), Spain
 - LeetCode, AlgoMonster, Scala/Spark (Coursera/EPFL), System Design
-
-```coursera
-name: Functional Program Design in Scala
-issuing organization: EPFL
-issue date: August 2016
-credential id: 3UQYMMJWLKCR
-credential url: https://www.coursera.org/account/accomplishments/verify/3UQYMMJWLKCR
-```
-
-![GitHub Stats](github?username=codigouranio&theme=dark)
-![Coursera Certificate](coursera?accomplishments=3ZQF6UNYMFW7&title=Functional%20Programming%20Principles%20in%20Scala&date=Oct%202016)
-![Coursera Certificate](coursera?accomplishments=BKQ777C62BXZ&title=Big%20Data%20Analysis%20with%20Scala%20and%20Spark)
 
 ## Technical Skills
 
@@ -98,5 +86,16 @@ PostgreSQL, MongoDB, Redis, MySQL
 Microservices, REST APIs, OAuth2, LDAP, Performance Optimization, Distributed Systems
 
 ---
-
+![GitHub Stats](github?username=codigouranio&theme=dark)
+![Coursera Certificate](coursera?accomplishments=3ZQF6UNYMFW7&title=Functional%20Programming%20Principles%20in%20Scala&date=Oct%202016)
+![Coursera Certificate](coursera?accomplishments=BKQ777C62BXZ&title=Big%20Data%20Analysis%20with%20Scala%20and%20Spark&date=Dec%202016)
+![LeetCode Stats](https://leetcard.jacoblin.cool/blancosj)
+```coursera 
+name: Functional Program Design in Scala
+issuing organization: EPFL
+issue date: August 2016
+credential id: 3UQYMMJWLKCR
+credential url: https://www.coursera.org/account/accomplishments/verify/3UQYMMJWLKCR
+``` 
+---
 **References available upon request**
