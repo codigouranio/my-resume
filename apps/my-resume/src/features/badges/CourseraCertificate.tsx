@@ -172,7 +172,7 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
           </div>
 
           {/* Middle Section - Certificate Title */}
-          <div className="flex-1 flex items-center justify-center py-1">
+          <div className="flex items-center justify-center my-[5px]">
             <h3 className="text-xs font-bold text-white leading-tight text-center px-1">
               {title}
             </h3>
