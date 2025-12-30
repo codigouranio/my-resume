@@ -3,6 +3,8 @@
 ## Professional Summary
 Senior Full-Stack Software Engineer with expertise in building robust, production-grade solutions across distributed systems, cloud infrastructure, and enterprise applications.
 
+![GitHub Stats](/badges/github?username=codigouranio&theme=dark)
+
 ## Professional Experience
 
 ### <img src="https://www.google.com/s2/favicons?domain=interactions.com&sz=64" alt="Interactions LLC"> Interactions LLC - Software Engineer
