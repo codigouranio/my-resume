@@ -198,25 +198,6 @@
   z-index: 10;
 }
 
-.resume-container .prose .coursera-certificate-card h3 {
-  @apply pt-0 pb-0 mt-2 text-lg;
-}
-
-.resume-container .prose .coursera-certificate-card p {
-  @apply pt-0 pb-0 mt-0 mb-0 text-xs;
-}
-
-.resume-container .prose .coursera-certificate-card a {
-  @apply text-xs text-white hover:opacity-80 break-all no-underline leading-tight underline cursor-pointer transition-opacity duration-200;
-}
-
-.resume-container .prose .coursera-certificate-card .card-body {
-  gap: 0.25rem;
-}
-
-/* .resume-container .prose .coursera-certificate-card .card-body .coursera-certificate-organization {
-  @apply text-xs font-bold text-white text-center px-1 !leading-[1.0];
-} */
 
 .resume-container .prose .github-card a {
   @apply underline text-white hover:text-white;
