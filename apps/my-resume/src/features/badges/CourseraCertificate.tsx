@@ -87,7 +87,7 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
               }`}
             style={{ animationDelay: '0.1s' }}
           >
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 overflow-hidden">
               <div className="flex items-center gap-1.5 mb-1">
                 <svg
                   className="flex-shrink-0"
@@ -111,7 +111,7 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
                 </svg>
                 <span className="text-xs text-blue-700 font-medium">{organization}</span>
               </div>
-              <h3 className="text-sm font-bold text-gray-900 leading-tight mb-0.5 break-words">
+              <h3 className="text-sm font-bold text-gray-900 leading-tight mb-0.5 break-words overflow-wrap-anywhere">
                 {title}
               </h3>
               {credentialId && (
