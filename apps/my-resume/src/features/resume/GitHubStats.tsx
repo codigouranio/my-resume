@@ -116,10 +116,10 @@ export function GitHubStats({ username, theme = 'dark' }: GitHubStatsProps) {
   const topLanguages = Object.entries(data.languages).slice(0, 3);
 
   return (
-    <div className={`card ${bgColor} shadow-lg ${borderColor} border my-4 not-prose max-w-md`}>
+    <div className={`card ${bgColor} shadow-lg ${borderColor} border my-4 not-prose max-w-md animate-[fadeInUp_0.6s_ease-out]`}>
       <div className="card-body p-3">
         {/* Header */}
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-2 animate-[fadeIn_0.5s_ease-out]">
           <svg className="w-6 h-6 flex-shrink-0 mt-0.5" viewBox="0 0 16 16" fill="currentColor">
             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
           </svg>
@@ -130,17 +130,17 @@ export function GitHubStats({ username, theme = 'dark' }: GitHubStatsProps) {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-2 text-center">
-          <div className="bg-base-100/50 rounded p-2">
+          <div className="bg-base-100/50 rounded p-2 animate-[fadeInScale_0.5s_ease-out_0.1s_backwards]">
             <div className="text-xs opacity-70">Repos</div>
             <div className="text-lg font-bold">📦 {data.repos}</div>
           </div>
 
-          <div className="bg-base-100/50 rounded p-2">
+          <div className="bg-base-100/50 rounded p-2 animate-[fadeInScale_0.5s_ease-out_0.2s_backwards]">
             <div className="text-xs opacity-70">Stars</div>
             <div className="text-lg font-bold">⭐ {data.stars}</div>
           </div>
 
-          <div className="bg-base-100/50 rounded p-2">
+          <div className="bg-base-100/50 rounded p-2 animate-[fadeInScale_0.5s_ease-out_0.3s_backwards]">
             <div className="text-xs opacity-70">Forks</div>
             <div className="text-lg font-bold">🔀 {data.forks}</div>
           </div>
@@ -148,10 +148,14 @@ export function GitHubStats({ username, theme = 'dark' }: GitHubStatsProps) {
 
         {/* Top Languages */}
         {topLanguages.length > 0 && (
-          <div className="mt-2">
+          <div className="mt-2 animate-[fadeIn_0.5s_ease-out_0.4s_backwards]">
             <div className="flex flex-wrap gap-1 justify-center">
-              {topLanguages.map(([language, count]) => (
-                <div key={language} className="badge badge-sm badge-primary">
+              {topLanguages.map(([language, count], index) => (
+                <div 
+                  key={language} 
+                  className="badge badge-sm badge-primary animate-[fadeInScale_0.4s_ease-out_backwards]"
+                  style={{ animationDelay: `${0.5 + index * 0.1}s` }}
+                >
                   {language} ({count})
                 </div>
               ))}
@@ -160,7 +164,7 @@ export function GitHubStats({ username, theme = 'dark' }: GitHubStatsProps) {
         )}
 
         {/* Footer */}
-        <div className="mt-2 text-center">
+        <div className="mt-2 text-center animate-[fadeIn_0.5s_ease-out_0.7s_backwards]">
           <a
             href={`https://github.com/${username}`}
             target="_blank"
