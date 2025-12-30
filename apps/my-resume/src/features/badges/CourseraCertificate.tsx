@@ -1,14 +1,33 @@
 import React, { useEffect, useState, useRef } from 'react';
 
+/**
+ * Props for the CourseraCertificate component.
+ * 
+ * @property {string} [name] - Certificate name (preferred)
+ * @property {string} [issuingOrganization] - Organization that issued the certificate (e.g., "EPFL")
+ * @property {string} [issueDate] - Date when the certificate was issued (e.g., "August 2016")
+ * @property {string} [credentialId] - Unique credential identifier
+ * @property {string} [credentialUrl] - Full URL to the certificate verification page
+ * 
+ * @deprecated Legacy props (use new props instead):
+ * @property {string} [title] - @deprecated Use 'name' instead
+ * @property {string} [certId] - @deprecated Use 'credentialId' instead
+ * @property {string} [date] - @deprecated Use 'issueDate' instead
+ */
 interface CourseraCertificateProps {
+  // New props (preferred)
   name?: string;
   issuingOrganization?: string;
   issueDate?: string;
   credentialId?: string;
   credentialUrl?: string;
-  // Legacy props for backward compatibility
+  
+  // Legacy props (deprecated - for backward compatibility only)
+  /** @deprecated Use 'name' instead */
   title?: string;
+  /** @deprecated Use 'credentialId' instead */
   certId?: string;
+  /** @deprecated Use 'issueDate' instead */
   date?: string;
 }
 
