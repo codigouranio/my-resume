@@ -80,5 +80,7 @@ enable_debug_logging: false
 # CORS Configuration
 cors_origins: 
   - "http://{{ ansible_host }}"
+  - "http://{{ domain }}"
   - "https://{{ domain }}"
+  - "http://my-resume.paskot.com"
   - "https://my-resume.paskot.com"
