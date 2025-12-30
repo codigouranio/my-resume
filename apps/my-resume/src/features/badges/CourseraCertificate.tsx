@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 
 interface CourseraCertificateProps {
-  name: string;
+  name?: string;
   issuingOrganization?: string;
   issueDate?: string;
-  credentialId: string;
-  credentialUrl: string;
+  credentialId?: string;
+  credentialUrl?: string;
   // Legacy props for backward compatibility
   title?: string;
   certId?: string;

@@ -236,12 +236,25 @@ export default function Resume() {
                 const lines = content.split('\n');
                 const certData: CourseraCertificateData = {};
 
+                // Valid keys for CourseraCertificateData
+                const validKeys: (keyof CourseraCertificateData)[] = [
+                  'name',
+                  'issuing_organization',
+                  'issue_date',
+                  'credential_id',
+                  'credential_url'
+                ];
+
                 lines.forEach((line) => {
                   const [key, ...valueParts] = line.split(':');
                   if (key && valueParts.length > 0) {
                     const value = valueParts.join(':').trim();
                     const normalizedKey = key.trim().toLowerCase().replace(/\s+/g, '_');
-                    certData[normalizedKey as keyof CourseraCertificateData] = value;
+                    
+                    // Only assign if the key is valid
+                    if (validKeys.includes(normalizedKey as keyof CourseraCertificateData)) {
+                      certData[normalizedKey as keyof CourseraCertificateData] = value;
+                    }
                   }
                 });
 
