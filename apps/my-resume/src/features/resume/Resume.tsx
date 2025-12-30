@@ -5,7 +5,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { apiClient } from '../../shared/api/client';
 import { ChatWidget } from '../chat';
-import { GitHubStats } from './GitHubStats';
+import { GitHubStats } from '../badges';
 import './Resume.css';
 
 export default function Resume() {

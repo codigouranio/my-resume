@@ -1,0 +1,1 @@
+export { GitHubStats } from './GitHubStats';
