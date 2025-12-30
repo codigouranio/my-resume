@@ -110,7 +110,7 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
     <div ref={componentRef} className="my-3">
       <div
         ref={cardRef}
-        className={`card bg-gradient-to-br from-blue-50 to-indigo-50 shadow-md w-full max-w-md border border-blue-200 transition-all duration-300 ease-out relative overflow-hidden ${isVisible ? 'animate-fadeInUp' : 'opacity-0'
+        className={`card bg-gradient-to-br from-blue-600 to-indigo-700 shadow-md w-full max-w-md border border-blue-400 transition-all duration-300 ease-out relative overflow-hidden ${isVisible ? 'animate-fadeInUp' : 'opacity-0'
           }`}
         style={{
           transformStyle: 'preserve-3d',
@@ -125,7 +125,7 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
-              background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(255,255,255,0.3) 0%, transparent 50%)`,
+              background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(255,255,255,0.4) 0%, transparent 50%)`,
               mixBlendMode: 'overlay',
             }}
           />
@@ -136,7 +136,7 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
-              background: `linear-gradient(115deg, transparent ${(mousePosition.x / (cardRef.current?.offsetWidth || 1)) * 100 - 20}%, rgba(255,255,255,0.5) ${(mousePosition.x / (cardRef.current?.offsetWidth || 1)) * 100}%, transparent ${(mousePosition.x / (cardRef.current?.offsetWidth || 1)) * 100 + 20}%)`,
+              background: `linear-gradient(115deg, transparent ${(mousePosition.x / (cardRef.current?.offsetWidth || 1)) * 100 - 20}%, rgba(255,255,255,0.6) ${(mousePosition.x / (cardRef.current?.offsetWidth || 1)) * 100}%, transparent ${(mousePosition.x / (cardRef.current?.offsetWidth || 1)) * 100 + 20}%)`,
               mixBlendMode: 'overlay',
             }}
           />
@@ -159,25 +159,25 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <rect width="24" height="24" rx="4" fill="#0056D2" />
+                  <rect width="24" height="24" rx="4" fill="#ffffff" />
                   <path
                     d="M12 4L7 9L12 14L17 9L12 4Z"
-                    fill="white"
+                    fill="#0056D2"
                     opacity="0.9"
                   />
                   <path
                     d="M12 10L7 15L12 20L17 15L12 10Z"
-                    fill="white"
+                    fill="#0056D2"
                     opacity="0.6"
                   />
                 </svg>
-                <span className="text-xs text-blue-700 font-medium">{organization}</span>
+                <span className="text-xs text-blue-100 font-medium">{organization}</span>
               </div>
-              <h3 className="text-sm font-bold text-gray-900 leading-snug mb-0.5 break-words overflow-wrap-anywhere">
+              <h3 className="text-sm font-bold text-white leading-snug mb-0.5 break-words overflow-wrap-anywhere">
                 {title}
               </h3>
               {credentialId && (
-                <div className="text-xs text-gray-500 break-all">
+                <div className="text-xs text-blue-200 break-all">
                   ID: {credentialId}
                 </div>
               )}
