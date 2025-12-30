@@ -3,8 +3,6 @@
 ## Professional Summary
 Senior Full-Stack Software Engineer with expertise in building robust, production-grade solutions across distributed systems, cloud infrastructure, and enterprise applications.
 
-![GitHub Stats](github?username=codigouranio&theme=dark)
-
 ## Professional Experience
 
 ### <img src="https://www.google.com/s2/favicons?domain=interactions.com&sz=64" alt="Interactions LLC"> Interactions LLC - Software Engineer
@@ -40,9 +38,10 @@ Provider of enterprise endpoint security and threat detection solutions
 - Engineered backend services for antivirus and endpoint detection, integrating Java Spring/microservices/Elasticsearch for scalable log processing.
 - Designed and built Alerts Screen, a flagship threat detection interface adopted by enterprise customers, enhancing analyst workflows.
 
-<div class="video-container">
-  <iframe width="560" height="315" src="https://www.youtube.com/embed/jkHeMk08aQ8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-</div>
+```video
+https://youtu.be/jkHeMk08aQ8?si=mNuZcuvFlTRZYC_w
+https://youtu.be/jkHeMk08aQ8?si=jkHeMk08aQ8
+```
 
 - Designed and implemented multi-threaded, high-throughput data-processing pipelines in Java, enabling real-time behavioral detection at enterprise scale.
 - Led early AWS adoption, optimizing infrastructure for high-throughput systems HornetQ/SQS/Kafka.
@@ -66,7 +65,9 @@ Provider of enterprise endpoint security and threat detection solutions
 - **BS in Mathematics** (in progress), UNED (National Distance Education University), Spain
 - LeetCode, AlgoMonster, Scala/Spark (Coursera/EPFL), System Design
 
-![Coursera Certificate](coursera?accomplishments=3ZQF6UNYMFW7&year=2016)
+![GitHub Stats](github?username=codigouranio&theme=dark)
+![Coursera Certificate](coursera?accomplishments=3ZQF6UNYMFW7&title=Functional%20Programming%20Principles%20in%20Scala&date=Oct%202016)
+![Coursera Certificate](coursera?accomplishments=BKQ777C62BXZ&title=Big%20Data%20Analysis%20with%20Scala%20and%20Spark&date=Dec%202016)
 
 ## Technical Skills
 

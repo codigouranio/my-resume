@@ -2,10 +2,11 @@ import React, { useEffect, useState, useRef } from 'react';
 
 interface CourseraCertificateProps {
   certId: string;
-  year?: string;
+  title: string;
+  date?: string;
 }
 
-export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({ certId, year }) => {
+export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({ certId, title, date }) => {
   const [isVisible, setIsVisible] = useState(false);
   const componentRef = useRef<HTMLDivElement>(null);
 
@@ -49,10 +50,10 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({ certId
           >
             <div className="flex items-center justify-between mb-1">
               <h3 className="text-base font-bold text-gray-900 leading-tight">
-                Functional Programming Principles in Scala
+                {title}
               </h3>
-              {year && (
-                <span className="text-xs text-gray-600 font-semibold ml-2 flex-shrink-0">{year}</span>
+              {date && (
+                <span className="text-xs text-gray-600 font-semibold ml-2 flex-shrink-0">{date}</span>
               )}
             </div>
             <div className="flex items-center gap-2">
