@@ -89,6 +89,15 @@
       become_user: "{{ ansible_user }}"
       ignore_errors: yes
     
+    - name: Configure Frontend environment
+      copy:
+        dest: "{{ frontend_path }}/.env"
+        content: |
+          PUBLIC_API_URL=/api
+          PUBLIC_LLM_API_URL=/llm
+        owner: "{{ ansible_user }}"
+        mode: '0644'
+    
     - name: Install/Update Frontend dependencies
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
