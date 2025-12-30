@@ -1,5 +1,5 @@
 .resume-container {
-  @apply bg-base-100 rounded-box shadow-xl p-8 md:p-12;
+  @apply bg-base-100 rounded-box shadow-xl p-8 md:p-12 max-w-5xl mx-auto;
 }
 
 .resume-container .prose {
@@ -15,7 +15,7 @@
 }
 
 .resume-container .prose h3 {
-  @apply text-2xl font-semibold mt-6 mb-3 text-accent;
+  @apply text-xl font-semibold mt-8 mb-3 text-accent;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -31,19 +31,19 @@
 }
 
 .resume-container .prose h4 {
-  @apply text-xl font-semibold mt-4 mb-2;
+  @apply text-xl font-semibold mt-2 mb-5;
 }
 
 .resume-container .prose p {
-  @apply mb-4 leading-relaxed;
+  @apply mt-2 mb-2 leading-relaxed;
 }
 
 .resume-container .prose ul {
-  @apply list-disc list-inside mb-4 space-y-2;
+  @apply list-disc list-outside mb-2 space-y-1 pl-4;
 }
 
 .resume-container .prose li {
-  @apply ml-4;
+  @apply ml-0;
 }
 
 .resume-container .prose strong {
@@ -178,6 +178,49 @@
   width: 30px;
   height: 30px;
   margin-left: 4px;
+}
+
+/* Coursera Certificate Card Styles */
+.resume-container .prose .coursera-certificate-card {
+  @apply bg-gradient-to-br from-blue-600 to-indigo-700 shadow-lg w-52 h-72 border border-blue-400 rounded-xl;
+  transition: transform 0.1s ease-out, box-shadow 0.3s ease-out;
+  transform-style: preserve-3d;
+  position: relative;
+  overflow: hidden;
+}
+
+.resume-container .prose .coursera-certificate-card:hover {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.resume-container .prose .coursera-certificate-card .card-body {
+  @apply p-3 relative flex flex-col h-full justify-between;
+  z-index: 10;
+}
+
+.resume-container .prose .coursera-certificate-card h3 {
+  @apply pt-0 pb-0 mt-2 text-lg;
+}
+
+.resume-container .prose .coursera-certificate-card p {
+  @apply pt-0 pb-0 mt-0 mb-0 text-xs;
+}
+
+.resume-container .prose .coursera-certificate-card a {
+  @apply text-xs text-white hover:opacity-80 break-all no-underline leading-tight underline cursor-pointer transition-opacity duration-200;
+}
+
+.resume-container .prose .coursera-certificate-card .card-body {
+  gap: 0.25rem;
+}
+
+/* .resume-container .prose .coursera-certificate-card .card-body .coursera-certificate-organization {
+  @apply text-xs font-bold text-white text-center px-1 !leading-[1.0];
+} */
+
+.resume-container .prose .github-card a {
+  @apply underline text-white hover:text-white;
+  color: black;
 }
 
 /* GitHub Stats Animations */

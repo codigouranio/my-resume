@@ -111,7 +111,7 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
     <div ref={componentRef} className="inline-block mx-1.5 my-1">
       <div
         ref={cardRef}
-        className={`card bg-gradient-to-br from-blue-600 to-indigo-700 shadow-lg w-52 h-72 border border-blue-400 transition-all duration-300 ease-out relative overflow-hidden ${isVisible ? 'animate-fadeInUp' : 'opacity-0'
+        className={`coursera-certificate-card transition-all duration-300 ease-out ${isVisible ? 'animate-fadeInUp' : 'opacity-0'
           }`}
         style={{
           transformStyle: 'preserve-3d',
@@ -143,9 +143,9 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
           />
         )}
 
-        <div className="card-body p-2 relative z-10 flex flex-col h-full justify-between">
+        <div className="card-body p-3 relative z-10 flex flex-col h-full justify-between">
           {/* Top Section - Logo and Organization */}
-          <div className="text-center">
+          <div className="text-center p-2 pb-1">
             <div className="flex justify-center mb-1">
               <svg
                 className="flex-shrink-0"
@@ -168,12 +168,14 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
                 />
               </svg>
             </div>
-            <span className="text-[10px] text-blue-100 font-semibold uppercase tracking-wide">{organization}</span>
+            <span className="text-xs mt-3 font-bold text-white text-center px-1 !leading-[1.1] block">
+              {organization}
+            </span>
           </div>
 
           {/* Middle Section - Certificate Title */}
           <div className="flex items-center justify-center">
-            <h3 className="text-xs font-bold text-white leading-tight text-center px-1 my-[5px] mx-0">
+            <h3 className="font-bold text-white leading-tight text-center pt-0">
               {title}
             </h3>
           </div>
@@ -189,33 +191,16 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
 
             {credentialId && (
               <div className="text-center">
-                <p className="text-[9px] text-blue-200 break-all leading-tight">
+                <a
+                  href={verifyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[9px] text-white hover:opacity-80 break-all leading-tight underline cursor-pointer transition-opacity duration-200"
+                >
                   ID: {credentialId}
-                </p>
+                </a>
               </div>
             )}
-
-            <div className="flex flex-col items-center gap-0.5">
-              <span className="inline-flex items-center gap-0.5 bg-blue-100 text-blue-800 text-[9px] font-medium px-1.5 py-0.5 rounded-full">
-                <svg
-                  width="8"
-                  height="8"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
-                </svg>
-                Verified
-              </span>
-              <a
-                href={verifyUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-xs bg-white text-blue-700 hover:bg-blue-50 border-0 w-full font-semibold text-[10px] min-h-0 h-6 px-2"
-              >
-                View →
-              </a>
-            </div>
           </div>
         </div>
       </div>

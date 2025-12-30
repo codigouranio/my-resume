@@ -145,72 +145,95 @@ export function GitHubStats({ username, theme = 'dark' }: GitHubStatsProps) {
   return (
     <div
       ref={cardRef}
-      className={`card ${bgColor} shadow-md ${borderColor} border my-3 not-prose max-w-md ${isVisible ? 'animate-[fadeInUp_0.6s_ease-out]' : 'opacity-0'
+      className={`github-card card ${bgColor} shadow-xl ${borderColor} border my-6 not-prose max-w-2xl ${isVisible ? 'animate-[fadeInUp_0.6s_ease-out]' : 'opacity-0'
         }`}
     >
-      <div className="card-body p-2">
+      <div className="card-body p-6">
         <div className="relative z-10">
           {/* Header */}
-          <div className={`flex items-center gap-1.5 mb-1.5 ${isVisible ? 'animate-[fadeIn_0.5s_ease-out]' : 'opacity-0'}`}>
-            <svg className="w-6 h-6 flex-shrink-0 self-center text-white" viewBox="0 0 16 16" fill="currentColor">
+          <div className={`flex items-center gap-3 mb-4 ${isVisible ? 'animate-[fadeIn_0.5s_ease-out]' : 'opacity-0'}`}>
+            <svg className="w-10 h-10 flex-shrink-0 self-center text-white" viewBox="0 0 16 16" fill="currentColor">
               <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
             </svg>
-            <h3 className={`text-sm font-bold ${textColor} leading-none`}>
-              {username}'s GitHub
-            </h3>
+            <div>
+              <h3 className={`text-2xl font-bold ${textColor} leading-none mb-1`}>
+                {username}
+              </h3>
+              <p className="text-sm opacity-70">GitHub Statistics</p>
+            </div>
           </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-3 gap-1.5 text-center">
-            <div className={`bg-base-100/50 rounded p-1.5 ${isVisible ? 'animate-[fadeInScale_0.5s_ease-out_0.1s_backwards]' : 'opacity-0'
+          {/* Stats Grid - 4 columns */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <div className={`bg-base-100/50 rounded-lg p-4 text-center ${isVisible ? 'animate-[fadeInScale_0.5s_ease-out_0.1s_backwards]' : 'opacity-0'
               }`}>
-              <div className="text-xs opacity-70">Repos</div>
-              <div className="text-base font-bold">📦 {data.repos}</div>
+              <div className="text-3xl mb-2">📦</div>
+              <div className="text-2xl font-bold">{data.repos}</div>
+              <div className="text-xs opacity-70 mt-1">Repositories</div>
             </div>
 
-            <div className={`bg-base-100/50 rounded p-1.5 ${isVisible ? 'animate-[fadeInScale_0.5s_ease-out_0.2s_backwards]' : 'opacity-0'
+            <div className={`bg-base-100/50 rounded-lg p-4 text-center ${isVisible ? 'animate-[fadeInScale_0.5s_ease-out_0.2s_backwards]' : 'opacity-0'
               }`}>
-              <div className="text-xs opacity-70">Stars</div>
-              <div className="text-base font-bold">⭐ {data.stars}</div>
+              <div className="text-3xl mb-2">⭐</div>
+              <div className="text-2xl font-bold">{data.stars}</div>
+              <div className="text-xs opacity-70 mt-1">Total Stars</div>
             </div>
 
-            <div className={`bg-base-100/50 rounded p-1.5 ${isVisible ? 'animate-[fadeInScale_0.5s_ease-out_0.3s_backwards]' : 'opacity-0'
+            <div className={`bg-base-100/50 rounded-lg p-4 text-center ${isVisible ? 'animate-[fadeInScale_0.5s_ease-out_0.3s_backwards]' : 'opacity-0'
               }`}>
-              <div className="text-xs opacity-70">Forks</div>
-              <div className="text-base font-bold">🔀 {data.forks}</div>
+              <div className="text-3xl mb-2">🔀</div>
+              <div className="text-2xl font-bold">{data.forks}</div>
+              <div className="text-xs opacity-70 mt-1">Total Forks</div>
+            </div>
+
+            <div className={`bg-base-100/50 rounded-lg p-4 text-center ${isVisible ? 'animate-[fadeInScale_0.5s_ease-out_0.4s_backwards]' : 'opacity-0'
+              }`}>
+              <div className="text-3xl mb-2">👥</div>
+              <div className="text-2xl font-bold">{data.followers}</div>
+              <div className="text-xs opacity-70 mt-1">Followers</div>
             </div>
           </div>
 
           {/* Top Languages */}
           {topLanguages.length > 0 && (
-            <div className={`mt-1.5 ${isVisible ? 'animate-[fadeIn_0.5s_ease-out_0.4s_backwards]' : 'opacity-0'}`}>
-              <div className="flex flex-wrap gap-1 justify-center">
+            <div className={`mb-4 ${isVisible ? 'animate-[fadeIn_0.5s_ease-out_0.5s_backwards]' : 'opacity-0'}`}>
+              <h4 className="text-sm font-semibold mb-3 opacity-80">Top Languages</h4>
+              <div className="flex flex-wrap gap-2">
                 {topLanguages.map(([language, count], index) => (
                   <div
                     key={language}
-                    className={`badge badge-sm badge-primary ${isVisible ? 'animate-[fadeInScale_0.4s_ease-out_backwards]' : 'opacity-0'
+                    className={`badge badge-lg badge-primary gap-2 ${isVisible ? 'animate-[fadeInScale_0.4s_ease-out_backwards]' : 'opacity-0'
                       }`}
-                    style={{ animationDelay: isVisible ? `${0.5 + index * 0.1}s` : '0s' }}
+                    style={{ animationDelay: isVisible ? `${0.6 + index * 0.1}s` : '0s' }}
                   >
-                    {language} ({count})
+                    <span className="font-semibold">{language}</span>
+                    <span className="opacity-70">({count} repos)</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Footer */}
-          <div className={`mt-1.5 text-center ${isVisible ? 'animate-[fadeIn_0.5s_ease-out_0.7s_backwards]' : 'opacity-0'}`}>
+          {/* Footer with Stats */}
+          <div className={`flex flex-wrap gap-4 justify-between items-center pt-4 border-t ${borderColor} ${isVisible ? 'animate-[fadeIn_0.5s_ease-out_0.8s_backwards]' : 'opacity-0'}`}>
+            <div className="flex gap-4 text-sm">
+              <div>
+                <span className="opacity-70">Gists:</span> <span className="font-semibold">{data.publicGists}</span>
+              </div>
+              <div>
+                <span className="opacity-70">Total Size:</span> <span className="font-semibold">{(data.totalSize / 1024).toFixed(1)} MB</span>
+              </div>
+            </div>
             <a
               href={`https://github.com/${username}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn btn-xs btn-outline gap-1"
+              className="btn btn-sm btn-primary gap-2"
             >
-              <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor">
+              <svg className="w-4 h-4" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
               </svg>
-              GitHub
+              View Profile
             </a>
           </div>
         </div>
