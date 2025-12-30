@@ -177,6 +177,16 @@ export default function Resume() {
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeRaw]}
           components={{
+            pre: ({ node, children, ...props }: any) => {
+              // Check if the child is a coursera code block
+              const child = children?.[0];
+              if (child?.props?.className?.includes('language-coursera')) {
+                // Return just the child without the pre wrapper
+                return <>{children}</>;
+              }
+              // For all other code blocks, keep the pre tag
+              return <pre {...props}>{children}</pre>;
+            },
             code: ({ node, inline, className, children, ...props }: any) => {
               const match = /language-(\w+)/.exec(className || '');
               const language = match ? match[1] : '';

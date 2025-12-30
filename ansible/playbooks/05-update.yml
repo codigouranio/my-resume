@@ -89,6 +89,7 @@
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
         conda activate {{ frontend_path }}/conda-env
+        rm -rf node_modules package-lock.json
         npm install
       args:
         chdir: "{{ frontend_path }}"
