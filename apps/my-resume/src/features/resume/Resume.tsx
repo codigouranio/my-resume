@@ -219,6 +219,35 @@ export default function Resume() {
                 );
               }
 
+              // Handle Coursera certificate code block
+              if (!inline && language === 'coursera') {
+                const content = String(children).trim();
+                const lines = content.split('\n');
+                const certData: Record<string, string> = {};
+
+                // Parse key-value pairs
+                lines.forEach(line => {
+                  const colonIndex = line.indexOf(':');
+                  if (colonIndex > -1) {
+                    const key = line.substring(0, colonIndex).trim();
+                    const value = line.substring(colonIndex + 1).trim();
+                    certData[key] = value;
+                  }
+                });
+
+                if (certData['name']) {
+                  return (
+                    <CourseraCertificate
+                      title={certData['name']}
+                      organization={certData['issuing organization']}
+                      date={certData['issue date']}
+                      credentialId={certData['credential id']}
+                      credentialUrl={certData['credential url']}
+                    />
+                  );
+                }
+              }
+
               return inline ? (
                 <code className={className} {...props}>{children}</code>
               ) : (

@@ -69,6 +69,14 @@ Provider of enterprise endpoint security and threat detection solutions
 - **BS in Mathematics** (in progress), UNED (National Distance Education University), Spain
 - LeetCode, AlgoMonster, Scala/Spark (Coursera/EPFL), System Design
 
+```coursera
+name: Functional Program Design in Scala
+issuing organization: EPFL
+issue date: August 2016
+credential id: 3UQYMMJWLKCR
+credential url: https://www.coursera.org/account/accomplishments/verify/3UQYMMJWLKCR
+```
+
 ## Technical Skills
 
 ### Languages

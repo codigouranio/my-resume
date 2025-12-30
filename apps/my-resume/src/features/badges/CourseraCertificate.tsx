@@ -155,3 +155,4 @@ export const CourseraCertificate: React.FC<CourseraCertificateProps> = ({
       </div>
     </div>
   );
+};

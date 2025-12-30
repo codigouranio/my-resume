@@ -65,6 +65,14 @@ https://youtu.be/jkHeMk08aQ8?si=jkHeMk08aQ8
 - **BS in Mathematics** (in progress), UNED (National Distance Education University), Spain
 - LeetCode, AlgoMonster, Scala/Spark (Coursera/EPFL), System Design
 
+```coursera
+name: Functional Program Design in Scala
+issuing organization: EPFL
+issue date: August 2016
+credential id: 3UQYMMJWLKCR
+credential url: https://www.coursera.org/account/accomplishments/verify/3UQYMMJWLKCR
+```
+
 ![GitHub Stats](github?username=codigouranio&theme=dark)
 ![Coursera Certificate](coursera?accomplishments=3ZQF6UNYMFW7&title=Functional%20Programming%20Principles%20in%20Scala&date=Oct%202016)
 ![Coursera Certificate](coursera?accomplishments=BKQ777C62BXZ&title=Big%20Data%20Analysis%20with%20Scala%20and%20Spark)
