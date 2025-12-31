@@ -412,7 +412,7 @@ export function DashboardPage() {
                           </button>
                         )}
                         <button
-                          className="btn btn-sm btn-error btn-outline gap-1"
+                          className="btn btn-sm btn-error btn-outline gap-1 outline-blue-500"
                           onClick={() => handleDeleteInterest(interest.id, interest.name)}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
