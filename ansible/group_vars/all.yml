@@ -79,6 +79,7 @@ enable_debug_logging: false
 
 # Analytics Configuration
 gtm_id: GTM-KC5CWRP
+ga_id: G-1S7FR5H9NV
 
 # CORS Configuration
 cors_origins: 

@@ -112,6 +112,7 @@
           PUBLIC_API_URL=/api
           PUBLIC_LLM_API_URL=/llm
           PUBLIC_GTM_ID={{ gtm_id | default('') }}
+          PUBLIC_GA_ID={{ ga_id | default('') }}
         owner: "{{ ansible_user }}"
         mode: '0644'
     

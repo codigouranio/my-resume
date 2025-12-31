@@ -18,6 +18,18 @@
       })(window, document, 'script', 'dataLayer', '<%= process.env.PUBLIC_GTM_ID %>');</script>
     <!-- End Google Tag Manager -->
     <% } %>
+
+      <% if (process.env.PUBLIC_GA_ID) { %>
+        <!-- Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=<%= process.env.PUBLIC_GA_ID %>"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag() { dataLayer.push(arguments); }
+          gtag('js', new Date());
+          gtag('config', '<%= process.env.PUBLIC_GA_ID %>');
+        </script>
+        <!-- End Google Analytics -->
+        <% } %>
 </head>
 
 <body>

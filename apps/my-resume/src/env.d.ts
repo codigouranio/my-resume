@@ -17,6 +17,7 @@ interface ImportMetaEnv {
   readonly PUBLIC_LLM_API_URL?: string;
   readonly PUBLIC_API_URL?: string;
   readonly PUBLIC_GTM_ID?: string;
+  readonly PUBLIC_GA_ID?: string;
 }
 
 interface ImportMeta {
