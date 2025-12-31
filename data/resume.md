@@ -1,10 +1,10 @@
 # José Blanco - Software Engineer
 
-## Professional Summary
+## Summary
 Senior Full-Stack Software Engineer with expertise in building robust, production-grade solutions across distributed systems, cloud infrastructure, and enterprise applications.  
 Experienced in leveraging AI tools and frameworks to accelerate development and enhance system capabilities.
 
-## Professional Experience
+## Experience
 
 ### <img src="https://www.google.com/s2/favicons?domain=asurion.com&sz=64" alt="Asurion LLC"> Asurion LLC - Software Engineer  
 **Nov 2021 - Present | Field Services & Service Bench Teams**  
@@ -65,7 +65,7 @@ https://youtu.be/jkHeMk08aQ8?si=jkHeMk08aQ8
 - Developed CRM web app with ASP and Oracle, selected for global presentation at P&G Boston HQ.
 
 ## Personal Projects & AI Contributions
-- Built [my-resume.paskot.com](my-resume.paskot.com) an interactive personal resume website powered by the open-source project github.com/codigouranio/my-resume.
+- Built __my-resume.paskot.com__ an interactive personal resume website powered by project github.com/codigouranio/my-resume.
 - The project leverages AI tools for dynamic content generation, formatting, and optimization, and includes an AI-driven chat interface that answers questions about the resume and provides deeper insights beyond the public version.
 
 ## Education & Certifications

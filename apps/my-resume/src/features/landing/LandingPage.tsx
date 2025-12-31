@@ -30,7 +30,7 @@ export function LandingPage() {
       {/* Features Section */}
       <div className="features-section py-20 bg-base-200">
         <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center mb-12">Why Choose ResumeHub?</h2>
+          <h2 className="text-4xl font-bold text-center mb-12">Why Choose ResumeBox.io?</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="card bg-base-100 shadow-xl">
@@ -89,7 +89,7 @@ export function LandingPage() {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl font-bold mb-6">Ready to Build Your Resume?</h2>
           <p className="text-xl mb-8 opacity-90">
-            Join thousands of professionals who trust ResumeHub
+            Join thousands of professionals who trust ResumeBox.io
           </p>
           <Link to="/register" className="btn btn-lg btn-neutral">
             Create Your Free Account
@@ -100,7 +100,7 @@ export function LandingPage() {
       {/* Footer */}
       <footer className="footer footer-center p-10 bg-base-200 text-base-content">
         <div>
-          <p className="font-bold text-lg">ResumeHub</p>
+          <p className="font-bold text-lg">ResumeBox.io</p>
           <p>Professional Resume Builder © 2025</p>
         </div>
       </footer>
