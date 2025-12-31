@@ -7,6 +7,9 @@ export default defineConfig({
   server: {
     port: 3001,
   },
+  html: {
+    template: './index.html',
+  },
   output: {
     sourceMap: {
       js: 'source-map',
