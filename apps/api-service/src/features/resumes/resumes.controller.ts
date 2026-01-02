@@ -167,6 +167,17 @@ export class ResumesController {
     return this.resumesService.getResumeAnalytics(id, user.id);
   }
 
+  @Get(':id/analytics/detailed')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get detailed analytics (PRO tier only)' })
+  getDetailedAnalytics(
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.resumesService.getDetailedAnalytics(id, user.id);
+  }
+
   @Post('improve-text')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)

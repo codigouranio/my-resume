@@ -454,6 +454,111 @@ export class ResumesService {
     };
   }
 
+  async getDetailedAnalytics(resumeId: string, userId: string) {
+    // Verify ownership
+    const resume = await this.prisma.resume.findUnique({
+      where: { id: resumeId },
+      include: { user: true },
+    });
+
+    if (!resume) {
+      throw new NotFoundException('Resume not found');
+    }
+
+    if (resume.userId !== userId) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    // Check if user has PRO tier
+    if (resume.user.subscriptionTier !== 'PRO' && resume.user.subscriptionTier !== 'ENTERPRISE') {
+      throw new ForbiddenException('Detailed analytics requires PRO subscription');
+    }
+
+    // Get comprehensive analytics
+    const [
+      totalViews,
+      uniqueVisitors,
+      avgDuration,
+      topReferrers,
+      topCountries,
+      recentViews
+    ] = await Promise.all([
+      // Total views
+      this.prisma.resumeView.count({
+        where: { resumeId },
+      }),
+      // Unique visitors (by session ID)
+      this.prisma.resumeView.groupBy({
+        by: ['sessionId'],
+        where: { 
+          resumeId,
+          sessionId: { not: null }
+        },
+      }).then(sessions => sessions.length),
+      // Average duration
+      this.prisma.resumeView.aggregate({
+        where: {
+          resumeId,
+          duration: { not: null }
+        },
+        _avg: { duration: true },
+      }).then(result => Math.round(result._avg.duration || 0)),
+      // Top referrers
+      this.prisma.$queryRaw`
+        SELECT 
+          CASE 
+            WHEN referrer IS NULL OR referrer = '' THEN 'Direct'
+            WHEN referrer LIKE '%google%' THEN 'Google'
+            WHEN referrer LIKE '%linkedin%' THEN 'LinkedIn'
+            WHEN referrer LIKE '%facebook%' THEN 'Facebook'
+            WHEN referrer LIKE '%twitter%' THEN 'Twitter'
+            WHEN referrer LIKE '%indeed%' THEN 'Indeed'
+            WHEN referrer LIKE '%glassdoor%' THEN 'Glassdoor'
+            ELSE 'Other'
+          END as source,
+          COUNT(*)::int as count
+        FROM "ResumeView"
+        WHERE "resumeId" = ${resumeId}
+        GROUP BY source
+        ORDER BY count DESC
+        LIMIT 10
+      `,
+      // Top countries
+      this.prisma.$queryRaw`
+        SELECT 
+          COALESCE(country, 'Unknown') as country,
+          COUNT(*)::int as count
+        FROM "ResumeView"
+        WHERE "resumeId" = ${resumeId}
+        GROUP BY country
+        ORDER BY count DESC
+        LIMIT 10
+      `,
+      // Recent views (last 50)
+      this.prisma.resumeView.findMany({
+        where: { resumeId },
+        orderBy: { viewedAt: 'desc' },
+        take: 50,
+        select: {
+          id: true,
+          viewedAt: true,
+          country: true,
+          city: true,
+          referrer: true,
+        },
+      }),
+    ]);
+
+    return {
+      totalViews,
+      uniqueVisitors,
+      avgDuration,
+      topReferrers,
+      topCountries,
+      recentViews,
+    };
+  }
+
   async improveText(text: string, context: string = 'resume') {
     const LLM_SERVICE_URL = process.env.LLM_SERVICE_URL || 'http://localhost:5000';
     

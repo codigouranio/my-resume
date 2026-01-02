@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { apiClient } from '../../shared/api/client';
+import { AnalyticsDashboard } from '../analytics';
 import './Dashboard.css';
 
 interface Resume {
@@ -435,99 +436,14 @@ export function DashboardPage() {
       {/* Analytics Modal */}
       {selectedResumeForAnalytics && (
         <div className="modal modal-open">
-          <div className="modal-box max-w-4xl">
-            <h3 className="font-bold text-lg mb-4">
-              Resume Analytics - {resumes.find(r => r.id === selectedResumeForAnalytics)?.title}
+          <div className="modal-box max-w-5xl">
+            <h3 className="font-bold text-2xl mb-6">
+              {resumes.find(r => r.id === selectedResumeForAnalytics)?.title}
             </h3>
 
-            {isLoadingAnalytics ? (
-              <div className="flex justify-center py-8">
-                <span className="loading loading-spinner loading-lg"></span>
-              </div>
-            ) : analytics ? (
-              <div className="space-y-6">
-                {/* Summary Stats */}
-                <div className="stats stats-vertical lg:stats-horizontal shadow w-full">
-                  <div className="stat">
-                    <div className="stat-title">Total Views</div>
-                    <div className="stat-value text-primary">{analytics.totalViews}</div>
-                    <div className="stat-desc">All time</div>
-                  </div>
-                  <div className="stat">
-                    <div className="stat-title">Detailed Tracking</div>
-                    <div className="stat-value text-secondary">{analytics.detailedViews}</div>
-                    <div className="stat-desc">With visitor info</div>
-                  </div>
-                </div>
+            <AnalyticsDashboard resumeId={selectedResumeForAnalytics} />
 
-                {/* Recent Views */}
-                {analytics.recentViews && analytics.recentViews.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold mb-2">Recent Views (Last 30 days)</h4>
-                    <div className="overflow-x-auto">
-                      <table className="table table-sm">
-                        <thead>
-                          <tr>
-                            <th>Date</th>
-                            <th>Location</th>
-                            <th>Referrer</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {analytics.recentViews.slice(0, 10).map((view: any) => (
-                            <tr key={view.id}>
-                              <td>{new Date(view.viewedAt).toLocaleDateString()}</td>
-                              <td>{view.city && view.country ? `${view.city}, ${view.country}` : view.country || 'Unknown'}</td>
-                              <td className="truncate max-w-xs">{view.referrer || 'Direct'}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-
-                {/* Views by Country */}
-                {analytics.viewsByCountry && analytics.viewsByCountry.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold mb-2">Views by Country</h4>
-                    <div className="space-y-2">
-                      {analytics.viewsByCountry.map((item: any) => (
-                        <div key={item.country} className="flex justify-between items-center">
-                          <span>{item.country}</span>
-                          <div className="flex items-center gap-2">
-                            <progress className="progress progress-primary w-32" value={item.views} max={analytics.viewsByCountry[0].views}></progress>
-                            <span className="font-bold">{item.views}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Views by Source */}
-                {analytics.viewsByReferrer && analytics.viewsByReferrer.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold mb-2">Traffic Sources</h4>
-                    <div className="space-y-2">
-                      {analytics.viewsByReferrer.map((item: any) => (
-                        <div key={item.source} className="flex justify-between items-center">
-                          <span>{item.source}</span>
-                          <div className="flex items-center gap-2">
-                            <progress className="progress progress-secondary w-32" value={item.views} max={analytics.viewsByReferrer[0].views}></progress>
-                            <span className="font-bold">{item.views}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <p className="text-center py-8">No analytics data available</p>
-            )}
-
-            <div className="modal-action">
+            <div className="modal-action mt-6">
               <button className="btn" onClick={() => { setSelectedResumeForAnalytics(null); setAnalytics(null); }}>Close</button>
             </div>
           </div>

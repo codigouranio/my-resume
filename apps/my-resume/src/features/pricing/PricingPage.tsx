@@ -48,7 +48,7 @@ export function PricingPage() {
               <p className="text-center text-sm opacity-70 mb-6">
                 Perfect for getting started
               </p>
-              
+
               <ul className="space-y-3 mb-6">
                 <li className="flex items-start gap-2">
                   <span className="text-success text-xl">✓</span>
@@ -98,7 +98,7 @@ export function PricingPage() {
               <p className="text-center text-sm opacity-70 mb-6">
                 For professionals who want to stand out
               </p>
-              
+
               <ul className="space-y-3 mb-6">
                 <li className="flex items-start gap-2">
                   <span className="text-warning text-xl">★</span>
@@ -127,7 +127,7 @@ export function PricingPage() {
                   Upgrade to PRO
                 </Link>
               </div>
-              
+
               <p className="text-center text-xs opacity-60 mt-4">
                 Coming soon! Join the waitlist
               </p>
@@ -138,10 +138,10 @@ export function PricingPage() {
         {/* FAQ Section */}
         <div className="max-w-3xl mx-auto mt-20">
           <h2 className="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
-          
+
           <div className="space-y-4">
             <div className="collapse collapse-plus bg-base-200">
-              <input type="radio" name="faq-accordion" defaultChecked /> 
+              <input type="radio" name="faq-accordion" defaultChecked />
               <div className="collapse-title text-xl font-medium">
                 Can I start free and upgrade later?
               </div>
@@ -151,7 +151,7 @@ export function PricingPage() {
             </div>
 
             <div className="collapse collapse-plus bg-base-200">
-              <input type="radio" name="faq-accordion" /> 
+              <input type="radio" name="faq-accordion" />
               <div className="collapse-title text-xl font-medium">
                 How does the custom subdomain work?
               </div>
@@ -161,7 +161,7 @@ export function PricingPage() {
             </div>
 
             <div className="collapse collapse-plus bg-base-200">
-              <input type="radio" name="faq-accordion" /> 
+              <input type="radio" name="faq-accordion" />
               <div className="collapse-title text-xl font-medium">
                 What analytics do I get with PRO?
               </div>
@@ -171,7 +171,7 @@ export function PricingPage() {
             </div>
 
             <div className="collapse collapse-plus bg-base-200">
-              <input type="radio" name="faq-accordion" /> 
+              <input type="radio" name="faq-accordion" />
               <div className="collapse-title text-xl font-medium">
                 Can I cancel anytime?
               </div>
@@ -181,7 +181,7 @@ export function PricingPage() {
             </div>
 
             <div className="collapse collapse-plus bg-base-200">
-              <input type="radio" name="faq-accordion" /> 
+              <input type="radio" name="faq-accordion" />
               <div className="collapse-title text-xl font-medium">
                 Is my data secure?
               </div>
