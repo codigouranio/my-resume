@@ -8,7 +8,6 @@ export function LandingPage() {
       <div className="hero min-h-screen bg-gradient-to-br from-primary to-secondary">
         <div className="hero-content text-center text-primary-content">
           <div className="max-w-4xl">
-            <img src="/logo.png" alt="ResumeCast.ai" className="w-32 h-32 mx-auto mb-6" />
             <h1 className="text-6xl font-bold mb-6">
               Create Your Professional Resume
             </h1>
@@ -102,8 +101,8 @@ export function LandingPage() {
       <footer className="footer footer-center p-10 bg-base-200 text-base-content">
         <div>
           <p className="font-bold text-lg">
-            <span style={{ color: '#0A1A2F' }}>Resume</span>
-            <span style={{ color: '#00C2CB' }}>Cast.ai</span>
+            <span style={{ color: '#00C2CB' }}>Resume</span>
+            <span style={{ color: '#007BFF' }}>Cast.ai</span>
           </p>
           <p>Professional Resume Builder © 2025</p>
         </div>
