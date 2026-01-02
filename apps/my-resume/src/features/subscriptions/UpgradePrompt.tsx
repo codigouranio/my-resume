@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { apiClient } from '../../shared/utils/apiClient';
+import { apiClient } from '../../shared/api/client';
 import './UpgradePrompt.css';
 
 interface UpgradePromptProps {
