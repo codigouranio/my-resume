@@ -3,10 +3,27 @@
   background: hsl(var(--b2));
 }
 
+/* Ensure navbar and dropdown are above tabs */
+.dashboard-container .navbar {
+  position: relative;
+  z-index: 100;
+}
+
+.dashboard-container .dropdown {
+  position: relative;
+  z-index: 150;
+}
+
+.dashboard-container .dropdown-content {
+  z-index: 150;
+}
+
 .dashboard-content {
   max-width: 1400px;
   margin: 0 auto;
   padding: 2rem;
+  position: relative;
+  z-index: 1;
 }
 
 .dashboard-header {

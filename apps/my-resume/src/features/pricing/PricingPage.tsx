@@ -1,9 +1,43 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../shared/contexts/AuthContext';
+import { apiClient } from '../../shared/api/client';
 import './PricingPage.css';
 
+const STRIPE_PRICE_ID = 'price_1SlG7BQaUmXjtzSFZCut7Kw6';
+
 export function PricingPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleUpgrade = async () => {
+    if (!isAuthenticated) {
+      // Redirect to register if not logged in
+      window.location.href = '/register';
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await apiClient.post<{ url: string }>('/subscriptions/checkout', {
+        priceId: STRIPE_PRICE_ID,
+      });
+
+      // Redirect to Stripe Checkout
+      if (response.data.url) {
+        window.location.href = response.data.url;
+      }
+    } catch (err: any) {
+      console.error('Checkout error:', err);
+      setError(err.response?.data?.message || 'Failed to start checkout');
+      setIsLoading(false);
+    }
+  };
+
+  const isPro = user?.subscriptionTier === 'PRO';
 
   return (
     <div className="pricing-container min-h-screen bg-base-100">
@@ -133,15 +167,38 @@ export function PricingPage() {
                 </li>
               </ul>
 
+              {error && (
+                <div className="alert alert-error shadow-lg mb-4">
+                  <span>{error}</span>
+                </div>
+              )}
+
               <div className="card-actions justify-center mt-2">
-                <Link to="/register" className="btn btn-secondary btn-wide">
-                  Upgrade to PRO
-                </Link>
+                {isPro ? (
+                  <div className="badge badge-lg badge-success">Current Plan</div>
+                ) : (
+                  <button
+                    onClick={handleUpgrade}
+                    disabled={isLoading}
+                    className="btn btn-secondary btn-wide"
+                  >
+                    {isLoading ? (
+                      <>
+                        <span className="loading loading-spinner"></span>
+                        Processing...
+                      </>
+                    ) : (
+                      'Upgrade to PRO'
+                    )}
+                  </button>
+                )}
               </div>
 
-              <p className="text-center text-xs opacity-60 mt-4">
-                Coming soon! Join the waitlist
-              </p>
+              {!isAuthenticated && (
+                <p className="text-center text-xs opacity-60 mt-4">
+                  Sign in or create an account to upgrade
+                </p>
+              )}
             </div>
           </div>
         </div>
