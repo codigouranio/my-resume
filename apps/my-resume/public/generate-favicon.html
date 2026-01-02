@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head><title>Generate Favicon</title></head>
+<body>
+<canvas id="canvas" width="512" height="512"></canvas>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+ctx.fillStyle = '#0A1A2F';
+ctx.fillRect(0, 0, 512, 512);
+ctx.font = 'bold 400px Arial';
+ctx.fillStyle = '#00C2CB';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+ctx.fillText('Ṛ', 256, 256);
+const link = document.createElement('a');
+link.download = 'favicon.png';
+link.href = canvas.toDataURL();
+link.click();
+</script>
+</body>
+</html>

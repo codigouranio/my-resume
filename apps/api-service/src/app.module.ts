@@ -9,6 +9,7 @@ import { UsersModule } from './features/users/users.module';
 import { ResumesModule } from './features/resumes/resumes.module';
 import { TemplatesModule } from './features/templates/templates.module';
 import { BadgesModule } from './features/badges/badges.module';
+import { SubscriptionsModule } from './features/subscriptions/subscriptions.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { BadgesModule } from './features/badges/badges.module';
     ResumesModule,
     TemplatesModule,
     BadgesModule,
+    SubscriptionsModule,
   ],
 })
 export class AppModule {}

@@ -30,8 +30,13 @@ model User {
   role      Role     @default(USER)
   
   // Subscription
-  subscriptionTier   SubscriptionTier @default(FREE)
-  subscriptionEndsAt DateTime?
+  subscriptionTier       SubscriptionTier @default(FREE)
+  subscriptionEndsAt     DateTime?
+  stripeCustomerId       String?          @unique
+  stripeSubscriptionId   String?          @unique
+  
+  // Custom subdomain (PRO feature)
+  customDomain           String?          @unique
   
   // Metadata
   createdAt DateTime @default(now())
@@ -42,6 +47,8 @@ model User {
   refreshTokens RefreshToken[]
   
   @@index([email])
+  @@index([stripeCustomerId])
+  @@index([customDomain])
 }
 
 model RefreshToken {

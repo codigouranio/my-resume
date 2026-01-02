@@ -1,8 +1,10 @@
 # José Blanco - Software Engineer
 
 ## Summary
-Senior Full-Stack Software Engineer with expertise in building robust, production-grade solutions across distributed systems, cloud infrastructure, and enterprise applications.  
-Experienced in leveraging AI tools and frameworks to accelerate development and enhance system capabilities.
+
+Senior Full-Stack Software Engineer with 20+ years architecting high-performance, real-time distributed systems and large-scale security solutions.
+Founding engineer at Confer (acquired by Carbon Black/VMware), where I designed and built core components of one of the industry’s earliest next-generation endpoint protection platforms — pioneering the fusion of scalable antivirus with real-time behavioral threat detection.
+Deep expertise in concurrency, parallelism, performance optimization, and security at scale, complemented by hands-on experience leveraging modern AI tools and frameworks to accelerate development, enhance system intelligence, and drive innovation.
 
 ## Experience
 
@@ -29,7 +31,7 @@ Provider of enterprise-grade virtual assistant solutions using conversational AI
 - Integrated secure OAuth2 and LDAP authentication, replacing legacy systems and improving security across enterprise-grade AI solutions.
 - Enhanced React-based interfaces, ensuring cross-browser compatibility and meeting all accessibility requirements.
 
-### <img src="https://www.google.com/s2/favicons?domain=broadcom.com&sz=64" alt="Carbon Black"> Carbon Black Inc. (CBLK) - Software Engineer  
+### <img src="https://www.google.com/s2/favicons?domain=broadcom.com&sz=64" alt="Carbon Black"> Carbon Black Inc. (CBLK:US) - Software Engineer  
 **Jul 2016 - Jul 2017**  
 Provider of enterprise endpoint security and threat detection solutions
 
@@ -41,6 +43,7 @@ Provider of enterprise endpoint security and threat detection solutions
 **Aug 2013 – Jul 2016**  
 *Note: Confer Technologies was later acquired by Carbon Black*
 
+- Led the design and implementation of core features in a next-generation endpoint protection platform, combining scalable antivirus capabilities with behavioral analysis to deliver robust security solutions.
 - Engineered backend services for antivirus and endpoint detection, integrating Java Spring/microservices/Elasticsearch for scalable log processing.
 - Designed and built Alerts Screen, a flagship threat detection interface adopted by enterprise customers, enhancing analyst workflows.
 - Designed and implemented multi-threaded, high-throughput data-processing pipelines in Java, enabling real-time behavioral detection at enterprise scale.
@@ -48,7 +51,11 @@ Provider of enterprise endpoint security and threat detection solutions
 
 ```video
 https://youtu.be/jkHeMk08aQ8?si=mNuZcuvFlTRZYC_w
+https://youtu.be/3cv66VV3-kY?si=539QKQcPogiWyjbm
 https://youtu.be/jkHeMk08aQ8?si=jkHeMk08aQ8
+https://youtu.be/MWlq-wL3tLQ?si=T9ZZ3vaiCviKX8-v
+https://youtu.be/3cv66VV3-kY?si=YYA2AbHAdk4phzmd
+https://youtu.be/k4XnC-6kP-Y?si=Ap_pezoICKST2oXt
 ```
 
 ### W2BI Inc. - Software Engineer  
@@ -103,7 +110,7 @@ Microservices, REST APIs, OAuth2, LDAP, Performance Optimization, Distributed Sy
 
 ---
 
-```coursera 
+```coursera sudo ./NVIDIA-Linux-x86_64-590.48.01.run --uninstall
 name: Algorithms for DNA Sequencing
 issuing organization: Johns Hopkins University
 issue date: February 2023

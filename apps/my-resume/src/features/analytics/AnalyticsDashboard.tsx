@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { UpgradePrompt } from '../subscriptions';
 
 interface AnalyticsData {
   totalViews: number;
@@ -23,6 +24,7 @@ export function AnalyticsDashboard({ resumeId }: AnalyticsDashboardProps) {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPro, setIsPro] = useState(false);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   useEffect(() => {
     loadAnalytics();
@@ -82,9 +84,9 @@ export function AnalyticsDashboard({ resumeId }: AnalyticsDashboardProps) {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Analytics</h2>
         {!isPro && (
-          <a href="/pricing" className="btn btn-primary btn-sm">
+          <button onClick={() => setShowUpgradePrompt(true)} className="btn btn-primary btn-sm">
             Upgrade to PRO for Detailed Analytics
-          </a>
+          </button>
         )}
       </div>
 
@@ -202,8 +204,28 @@ export function AnalyticsDashboard({ resumeId }: AnalyticsDashboardProps) {
             <h3 className="font-bold">Upgrade to PRO for Advanced Analytics</h3>
             <p className="text-sm">Get detailed insights: visitor tracking, referral sources, geographic data, and more!</p>
           </div>
-          <a href="/pricing" className="btn btn-primary btn-sm">View Plans</a>
+          <button onClick={() => setShowUpgradePrompt(true)} className="btn btn-primary btn-sm">
+            View Plans
+          </button>
         </div>
+      )}
+
+      {/* Upgrade Modal */}
+      {showUpgradePrompt && (
+        <dialog open className="modal modal-open">
+          <div className="modal-box max-w-2xl">
+            <button
+              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+              onClick={() => setShowUpgradePrompt(false)}
+            >
+              ✕
+            </button>
+            <UpgradePrompt onClose={() => setShowUpgradePrompt(false)} />
+          </div>
+          <form method="dialog" className="modal-backdrop">
+            <button onClick={() => setShowUpgradePrompt(false)}>close</button>
+          </form>
+        </dialog>
       )}
     </div>
   );
