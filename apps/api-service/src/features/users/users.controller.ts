@@ -6,12 +6,14 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -19,6 +21,14 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Get('check-subdomain')
+  @Public()
+  @ApiOperation({ summary: 'Check if custom subdomain is available' })
+  async checkSubdomainAvailability(@Query('subdomain') subdomain: string) {
+    const isAvailable = await this.usersService.checkSubdomainAvailability(subdomain);
+    return { available: isAvailable };
+  }
 
   @Get('me')
   @ApiOperation({ summary: 'Get current user profile' })

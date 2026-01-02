@@ -108,4 +108,16 @@ export class UsersService {
       where: { id },
     });
   }
+
+  async checkSubdomainAvailability(subdomain: string): Promise<boolean> {
+    if (!subdomain) {
+      return false;
+    }
+
+    const existingUser = await this.prisma.user.findUnique({
+      where: { customDomain: subdomain },
+    });
+
+    return !existingUser;
+  }
 }

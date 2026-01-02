@@ -13,12 +13,43 @@ export function SettingsPage() {
   const [isSavingDomain, setIsSavingDomain] = useState(false);
   const [domainError, setDomainError] = useState('');
   const [domainSuccess, setDomainSuccess] = useState('');
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (user?.customDomain) {
       setCustomDomain(user.customDomain);
     }
   }, [user]);
+
+  // Check subdomain availability with debounce
+  useEffect(() => {
+    if (!customDomain || customDomain.length < 3 || !isEditingDomain) {
+      setIsAvailable(null);
+      return;
+    }
+
+    // Skip check if it's the user's current domain
+    if (customDomain === user?.customDomain) {
+      setIsAvailable(true);
+      return;
+    }
+
+    setIsCheckingAvailability(true);
+    const timer = setTimeout(async () => {
+      try {
+        const result = await apiClient.checkSubdomainAvailability(customDomain);
+        setIsAvailable(result.available);
+      } catch (err) {
+        console.error('Failed to check availability:', err);
+        setIsAvailable(null);
+      } finally {
+        setIsCheckingAvailability(false);
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timer);
+  }, [customDomain, isEditingDomain, user?.customDomain]);
 
   const handleLogout = () => {
     logout();
@@ -180,15 +211,44 @@ export function SettingsPage() {
                             onChange={(e) => setCustomDomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                             disabled={!isEditingDomain || isSavingDomain}
                             placeholder="yourname"
-                            className="input input-bordered flex-1"
+                            className={`input input-bordered flex-1 ${
+                              isEditingDomain && customDomain.length >= 3 && isAvailable === true ? 'input-success' :
+                              isEditingDomain && customDomain.length >= 3 && isAvailable === false ? 'input-error' : ''
+                            }`}
                             minLength={3}
                             maxLength={63}
                           />
                           <span className="text-sm text-base-content/60">.resumecast.ai</span>
+                          {isEditingDomain && customDomain.length >= 3 && (
+                            <div className="flex items-center">
+                              {isCheckingAvailability ? (
+                                <span className="loading loading-spinner loading-sm"></span>
+                              ) : isAvailable === true ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-success" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                              ) : isAvailable === false ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-error" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                </svg>
+                              ) : null}
+                            </div>
+                          )}
                         </div>
-                        <p className="text-xs text-base-content/60">
-                          • 3-63 characters • Lowercase letters, numbers, hyphens only • No hyphens at start/end
-                        </p>
+                        <div className="space-y-1">
+                          <p className="text-xs text-base-content/60">
+                            • 3-63 characters • Lowercase letters, numbers, hyphens only • No hyphens at start/end
+                          </p>
+                          {isEditingDomain && customDomain.length >= 3 && !isCheckingAvailability && (
+                            <p className={`text-sm font-medium ${
+                              isAvailable === true ? 'text-success' :
+                              isAvailable === false ? 'text-error' : ''
+                            }`}>
+                              {isAvailable === true && '✓ This subdomain is available!'}
+                              {isAvailable === false && '✗ This subdomain is already taken'}
+                            </p>
+                          )}
+                        </div>
 
                         {domainError && (
                           <div className="alert alert-error">
@@ -224,7 +284,7 @@ export function SettingsPage() {
                               <button
                                 className="btn btn-success btn-sm"
                                 onClick={handleSaveCustomDomain}
-                                disabled={isSavingDomain || !customDomain || customDomain.length < 3}
+                                disabled={isSavingDomain || !customDomain || customDomain.length < 3 || isAvailable === false || isCheckingAvailability}
                               >
                                 {isSavingDomain ? (
                                   <>

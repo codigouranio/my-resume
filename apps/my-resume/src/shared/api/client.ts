@@ -152,6 +152,10 @@ class ApiClient {
     });
   }
 
+  async checkSubdomainAvailability(subdomain: string) {
+    return this.request(`/users/check-subdomain?subdomain=${encodeURIComponent(subdomain)}`);
+  }
+
   async deleteAccount() {
     return this.request('/users/me', {
       method: 'DELETE',
