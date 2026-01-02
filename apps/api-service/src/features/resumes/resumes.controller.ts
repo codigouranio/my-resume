@@ -69,6 +69,25 @@ export class ResumesController {
     return this.resumesService.getPublicStats(slug);
   }
 
+  @Get('by-domain/:domain')
+  @Public()
+  @ApiOperation({ summary: 'Get resume by custom domain' })
+  findByDomain(
+    @Param('domain') domain: string,
+    @Query('view') view?: string,
+    @Req() req?: any,
+  ) {
+    const viewData = view === 'true' ? {
+      ipAddress: req?.ip || req?.connection?.remoteAddress,
+      userAgent: req?.headers?.['user-agent'],
+      referrer: req?.headers?.['referer'] || req?.headers?.['referrer'],
+      country: req?.headers?.['cf-ipcountry'],
+      city: req?.headers?.['cf-ipcity'],
+    } : undefined;
+    
+    return this.resumesService.findByCustomDomain(domain, view === 'true', viewData);
+  }
+
   @Get('llm/:slug')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)

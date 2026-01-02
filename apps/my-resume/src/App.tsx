@@ -10,7 +10,42 @@ import { SettingsPage } from './features/settings';
 import Resume from './features/resume/Resume';
 import './shared/styles/App.css';
 
+// Check if we're on a custom subdomain
+function getCustomSubdomain(): string | null {
+  const hostname = window.location.hostname;
+
+  // Check if it's a subdomain (not main domain)
+  if (hostname !== 'resumecast.ai' &&
+    hostname !== 'www.resumecast.ai' &&
+    hostname !== 'localhost' &&
+    !hostname.match(/^\d+\.\d+\.\d+\.\d+$/)) { // Not IP address
+
+    // Extract subdomain
+    const parts = hostname.split('.');
+    if (parts.length >= 3 && parts[parts.length - 2] === 'resumecast') {
+      return parts[0]; // Return the subdomain part
+    }
+  }
+
+  return null;
+}
+
 const App = () => {
+  const customSubdomain = getCustomSubdomain();
+
+  // If on custom subdomain, show only the resume
+  if (customSubdomain) {
+    return (
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="*" element={<Resume customDomain={customSubdomain} />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    );
+  }
+
   return (
     <AuthProvider>
       <BrowserRouter>

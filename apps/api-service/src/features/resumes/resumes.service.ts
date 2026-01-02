@@ -141,6 +141,84 @@ export class ResumesService {
     return publicResume;
   }
 
+  async findByCustomDomain(
+    customDomain: string,
+    incrementView: boolean = false,
+    viewData?: {
+      ipAddress?: string;
+      userAgent?: string;
+      referrer?: string;
+      country?: string;
+      city?: string;
+    },
+  ) {
+    // Find user with this custom domain
+    const user = await this.prisma.user.findUnique({
+      where: { customDomain },
+      select: { id: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Custom domain not found');
+    }
+
+    // Find user's first public published resume
+    const resume = await this.prisma.resume.findFirst({
+      where: {
+        userId: user.id,
+        isPublic: true,
+        isPublished: true,
+      },
+      include: {
+        template: true,
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc', // Get most recent resume
+      },
+    });
+
+    if (!resume) {
+      throw new NotFoundException('No public resume found for this domain');
+    }
+
+    // Track view
+    if (incrementView && viewData) {
+      await Promise.all([
+        this.prisma.resume.update({
+          where: { id: resume.id },
+          data: { viewCount: { increment: 1 } },
+        }),
+        this.prisma.resumeView.create({
+          data: {
+            resumeId: resume.id,
+            ipAddress: viewData.ipAddress,
+            userAgent: viewData.userAgent,
+            referrer: viewData.referrer,
+            country: viewData.country,
+            city: viewData.city,
+          },
+        }),
+      ]);
+    } else if (incrementView) {
+      await this.prisma.resume.update({
+        where: { id: resume.id },
+        data: { viewCount: { increment: 1 } },
+      });
+    }
+
+    // Remove llmContext from public view
+    const { llmContext, ...publicResume } = resume;
+
+    return publicResume;
+  }
+
   async getPublicStats(slug: string) {
     const resume = await this.prisma.resume.findUnique({
       where: { slug },

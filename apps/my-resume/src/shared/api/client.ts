@@ -175,6 +175,10 @@ class ApiClient {
     return this.request(`/resumes/public/${slug}/stats`);
   }
 
+  async getResumeByDomain(domain: string) {
+    return this.request(`/resumes/by-domain/${domain}?view=true`);
+  }
+
   async checkSlugAvailability(slug: string) {
     return this.request(`/resumes/public/${slug}`);
   }

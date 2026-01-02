@@ -8,7 +8,11 @@ import { ChatWidget } from '../chat';
 import { GitHubStats, CourseraCertificate } from '../badges';
 import './Resume.css';
 
-export default function Resume() {
+interface ResumeProps {
+  customDomain?: string;
+}
+
+export default function Resume({ customDomain }: ResumeProps = {}) {
   const { slug } = useParams<{ slug?: string }>();
   const [markdown, setMarkdown] = useState<string>('');
   const [resumeData, setResumeData] = useState<any>(null);
@@ -27,14 +31,31 @@ export default function Resume() {
   const [viewCount, setViewCount] = useState<number | null>(null);
 
   useEffect(() => {
-    if (slug) {
+    if (customDomain) {
+      // Load resume by custom domain
+      fetchByCustomDomain(customDomain);
+    } else if (slug) {
       // Load public resume by slug from API
       fetchPublicResume(slug);
     } else {
       // Fallback to local resume.md (for backward compatibility)
       fetchLocalResume();
     }
-  }, [slug]);
+  }, [slug, customDomain]);
+
+  const fetchByCustomDomain = async (domain: string) => {
+    try {
+      const data = await apiClient.getResumeByDomain(domain);
+      setResumeData(data);
+      setMarkdown(data.content);
+      setViewCount(data.viewCount);
+    } catch (err: any) {
+      setError(err.message || 'Resume not found for this domain');
+      setMarkdown('');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const fetchPublicResume = async (slug: string) => {
     try {
