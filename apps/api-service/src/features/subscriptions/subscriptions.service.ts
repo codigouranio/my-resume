@@ -122,7 +122,7 @@ export class SubscriptionsService {
     }
 
     const subscriptionId = session.subscription as string;
-    const subscription = await this.stripe.subscriptions.retrieve(subscriptionId);
+    const subscription: any = await this.stripe.subscriptions.retrieve(subscriptionId);
     
     await this.prisma.user.update({
       where: { id: userId },
@@ -139,7 +139,7 @@ export class SubscriptionsService {
   /**
    * Handle subscription updates (renewals, plan changes)
    */
-  private async handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+  private async handleSubscriptionUpdated(subscription: any) {
     const user = await this.prisma.user.findUnique({
       where: { stripeSubscriptionId: subscription.id },
     });
@@ -166,7 +166,7 @@ export class SubscriptionsService {
   /**
    * Handle subscription cancellation
    */
-  private async handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+  private async handleSubscriptionDeleted(subscription: any) {
     const user = await this.prisma.user.findUnique({
       where: { stripeSubscriptionId: subscription.id },
     });
