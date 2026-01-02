@@ -14,7 +14,7 @@ export class SubscriptionsService {
     }
     
     this.stripe = new Stripe(stripeSecretKey, {
-      apiVersion: '2024-12-18.acacia',
+      apiVersion: '2025-12-15.clover',
     });
   }
 
@@ -129,7 +129,7 @@ export class SubscriptionsService {
       data: {
         subscriptionTier: 'PRO',
         stripeSubscriptionId: subscriptionId,
-        subscriptionEndsAt: new Date(subscription.current_period_end * 1000),
+        subscriptionEndsAt: subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null,
       },
     });
 
@@ -156,7 +156,7 @@ export class SubscriptionsService {
       where: { id: user.id },
       data: {
         subscriptionTier: tier,
-        subscriptionEndsAt: new Date(subscription.current_period_end * 1000),
+        subscriptionEndsAt: subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null,
       },
     });
 
