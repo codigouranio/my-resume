@@ -143,7 +143,8 @@ export function DashboardPage() {
         <div className="flex-1">
           <Link to="/dashboard" className="btn btn-ghost normal-case text-xl flex items-center gap-2">
             <img src="/logo.png" alt="RC" className="w-8 h-8" />
-            resumecast.ai
+            <span style={{ color: '#0A1A2F', fontWeight: 700 }}>Resume</span>
+            <span style={{ color: '#00C2CB', fontWeight: 700 }}>Cast.ai</span>
           </Link>
         </div>
         <div className="flex-none gap-2">

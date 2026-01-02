@@ -8,7 +8,7 @@ export function LandingPage() {
       <div className="hero min-h-screen bg-gradient-to-br from-primary to-secondary">
         <div className="hero-content text-center text-primary-content">
           <div className="max-w-4xl">
-            <img src="/logo.png" alt="resumecast.ai" className="w-32 h-32 mx-auto mb-6" />
+            <img src="/logo.png" alt="ResumeCast.ai" className="w-32 h-32 mx-auto mb-6" />
             <h1 className="text-6xl font-bold mb-6">
               Create Your Professional Resume
             </h1>
@@ -31,7 +31,7 @@ export function LandingPage() {
       {/* Features Section */}
       <div className="features-section py-20 bg-base-200">
         <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center mb-12">Why Choose resumecast.ai?</h2>
+          <h2 className="text-4xl font-bold text-center mb-12">Why Choose ResumeCast.ai?</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="card bg-base-100 shadow-xl">
@@ -90,7 +90,7 @@ export function LandingPage() {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl font-bold mb-6">Ready to Build Your Resume?</h2>
           <p className="text-xl mb-8 opacity-90">
-            Join thousands of professionals who trust resumecast.ai
+            Join thousands of professionals who trust ResumeCast.ai
           </p>
           <Link to="/register" className="btn btn-lg btn-neutral">
             Create Your Free Account
@@ -101,7 +101,10 @@ export function LandingPage() {
       {/* Footer */}
       <footer className="footer footer-center p-10 bg-base-200 text-base-content">
         <div>
-          <p className="font-bold text-lg">resumecast.ai</p>
+          <p className="font-bold text-lg">
+            <span style={{ color: '#0A1A2F' }}>Resume</span>
+            <span style={{ color: '#00C2CB' }}>Cast.ai</span>
+          </p>
           <p>Professional Resume Builder © 2025</p>
         </div>
       </footer>
