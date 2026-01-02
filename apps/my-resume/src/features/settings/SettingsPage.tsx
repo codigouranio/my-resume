@@ -211,10 +211,9 @@ export function SettingsPage() {
                             onChange={(e) => setCustomDomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                             disabled={!isEditingDomain || isSavingDomain}
                             placeholder="yourname"
-                            className={`input input-bordered flex-1 ${
-                              isEditingDomain && customDomain.length >= 3 && isAvailable === true ? 'input-success' :
-                              isEditingDomain && customDomain.length >= 3 && isAvailable === false ? 'input-error' : ''
-                            }`}
+                            className={`input input-bordered flex-1 ${isEditingDomain && customDomain.length >= 3 && isAvailable === true ? 'input-success' :
+                                isEditingDomain && customDomain.length >= 3 && isAvailable === false ? 'input-error' : ''
+                              }`}
                             minLength={3}
                             maxLength={63}
                           />
@@ -240,10 +239,9 @@ export function SettingsPage() {
                             • 3-63 characters • Lowercase letters, numbers, hyphens only • No hyphens at start/end
                           </p>
                           {isEditingDomain && customDomain.length >= 3 && !isCheckingAvailability && (
-                            <p className={`text-sm font-medium ${
-                              isAvailable === true ? 'text-success' :
-                              isAvailable === false ? 'text-error' : ''
-                            }`}>
+                            <p className={`text-sm font-medium ${isAvailable === true ? 'text-success' :
+                                isAvailable === false ? 'text-error' : ''
+                              }`}>
                               {isAvailable === true && '✓ This subdomain is available!'}
                               {isAvailable === false && '✗ This subdomain is already taken'}
                             </p>

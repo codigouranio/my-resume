@@ -262,7 +262,15 @@ export function DashboardPage() {
                   <div key={resume.id} className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
                     <div className="card-body">
                       <h2 className="card-title">{resume.title}</h2>
-                      <p className="text-sm text-base-content/60">/{resume.slug}</p>
+                      <p className="text-sm text-base-content/60">
+                        {user?.customDomain ? (
+                          <>
+                            {user.customDomain}.resumecast.ai/{resume.slug}
+                          </>
+                        ) : (
+                          <>/resume/{resume.slug}</>
+                        )}
+                      </p>
 
                       <div className="flex gap-2 mt-2">
                         {resume.isPublished ? (
@@ -289,7 +297,7 @@ export function DashboardPage() {
                       <div className="card-actions justify-end mt-4">
                         {resume.isPublic && resume.isPublished && (
                           <a
-                            href={`/resume/${resume.slug}`}
+                            href={user?.customDomain ? `https://${user.customDomain}.resumecast.ai/${resume.slug}` : `/resume/${resume.slug}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="btn btn-sm btn-ghost gap-1"

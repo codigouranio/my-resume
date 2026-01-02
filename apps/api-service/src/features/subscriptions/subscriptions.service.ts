@@ -152,6 +152,11 @@ export class SubscriptionsService {
     const status = subscription.status;
     const tier = status === 'active' || status === 'trialing' ? 'PRO' : 'FREE';
 
+    // If downgrading from PRO to FREE, unpublish all resumes and clear custom domain
+    if (user.subscriptionTier === 'PRO' && tier === 'FREE') {
+      await this.handleDowngradeToPRO(user.id);
+    }
+
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
@@ -176,6 +181,9 @@ export class SubscriptionsService {
       return;
     }
 
+    // Unpublish all resumes and clear custom domain
+    await this.handleDowngradeToFREE(user.id);
+
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
@@ -186,5 +194,26 @@ export class SubscriptionsService {
     });
 
     this.logger.log(`User ${user.id} downgraded to FREE`);
+  }
+
+  /**
+   * Handle downgrade from PRO to FREE
+   * - Unpublish all user's resumes
+   * - Clear custom domain
+   */
+  private async handleDowngradeToFREE(userId: string) {
+    // Unpublish all resumes
+    await this.prisma.resume.updateMany({
+      where: { userId },
+      data: { isPublished: false },
+    });
+
+    // Clear custom domain
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { customDomain: null },
+    });
+
+    this.logger.log(`User ${userId} resumes unpublished and custom domain cleared due to downgrade`);
   }
 }
