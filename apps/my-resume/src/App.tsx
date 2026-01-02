@@ -6,6 +6,7 @@ import { LoginPage, RegisterPage } from './features/auth';
 import { DashboardPage } from './features/dashboard';
 import { EditorPage } from './features/editor';
 import { PricingPage } from './features/pricing';
+import { SettingsPage } from './features/settings';
 import Resume from './features/resume/Resume';
 import './shared/styles/App.css';
 
@@ -27,6 +28,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
               </ProtectedRoute>
             }
           />

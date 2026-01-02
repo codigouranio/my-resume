@@ -140,16 +140,16 @@ export function DashboardPage() {
   return (
     <div className="dashboard-container">
       {/* Header */}
-      <div className="navbar bg-white shadow-lg">
+      <div className="navbar bg-base-300 shadow-lg">
         <div className="flex-1">
           <Link to="/dashboard" className="btn btn-ghost normal-case text-xl flex items-center gap-2">
             <img src="/logo.png" alt="RC" className="w-8 h-8" />
-            <span style={{ color: '#007BFF', fontWeight: 700 }}>Resume</span>
-            <span style={{ color: '#00C2CB', fontWeight: 700 }}>Cast.ai</span>
+            <span style={{ color: '#00C2CB', fontWeight: 700 }}>Resume</span>
+            <span style={{ color: '#007BFF', fontWeight: 700 }}>Cast.ai</span>
           </Link>
         </div>
         <div className="flex-none gap-2">
-          <Link to="/pricing" className="btn btn-primary btn-sm">
+          <Link to="/settings" className="btn btn-primary btn-sm">
             ⭐ Upgrade to PRO
           </Link>
           <div className="dropdown dropdown-end">
@@ -164,8 +164,7 @@ export function DashboardPage() {
               <li className="menu-title">
                 <span>{user?.email}</span>
               </li>
-              <li><Link to="/pricing">⭐ Subscription</Link></li>
-              <li><a onClick={() => navigate('/settings')}>⚙️ Settings</a></li>
+              <li><Link to="/settings">⚙️ Settings</Link></li>
               <li><a onClick={handleLogout}>🚪 Logout</a></li>
             </ul>
           </div>
