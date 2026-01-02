@@ -154,7 +154,7 @@ export class SubscriptionsService {
 
     // If downgrading from PRO to FREE, unpublish all resumes and clear custom domain
     if (user.subscriptionTier === 'PRO' && tier === 'FREE') {
-      await this.handleDowngradeToPRO(user.id);
+      await this.handleDowngradeToFREE(user.id);
     }
 
     await this.prisma.user.update({
