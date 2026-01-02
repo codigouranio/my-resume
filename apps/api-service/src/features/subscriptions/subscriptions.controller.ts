@@ -33,8 +33,8 @@ export class SubscriptionsController {
    */
   @Post('checkout')
   @UseGuards(JwtAuthGuard)
-  async createCheckout(@Req() req: Request & { user: { userId: string } }, @Body() body: { priceId: string }) {
-    const userId = req.user.userId;
+  async createCheckout(@Req() req: Request & { user: { id: string } }, @Body() body: { priceId: string }) {
+    const userId = req.user.id;
     const { priceId } = body;
 
     if (!priceId) {
@@ -53,8 +53,8 @@ export class SubscriptionsController {
    */
   @Post('portal')
   @UseGuards(JwtAuthGuard)
-  async createPortal(@Req() req: Request & { user: { userId: string } }) {
-    const userId = req.user.userId;
+  async createPortal(@Req() req: Request & { user: { id: string } }) {
+    const userId = req.user.id;
     const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     const returnUrl = `${baseUrl}/dashboard`;
 
