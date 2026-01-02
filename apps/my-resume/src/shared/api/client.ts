@@ -145,7 +145,7 @@ class ApiClient {
     return this.request('/users/me');
   }
 
-  async updateCurrentUser(data: { firstName?: string; lastName?: string }) {
+  async updateCurrentUser(data: { firstName?: string; lastName?: string; customDomain?: string | null }) {
     return this.request('/users/me', {
       method: 'PATCH',
       body: JSON.stringify(data),

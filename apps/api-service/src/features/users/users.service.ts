@@ -51,6 +51,7 @@ export class UsersService {
         role: true,
         subscriptionTier: true,
         subscriptionEndsAt: true,
+        customDomain: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -64,7 +65,26 @@ export class UsersService {
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
-    await this.findById(id); // Check if user exists
+    const user = await this.findById(id); // Check if user exists
+
+    // Check if trying to set custom domain
+    if (updateUserDto.customDomain !== undefined) {
+      // Only PRO users can set custom domains
+      if (user.subscriptionTier !== 'PRO') {
+        throw new ConflictException('Custom subdomains are only available for PRO users');
+      }
+
+      // Check if subdomain is already taken
+      if (updateUserDto.customDomain) {
+        const existingUser = await this.prisma.user.findUnique({
+          where: { customDomain: updateUserDto.customDomain },
+        });
+
+        if (existingUser && existingUser.id !== id) {
+          throw new ConflictException('This subdomain is already taken');
+        }
+      }
+    }
 
     return this.prisma.user.update({
       where: { id },
@@ -76,6 +96,7 @@ export class UsersService {
         lastName: true,
         role: true,
         subscriptionTier: true,
+        customDomain: true,
         updatedAt: true,
       },
     });
