@@ -267,6 +267,20 @@ class ApiClient {
     });
   }
 
+  // Subscriptions (Stripe)
+  async createCheckoutSession(priceId: string) {
+    return this.request('/subscriptions/checkout', {
+      method: 'POST',
+      body: JSON.stringify({ priceId }),
+    });
+  }
+
+  async createPortalSession() {
+    return this.request('/subscriptions/portal', {
+      method: 'POST',
+    });
+  }
+
   // Templates
   async getTemplates() {
     return this.request('/templates');

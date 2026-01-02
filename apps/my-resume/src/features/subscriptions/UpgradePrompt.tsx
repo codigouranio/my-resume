@@ -17,17 +17,17 @@ export const UpgradePrompt: React.FC<UpgradePromptProps> = ({ onClose }) => {
     try {
       const priceId = import.meta.env.PUBLIC_STRIPE_PRICE_ID || 'price_1234567890'; // Replace with actual Stripe price ID
 
-      const response = await apiClient.post('/subscriptions/checkout', { priceId });
+      const response = await apiClient.createCheckoutSession(priceId);
 
-      if (response.data.url) {
+      if (response.url) {
         // Redirect to Stripe checkout
-        window.location.href = response.data.url;
+        window.location.href = response.url;
       } else {
         throw new Error('No checkout URL received');
       }
     } catch (err: any) {
       console.error('Checkout error:', err);
-      setError(err.response?.data?.message || 'Failed to start checkout. Please try again.');
+      setError(err.message || 'Failed to start checkout. Please try again.');
       setIsLoading(false);
     }
   };

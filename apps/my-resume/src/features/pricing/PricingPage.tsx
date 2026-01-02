@@ -22,17 +22,15 @@ export function PricingPage() {
     setError(null);
 
     try {
-      const response = await apiClient.post<{ url: string }>('/subscriptions/checkout', {
-        priceId: STRIPE_PRICE_ID,
-      });
+      const response = await apiClient.createCheckoutSession(STRIPE_PRICE_ID);
 
       // Redirect to Stripe Checkout
-      if (response.data.url) {
-        window.location.href = response.data.url;
+      if (response.url) {
+        window.location.href = response.url;
       }
     } catch (err: any) {
       console.error('Checkout error:', err);
-      setError(err.response?.data?.message || 'Failed to start checkout');
+      setError(err.message || 'Failed to start checkout');
       setIsLoading(false);
     }
   };
