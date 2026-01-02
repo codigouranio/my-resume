@@ -1,24 +1,35 @@
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../shared/contexts/AuthContext';
 import './PricingPage.css';
 
 export function PricingPage() {
+  const { isAuthenticated } = useAuth();
+
   return (
     <div className="pricing-container min-h-screen bg-base-100">
       {/* Header */}
       <div className="navbar bg-base-100 shadow-lg">
         <div className="flex-1">
-          <Link to="/" className="btn btn-ghost normal-case text-xl">
+          <Link to={isAuthenticated ? "/dashboard" : "/"} className="btn btn-ghost normal-case text-xl">
             <span style={{ color: '#00C2CB', fontWeight: 700 }}>Resume</span>
             <span style={{ color: '#007BFF', fontWeight: 700 }}>Cast.ai</span>
           </Link>
         </div>
         <div className="flex-none gap-2">
-          <Link to="/login" className="btn btn-ghost">
-            Sign In
-          </Link>
-          <Link to="/register" className="btn btn-primary">
-            Get Started
-          </Link>
+          {isAuthenticated ? (
+            <Link to="/dashboard" className="btn btn-ghost">
+              Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link to="/login" className="btn btn-ghost">
+                Sign In
+              </Link>
+              <Link to="/register" className="btn btn-primary">
+                Get Started
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
