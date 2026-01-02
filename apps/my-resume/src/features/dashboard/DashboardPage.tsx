@@ -141,8 +141,9 @@ export function DashboardPage() {
       {/* Header */}
       <div className="navbar bg-base-100 shadow-lg">
         <div className="flex-1">
-          <Link to="/dashboard" className="btn btn-ghost normal-case text-xl">
-            📄 resumecast.ai
+          <Link to="/dashboard" className="btn btn-ghost normal-case text-xl flex items-center gap-2">
+            <img src="/logo.png" alt="RC" className="w-8 h-8" />
+            resumecast.ai
           </Link>
         </div>
         <div className="flex-none gap-2">

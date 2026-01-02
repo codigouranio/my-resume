@@ -8,6 +8,7 @@ export function LandingPage() {
       <div className="hero min-h-screen bg-gradient-to-br from-primary to-secondary">
         <div className="hero-content text-center text-primary-content">
           <div className="max-w-4xl">
+            <img src="/logo.png" alt="resumecast.ai" className="w-32 h-32 mx-auto mb-6" />
             <h1 className="text-6xl font-bold mb-6">
               Create Your Professional Resume
             </h1>
