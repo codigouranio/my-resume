@@ -141,97 +141,6 @@ export function SettingsPage() {
                     </span>
                     {!isPro && (
                       <button
-
-                        {/* Custom Subdomain - PRO Only */}
-                        {isPro && (
-                          <>
-                            <div className="divider"></div>
-                            <div className="form-control">
-                              <label className="label">
-                                <span className="label-text font-semibold">Custom Subdomain (PRO)</span>
-                                <span className="label-text-alt badge badge-primary">PRO Feature</span>
-                              </label>
-                              <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                  <input
-                                    type="text"
-                                    value={customDomain}
-                                    onChange={(e) => setCustomDomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                                    disabled={!isEditingDomain || isSavingDomain}
-                                    placeholder="yourname"
-                                    className="input input-bordered flex-1"
-                                    minLength={3}
-                                    maxLength={63}
-                                  />
-                                  <span className="text-sm text-base-content/60">.resumecast.ai</span>
-                                </div>
-                                <p className="text-xs text-base-content/60">
-                                  • 3-63 characters • Lowercase letters, numbers, hyphens only • No hyphens at start/end
-                                </p>
-
-                                {domainError && (
-                                  <div className="alert alert-error">
-                                    <span>{domainError}</span>
-                                  </div>
-                                )}
-
-                                {domainSuccess && (
-                                  <div className="alert alert-success">
-                                    <span>{domainSuccess}</span>
-                                  </div>
-                                )}
-
-                                {user?.customDomain && !isEditingDomain && (
-                                  <div className="alert alert-info">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span>Your resume is accessible at: <a href={`https://${user.customDomain}.resumecast.ai`} target="_blank" rel="noopener noreferrer" className="link">{user.customDomain}.resumecast.ai</a></span>
-                                  </div>
-                                )}
-
-                                <div className="flex gap-2">
-                                  {!isEditingDomain ? (
-                                    <button
-                                      className="btn btn-primary btn-sm"
-                                      onClick={() => setIsEditingDomain(true)}
-                                    >
-                                      {user?.customDomain ? 'Change Subdomain' : 'Set Custom Subdomain'}
-                                    </button>
-                                  ) : (
-                                    <>
-                                      <button
-                                        className="btn btn-success btn-sm"
-                                        onClick={handleSaveCustomDomain}
-                                        disabled={isSavingDomain || !customDomain || customDomain.length < 3}
-                                      >
-                                        {isSavingDomain ? (
-                                          <>
-                                            <span className="loading loading-spinner loading-xs"></span>
-                                            Saving...
-                                          </>
-                                        ) : (
-                                          'Save'
-                                        )}
-                                      </button>
-                                      <button
-                                        className="btn btn-ghost btn-sm"
-                                        onClick={() => {
-                                          setIsEditingDomain(false);
-                                          setCustomDomain(user?.customDomain || '');
-                                          setDomainError('');
-                                        }}
-                                        disabled={isSavingDomain}
-                                      >
-                                        Cancel
-                                      </button>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </>
-                        )}
                         className="btn btn-primary btn-sm"
                         onClick={() => setActiveTab('subscription')}
                       >
@@ -253,6 +162,97 @@ export function SettingsPage() {
                     </button>
                   </div>
                 </div>
+
+                {/* Custom Subdomain - PRO Only */}
+                {isPro && (
+                  <>
+                    <div className="divider"></div>
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text font-semibold">Custom Subdomain (PRO)</span>
+                        <span className="label-text-alt badge badge-primary">PRO Feature</span>
+                      </label>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={customDomain}
+                            onChange={(e) => setCustomDomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                            disabled={!isEditingDomain || isSavingDomain}
+                            placeholder="yourname"
+                            className="input input-bordered flex-1"
+                            minLength={3}
+                            maxLength={63}
+                          />
+                          <span className="text-sm text-base-content/60">.resumecast.ai</span>
+                        </div>
+                        <p className="text-xs text-base-content/60">
+                          • 3-63 characters • Lowercase letters, numbers, hyphens only • No hyphens at start/end
+                        </p>
+
+                        {domainError && (
+                          <div className="alert alert-error">
+                            <span>{domainError}</span>
+                          </div>
+                        )}
+
+                        {domainSuccess && (
+                          <div className="alert alert-success">
+                            <span>{domainSuccess}</span>
+                          </div>
+                        )}
+
+                        {user?.customDomain && !isEditingDomain && (
+                          <div className="alert alert-info">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Your resume is accessible at: <a href={`https://${user.customDomain}.resumecast.ai`} target="_blank" rel="noopener noreferrer" className="link">{user.customDomain}.resumecast.ai</a></span>
+                          </div>
+                        )}
+
+                        <div className="flex gap-2">
+                          {!isEditingDomain ? (
+                            <button
+                              className="btn btn-primary btn-sm"
+                              onClick={() => setIsEditingDomain(true)}
+                            >
+                              {user?.customDomain ? 'Change Subdomain' : 'Set Custom Subdomain'}
+                            </button>
+                          ) : (
+                            <>
+                              <button
+                                className="btn btn-success btn-sm"
+                                onClick={handleSaveCustomDomain}
+                                disabled={isSavingDomain || !customDomain || customDomain.length < 3}
+                              >
+                                {isSavingDomain ? (
+                                  <>
+                                    <span className="loading loading-spinner loading-xs"></span>
+                                    Saving...
+                                  </>
+                                ) : (
+                                  'Save'
+                                )}
+                              </button>
+                              <button
+                                className="btn btn-ghost btn-sm"
+                                onClick={() => {
+                                  setIsEditingDomain(false);
+                                  setCustomDomain(user?.customDomain || '');
+                                  setDomainError('');
+                                }}
+                                disabled={isSavingDomain}
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
