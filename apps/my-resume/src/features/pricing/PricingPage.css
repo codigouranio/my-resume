@@ -1,0 +1,25 @@
+.pricing-container {
+  min-height: 100vh;
+}
+
+.pricing-container code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
+.collapse-plus .collapse-title {
+  font-weight: 600;
+}
+
+.badge-secondary {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}

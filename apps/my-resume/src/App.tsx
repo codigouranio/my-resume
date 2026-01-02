@@ -5,6 +5,7 @@ import { LandingPage } from './features/landing';
 import { LoginPage, RegisterPage } from './features/auth';
 import { DashboardPage } from './features/dashboard';
 import { EditorPage } from './features/editor';
+import { PricingPage } from './features/pricing';
 import Resume from './features/resume/Resume';
 import './shared/styles/App.css';
 
@@ -17,6 +18,7 @@ const App = () => {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
           <Route path="/resume/:slug" element={<Resume />} />
 
           {/* Protected Routes */}

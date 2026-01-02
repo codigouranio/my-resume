@@ -19,8 +19,8 @@ export function LandingPage() {
               <Link to="/register" className="btn btn-lg bg-black text-white px-8 py-4 rounded-lg font-semibold text-lg shadow-lg hover:bg-gray-800 hover:shadow-xl transition-all duration-200" data-discover="true">
                 Get Started Free
               </Link>
-              <Link to="/login" className="btn btn-lg bg-transparent text-black border-2 border-black px-8 py-4 rounded-lg font-semibold text-lg hover:bg-black hover:text-white transition-all duration-200" data-discover="true">
-                Sign In
+              <Link to="/pricing" className="btn btn-lg bg-transparent text-black border-2 border-black px-8 py-4 rounded-lg font-semibold text-lg hover:bg-black hover:text-white transition-all duration-200" data-discover="true">
+                View Pricing
               </Link>
             </div>
           </div>
