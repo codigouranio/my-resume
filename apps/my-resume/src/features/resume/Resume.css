@@ -185,7 +185,6 @@
 .resume-container .coursera-certificate-card,
 .resume-container .prose .coursera-certificate-card,
 div[class*="template"] .coursera-certificate-card {
-  @apply bg-gradient-to-br from-blue-600 to-indigo-700 shadow-lg w-52 h-72 border border-blue-400 rounded-xl;
   transition: transform 0.1s ease-out, box-shadow 0.3s ease-out !important;
   transform-style: preserve-3d !important;
   position: relative !important;
@@ -195,6 +194,7 @@ div[class*="template"] .coursera-certificate-card {
   height: 18rem !important;
   border-radius: 0.75rem !important;
   border: 1px solid rgb(96 165 250) !important;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
 }
 
 .coursera-certificate-card:hover,
@@ -323,16 +323,6 @@ div[class*="template"] .coursera-certificate-card p.text-blue-200 {
   letter-spacing: 0.05em !important;
   margin-bottom: 0 !important;
   color: rgb(191 219 254) !important;
-}
-
-/* Date value */
-.coursera-certificate-card p.font-semibold,
-.resume-container .coursera-certificate-card p.font-semibold,
-.resume-container .prose .coursera-certificate-card p.font-semibold,
-div[class*="template"] .coursera-certificate-card p.font-semibold {
-  font-size: 10px !important;
-  font-weight: 600 !important;
-  color: white !important;
 }
 
 /* All spans */
