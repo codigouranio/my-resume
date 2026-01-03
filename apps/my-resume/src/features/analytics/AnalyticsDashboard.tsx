@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { UpgradePrompt } from '../subscriptions';
+import { useAuth } from '../../shared/contexts/AuthContext';
 
 interface AnalyticsData {
   totalViews: number;
@@ -21,10 +22,12 @@ interface AnalyticsDashboardProps {
 }
 
 export function AnalyticsDashboard({ resumeId }: AnalyticsDashboardProps) {
+  const { user } = useAuth();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isPro, setIsPro] = useState(false);
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+
+  const isPro = user?.subscriptionTier === 'PRO';
 
   useEffect(() => {
     loadAnalytics();
@@ -32,18 +35,36 @@ export function AnalyticsDashboard({ resumeId }: AnalyticsDashboardProps) {
 
   const loadAnalytics = async () => {
     try {
-      const response = await fetch(`/api/resumes/${resumeId}/analytics/detailed`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+      if (isPro) {
+        // PRO users: load detailed analytics
+        const response = await fetch(`/api/resumes/${resumeId}/analytics/detailed`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
 
-      if (response.ok) {
-        const data = await response.json();
-        setAnalytics(data);
-        setIsPro(true);
+        if (response.ok) {
+          const data = await response.json();
+          setAnalytics(data);
+        } else {
+          // If detailed analytics fails, still show basic stats
+          const basicResponse = await fetch(`/api/resumes/${resumeId}`, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            },
+          });
+          const resumeData = await basicResponse.json();
+          setAnalytics({
+            totalViews: resumeData.viewCount || 0,
+            uniqueVisitors: 0,
+            avgDuration: 0,
+            topReferrers: [],
+            topCountries: [],
+            recentViews: [],
+          });
+        }
       } else {
-        // Fallback to basic analytics for free tier
+        // Free tier: only show basic view count
         const basicResponse = await fetch(`/api/resumes/${resumeId}`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -58,7 +79,6 @@ export function AnalyticsDashboard({ resumeId }: AnalyticsDashboardProps) {
           topCountries: [],
           recentViews: [],
         });
-        setIsPro(false);
       }
     } catch (error) {
       console.error('Failed to load analytics:', error);
