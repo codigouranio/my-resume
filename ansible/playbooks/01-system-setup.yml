@@ -53,6 +53,29 @@
         state: started
         enabled: yes
     
+    - name: Install Redis
+      apt:
+        name:
+          - redis-server
+        state: present
+    
+    - name: Configure Redis for production
+      lineinfile:
+        path: /etc/redis/redis.conf
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        backup: yes
+      loop:
+        - { regexp: '^maxmemory ', line: 'maxmemory 256mb' }
+        - { regexp: '^maxmemory-policy ', line: 'maxmemory-policy allkeys-lru' }
+      notify: restart redis
+    
+    - name: Ensure Redis is running
+      service:
+        name: redis-server
+        state: started
+        enabled: yes
+    
     - name: Install Nginx
       apt:
         name:
@@ -238,8 +261,15 @@
           - ""
           - "Installed:"
           - "  - PostgreSQL {{ postgres_version }}"
+          - "  - Redis"
           - "  - Nginx"
           - "  - Miniconda3"
           - "  - Essential build tools"
           - ""
           - "Next step: Run 02-database-setup.yml"
+  
+  handlers:
+    - name: restart redis
+      service:
+        name: redis-server
+        state: restarted

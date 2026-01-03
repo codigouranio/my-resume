@@ -3,15 +3,24 @@ import {
   NotFoundException,
   ForbiddenException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../shared/database/prisma.service';
 import { CreateResumeDto } from './dto/create-resume.dto';
 import { UpdateResumeDto } from './dto/update-resume.dto';
 import { CreateRecruiterInterestDto } from './dto/create-recruiter-interest.dto';
+import { EmbeddingQueueService } from '../embeddings/embedding-queue.service';
+import { EmbeddingJobType } from '../embeddings/dto/generate-embedding.dto';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class ResumesService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(ResumesService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private embeddingQueueService: EmbeddingQueueService,
+  ) {}
 
   async create(userId: string, createResumeDto: CreateResumeDto) {
     // Check if slug is already taken
@@ -24,7 +33,7 @@ export class ResumesService {
       }
     }
 
-    return this.prisma.resume.create({
+    const resume = await this.prisma.resume.create({
       data: {
         ...createResumeDto,
         userId,
@@ -33,6 +42,18 @@ export class ResumesService {
         template: true,
       },
     });
+
+    // Queue embedding generation asynchronously (don't await)
+    this.embeddingQueueService
+      .addEmbeddingJob(resume.id, EmbeddingJobType.CREATE, userId)
+      .catch((error) => {
+        this.logger.error(
+          `Failed to queue embedding for resume ${resume.id}:`,
+          error,
+        );
+      });
+
+    return resume;
   }
 
   async findAll(userId: string) {
@@ -297,6 +318,19 @@ export class ResumesService {
   async update(id: string, userId: string, updateResumeDto: UpdateResumeDto) {
     const resume = await this.prisma.resume.findUnique({
       where: { id },
+      select: {
+        id: true,
+        userId: true,
+        slug: true,
+        content: true,
+        llmContext: true,
+        embeddings: {
+          select: {
+            contentHash: true,
+            llmContextHash: true,
+          },
+        },
+      },
     });
 
     if (!resume) {
@@ -317,13 +351,63 @@ export class ResumesService {
       }
     }
 
-    return this.prisma.resume.update({
+    // Check if content or llmContext changed to determine if embeddings need regeneration
+    let shouldRegenerateEmbeddings = false;
+
+    if (updateResumeDto.content || updateResumeDto.llmContext !== undefined) {
+      const newContentHash = updateResumeDto.content
+        ? this.calculateHash(updateResumeDto.content)
+        : this.calculateHash(resume.content);
+
+      const newLlmContextHash =
+        updateResumeDto.llmContext !== undefined
+          ? updateResumeDto.llmContext
+            ? this.calculateHash(updateResumeDto.llmContext)
+            : null
+          : resume.llmContext
+          ? this.calculateHash(resume.llmContext)
+          : null;
+
+      // Compare hashes with existing embeddings
+      if (resume.embeddings) {
+        const contentChanged = newContentHash !== resume.embeddings.contentHash;
+        const llmContextChanged =
+          newLlmContextHash !== resume.embeddings.llmContextHash;
+        shouldRegenerateEmbeddings = contentChanged || llmContextChanged;
+      } else {
+        // No embeddings yet, should generate
+        shouldRegenerateEmbeddings = true;
+      }
+    }
+
+    const updatedResume = await this.prisma.resume.update({
       where: { id },
       data: updateResumeDto,
       include: {
         template: true,
       },
     });
+
+    // Queue embedding regeneration if content changed
+    if (shouldRegenerateEmbeddings) {
+      this.embeddingQueueService
+        .addEmbeddingJob(id, EmbeddingJobType.UPDATE, userId)
+        .catch((error) => {
+          this.logger.error(
+            `Failed to queue embedding update for resume ${id}:`,
+            error,
+          );
+        });
+    }
+
+    return updatedResume;
+  }
+
+  /**
+   * Calculate MD5 hash of text for change detection
+   */
+  private calculateHash(text: string): string {
+    return crypto.createHash('md5').update(text).digest('hex');
   }
 
   async remove(id: string, userId: string) {

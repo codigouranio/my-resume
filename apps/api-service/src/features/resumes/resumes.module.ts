@@ -8,6 +8,7 @@ import {
   GetResumeBySlugHandler,
   GetResumesHandler,
 } from './queries/handlers';
+import { EmbeddingsModule } from '../embeddings/embeddings.module';
 
 const QueryHandlers = [
   GetResumeHandler,
@@ -16,7 +17,7 @@ const QueryHandlers = [
 ];
 
 @Module({
-  imports: [CqrsModule],
+  imports: [CqrsModule, EmbeddingsModule],
   providers: [
     ResumesService,
     ResumesResolver,
