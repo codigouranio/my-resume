@@ -35,7 +35,7 @@ export class SearchService {
 
       // Step 2: Build SQL query with filters
       const queryEmbeddingStr = `[${queryEmbedding.embedding.join(',')}]`;
-      const minSimilarity = searchDto.minSimilarity ?? 0.7;
+      const minSimilarity = searchDto.minSimilarity ?? 0.5; // Default to 0.5 (50% similarity)
       const limit = searchDto.limit ?? 10;
       const offset = searchDto.offset ?? 0;
 
