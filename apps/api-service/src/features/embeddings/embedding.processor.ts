@@ -176,7 +176,12 @@ export class EmbeddingProcessor {
   private async generateEmbedding(text: string): Promise<EmbeddingResponse> {
     try {
       // Truncate text to fit in model context window
+      const originalLength = text.length;
       const truncatedText = this.truncateText(text);
+      
+      this.logger.debug(
+        `Text length: ${originalLength} -> ${truncatedText.length} chars (truncated: ${originalLength > truncatedText.length})`
+      );
       
       const response = await axios.post<EmbeddingResponse>(
         `${this.llmServiceUrl}/api/embed`,
