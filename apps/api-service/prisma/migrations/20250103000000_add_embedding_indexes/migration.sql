@@ -5,21 +5,21 @@
 -- Index on combinedEmbedding (most common search target)
 CREATE INDEX IF NOT EXISTS "ResumeEmbedding_combinedEmbedding_idx" 
 ON "ResumeEmbedding" 
-USING hnsw (combinedEmbedding vector_cosine_ops)
+USING hnsw ("combinedEmbedding" vector_cosine_ops)
 WITH (m = 16, ef_construction = 64);
 
 -- Index on contentEmbedding (for content-only searches)
 CREATE INDEX IF NOT EXISTS "ResumeEmbedding_contentEmbedding_idx" 
 ON "ResumeEmbedding" 
-USING hnsw (contentEmbedding vector_cosine_ops)
+USING hnsw ("contentEmbedding" vector_cosine_ops)
 WITH (m = 16, ef_construction = 64);
 
 -- Index on llmContextEmbedding (for context-only searches, sparse because of NULLs)
 CREATE INDEX IF NOT EXISTS "ResumeEmbedding_llmContextEmbedding_idx" 
 ON "ResumeEmbedding" 
-USING hnsw (llmContextEmbedding vector_cosine_ops)
+USING hnsw ("llmContextEmbedding" vector_cosine_ops)
 WITH (m = 16, ef_construction = 64)
-WHERE llmContextEmbedding IS NOT NULL;
+WHERE "llmContextEmbedding" IS NOT NULL;
 
 -- HNSW Parameters:
 -- m = 16: Number of bidirectional links per node (default). Higher = better recall, more memory
