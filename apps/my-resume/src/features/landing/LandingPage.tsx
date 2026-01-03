@@ -6,7 +6,7 @@ export function LandingPage() {
     <div className="landing-container">
       {/* Login Button in Corner */}
       <div className="fixed top-4 right-4 z-50">
-        <Link to="/login" className="btn btn-ghost">
+        <Link to="/login" className="btn btn-outline btn-accent text-white border-white hover:bg-white hover:text-primary">
           Login
         </Link>
       </div>
