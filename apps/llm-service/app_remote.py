@@ -642,6 +642,145 @@ def improve_text():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/api/embed", methods=["POST"])
+def generate_embedding():
+    """
+    Generate embeddings using nomic-embed-text model.
+
+    Request body:
+    {
+        "text": "Text to embed",
+        "model": "nomic-embed-text"  // optional
+    }
+
+    Returns:
+    {
+        "embedding": [0.123, -0.456, ...],  // 768-dimensional vector
+        "dimensions": 768,
+        "model": "nomic-embed-text"
+    }
+    """
+    try:
+        data = request.get_json()
+        text = data.get("text", "").strip()
+        model = data.get("model", "nomic-embed-text")
+
+        if not text:
+            return jsonify({"error": "Text is required"}), 400
+
+        # Ollama API endpoint for embeddings
+        embed_url = f"{LLAMA_SERVER_URL}/api/embeddings"
+
+        logger.info(f"Generating embedding for text ({len(text)} chars) using {model}")
+
+        response = requests.post(
+            embed_url, json={"model": model, "prompt": text}, timeout=30
+        )
+
+        if response.status_code != 200:
+            error_msg = (
+                f"Ollama returned status {response.status_code}: {response.text}"
+            )
+            logger.error(error_msg)
+            return jsonify({"error": error_msg}), 500
+
+        result = response.json()
+        embedding = result.get("embedding", [])
+
+        if not embedding:
+            return jsonify({"error": "No embedding returned from model"}), 500
+
+        logger.info(f"Generated embedding with {len(embedding)} dimensions")
+
+        return jsonify(
+            {"embedding": embedding, "dimensions": len(embedding), "model": model}
+        )
+
+    except requests.exceptions.Timeout:
+        logger.error("Timeout generating embedding")
+        return jsonify({"error": "Request timeout - model may be loading"}), 504
+    except requests.exceptions.ConnectionError:
+        logger.error(f"Cannot connect to Ollama at {LLAMA_SERVER_URL}")
+        return jsonify({"error": "Cannot connect to Ollama server"}), 503
+    except Exception as e:
+        logger.error(f"Error generating embedding: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/embed/batch", methods=["POST"])
+def generate_embeddings_batch():
+    """
+    Generate embeddings for multiple texts in batch.
+
+    Request body:
+    {
+        "texts": ["text1", "text2", ...],
+        "model": "nomic-embed-text"  // optional
+    }
+
+    Returns:
+    {
+        "embeddings": [[...], [...], ...],
+        "dimensions": 768,
+        "count": 2,
+        "model": "nomic-embed-text"
+    }
+    """
+    try:
+        data = request.get_json()
+        texts = data.get("texts", [])
+        model = data.get("model", "nomic-embed-text")
+
+        if not texts or not isinstance(texts, list):
+            return jsonify({"error": "texts must be a non-empty array"}), 400
+
+        if len(texts) > 100:
+            return jsonify({"error": "Maximum 100 texts per batch"}), 400
+
+        embeddings = []
+        embed_url = f"{LLAMA_SERVER_URL}/api/embeddings"
+
+        logger.info(f"Generating {len(texts)} embeddings using {model}")
+
+        for i, text in enumerate(texts):
+            if not text or not text.strip():
+                logger.warning(f"Skipping empty text at index {i}")
+                embeddings.append(None)
+                continue
+
+            response = requests.post(
+                embed_url, json={"model": model, "prompt": text.strip()}, timeout=30
+            )
+
+            if response.status_code != 200:
+                logger.error(f"Failed to embed text {i}: {response.status_code}")
+                embeddings.append(None)
+                continue
+
+            result = response.json()
+            embedding = result.get("embedding", [])
+            embeddings.append(embedding if embedding else None)
+
+        successful = sum(1 for e in embeddings if e is not None)
+        dimensions = len(embeddings[0]) if embeddings and embeddings[0] else 0
+
+        logger.info(f"Generated {successful}/{len(texts)} embeddings successfully")
+
+        return jsonify(
+            {
+                "embeddings": embeddings,
+                "dimensions": dimensions,
+                "count": len(embeddings),
+                "successful": successful,
+                "model": model,
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Error in batch embedding: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/api/reload-resume", methods=["POST"])
 def reload_resume():
     """Reload resume context from file. Requires admin authorization."""

@@ -44,6 +44,7 @@
           - postgresql-contrib
           - python3-psycopg2
           - libpq-dev
+          - postgresql-15-pgvector
         state: present
     
     - name: Ensure PostgreSQL is running

@@ -167,6 +167,38 @@
         owner: "{{ ansible_user }}"
         mode: '0600'
     
+    - name: Check if Ollama is installed
+      command: which ollama
+      register: ollama_check
+      ignore_errors: yes
+      changed_when: false
+    
+    - name: Pull main Ollama model for chat
+      command: ollama pull {{ ollama_model }}
+      become_user: "{{ ansible_user }}"
+      when: ollama_check.rc == 0
+      async: 300
+      poll: 10
+    
+    - name: Pull nomic-embed-text model for embeddings
+      command: ollama pull nomic-embed-text
+      become_user: "{{ ansible_user }}"
+      when: ollama_check.rc == 0
+      async: 300
+      poll: 10
+    
+    - name: Display Ollama models
+      shell: ollama list
+      register: ollama_models
+      become_user: "{{ ansible_user }}"
+      when: ollama_check.rc == 0
+      changed_when: false
+    
+    - name: Show installed models
+      debug:
+        msg: "{{ ollama_models.stdout_lines }}"
+      when: ollama_check.rc == 0
+    
     - name: Configure Frontend environment
       copy:
         dest: "{{ frontend_path }}/.env"

@@ -82,6 +82,7 @@
       loop:
         - pg_trgm
         - btree_gin
+        - vector
       ignore_errors: yes
     
     - name: Test database connection
