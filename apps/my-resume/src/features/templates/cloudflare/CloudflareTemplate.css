@@ -1,0 +1,285 @@
+/* Cloudflare Template - Clean tech-forward design with orange accents */
+
+.cloudflare-template {
+  min-height: 100vh;
+  background: #ffffff;
+  position: relative;
+}
+
+.cloudflare-accent-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #f38020 0%, #fb923c 100%);
+  z-index: 100;
+}
+
+.cloudflare-content {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 80px 48px 60px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  color: #1f2937;
+  line-height: 1.7;
+}
+
+/* Headers */
+.cloudflare-content h1 {
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+.cloudflare-content h1::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(90deg, #f38020 0%, #fb923c 100%);
+}
+
+.cloudflare-content h2 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #f38020;
+  margin-top: 3.5rem;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.02em;
+  display: inline-block;
+  position: relative;
+}
+
+.cloudflare-content h2::before {
+  content: '';
+  position: absolute;
+  left: -24px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #f38020 0%, #fb923c 100%);
+  border-radius: 2px;
+}
+
+.cloudflare-content h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #111827;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Paragraphs */
+.cloudflare-content p {
+  color: #4b5563;
+  font-size: 1.0625rem;
+  margin-bottom: 1.25rem;
+  max-width: 75ch;
+  line-height: 1.8;
+}
+
+/* Links */
+.cloudflare-content a {
+  color: #f38020;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.cloudflare-content a::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #f38020 0%, #fb923c 100%);
+  transition: width 0.2s ease;
+}
+
+.cloudflare-content a:hover::after {
+  width: 100%;
+}
+
+.cloudflare-content a:hover {
+  color: #fb923c;
+}
+
+/* Lists */
+.cloudflare-content ul,
+.cloudflare-content ol {
+  margin-left: 1.5rem;
+  margin-bottom: 1.5rem;
+  color: #4b5563;
+}
+
+.cloudflare-content li {
+  margin-bottom: 0.75rem;
+  padding-left: 0.5rem;
+}
+
+.cloudflare-content ul li::marker {
+  color: #f38020;
+  font-size: 1.3em;
+}
+
+.cloudflare-content ol li::marker {
+  color: #f38020;
+  font-weight: 600;
+}
+
+/* Code blocks */
+.cloudflare-content code {
+  background: #fef3f2;
+  color: #f38020;
+  padding: 0.25em 0.5em;
+  border-radius: 6px;
+  font-size: 0.9em;
+  font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+  border: 1px solid #fecaca;
+  font-weight: 500;
+}
+
+.cloudflare-content pre {
+  background: #1f2937;
+  color: #f3f4f6;
+  padding: 1.75rem;
+  border-radius: 12px;
+  overflow-x: auto;
+  margin: 2rem 0;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border: 1px solid #374151;
+}
+
+.cloudflare-content pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  border: none;
+  font-size: 0.9rem;
+}
+
+/* Blockquotes */
+.cloudflare-content blockquote {
+  border-left: 4px solid #f38020;
+  padding-left: 1.5rem;
+  margin: 2rem 0;
+  color: #4b5563;
+  font-style: italic;
+  background: #fef3f2;
+  padding: 1.25rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(243, 128, 32, 0.08);
+}
+
+/* Tables */
+.cloudflare-content table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 2.5rem 0;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+}
+
+.cloudflare-content th {
+  background: linear-gradient(135deg, #f38020 0%, #fb923c 100%);
+  color: white;
+  padding: 1.25rem 1rem;
+  text-align: left;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cloudflare-content td {
+  padding: 1.25rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  color: #4b5563;
+}
+
+.cloudflare-content tr:last-child td {
+  border-bottom: none;
+}
+
+.cloudflare-content tbody tr:hover {
+  background: #fffbeb;
+}
+
+/* HR */
+.cloudflare-content hr {
+  border: none;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #f38020, #fb923c, transparent);
+  margin: 3.5rem 0;
+  border-radius: 2px;
+}
+
+/* Strong/Bold */
+.cloudflare-content strong {
+  color: #111827;
+  font-weight: 700;
+}
+
+/* Images */
+.cloudflare-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  margin: 2rem 0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border: 1px solid #e5e7eb;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .cloudflare-content {
+    padding: 60px 24px 40px;
+  }
+
+  .cloudflare-content h1 {
+    font-size: 2.5rem;
+  }
+
+  .cloudflare-content h2 {
+    font-size: 1.5rem;
+  }
+
+  .cloudflare-content h2::before {
+    left: -16px;
+  }
+}
+
+/* Print styles */
+@media print {
+  .cloudflare-accent-bar {
+    display: none;
+  }
+
+  .cloudflare-content {
+    padding: 20px;
+    max-width: 100%;
+  }
+
+  .cloudflare-content a {
+    color: #111827;
+  }
+
+  .cloudflare-content a::after {
+    display: none;
+  }
+}

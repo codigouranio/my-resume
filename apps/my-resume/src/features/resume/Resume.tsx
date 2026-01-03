@@ -373,6 +373,15 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
         } else if (templateType === 'minimal') {
           const { MinimalTemplate } = require('../templates');
           return <MinimalTemplate content={markdown} viewCount={viewCount} components={customComponents} />;
+        } else if (templateType === 'professional') {
+          const { ProfessionalTemplate } = require('../templates');
+          return <ProfessionalTemplate content={markdown} viewCount={viewCount} components={customComponents} />;
+        } else if (templateType === 'ibm') {
+          const { IbmTemplate } = require('../templates');
+          return <IbmTemplate content={markdown} viewCount={viewCount} components={customComponents} />;
+        } else if (templateType === 'cloudflare') {
+          const { CloudflareTemplate } = require('../templates');
+          return <CloudflareTemplate content={markdown} viewCount={viewCount} components={customComponents} />;
         } else {
           const { DefaultTemplate } = require('../templates');
           return <DefaultTemplate content={markdown} viewCount={viewCount} components={customComponents} />;

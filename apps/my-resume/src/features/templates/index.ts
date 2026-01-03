@@ -1,6 +1,9 @@
 export { DefaultTemplate } from './default/DefaultTemplate';
 export { ModernTemplate } from './modern/ModernTemplate';
 export { MinimalTemplate } from './minimal/MinimalTemplate';
+export { ProfessionalTemplate } from './professional/ProfessionalTemplate';
+export { IbmTemplate } from './ibm/IbmTemplate';
+export { CloudflareTemplate } from './cloudflare/CloudflareTemplate';
 
 export interface TemplateProps {
   content: string;
@@ -24,6 +27,21 @@ export const TEMPLATES = {
     name: 'Minimal',
     description: 'Clean and simple typography-focused design',
     component: 'MinimalTemplate',
+  },
+  professional: {
+    name: 'Professional',
+    description: 'Clean gradient design with modern SaaS aesthetics',
+    component: 'ProfessionalTemplate',
+  },
+  ibm: {
+    name: 'IBM',
+    description: 'Dark corporate theme with blue accents',
+    component: 'IbmTemplate',
+  },
+  cloudflare: {
+    name: 'Cloudflare',
+    description: 'Tech-forward design with orange accents',
+    component: 'CloudflareTemplate',
   },
 } as const;
 

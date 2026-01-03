@@ -1,0 +1,259 @@
+/* IBM Template - Dark corporate theme with blue accents */
+
+.ibm-template {
+  display: flex;
+  min-height: 100vh;
+  background: #161616;
+  color: #f4f4f4;
+  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.ibm-sidebar {
+  width: 8px;
+  background: linear-gradient(180deg, #0f62fe 0%, #001d6c 100%);
+  flex-shrink: 0;
+}
+
+.ibm-content {
+  flex: 1;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 60px 48px;
+  line-height: 1.7;
+}
+
+/* Headers */
+.ibm-content h1 {
+  font-size: 3rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+
+.ibm-content h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #0f62fe;
+  margin-top: 3rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #393939;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  font-size: 1.125rem;
+  font-weight: 400;
+}
+
+.ibm-content h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Paragraphs */
+.ibm-content p {
+  color: #c6c6c6;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  max-width: 75ch;
+  line-height: 1.8;
+}
+
+/* Links */
+.ibm-content a {
+  color: #78a9ff;
+  text-decoration: none;
+  font-weight: 400;
+  transition: all 0.15s ease;
+  border-bottom: 1px solid transparent;
+}
+
+.ibm-content a:hover {
+  border-bottom-color: #78a9ff;
+  color: #a6c8ff;
+}
+
+/* Lists */
+.ibm-content ul,
+.ibm-content ol {
+  margin-left: 1.5rem;
+  margin-bottom: 1.5rem;
+  color: #c6c6c6;
+}
+
+.ibm-content li {
+  margin-bottom: 0.75rem;
+  padding-left: 0.5rem;
+}
+
+.ibm-content ul li::marker {
+  color: #0f62fe;
+  font-size: 1.2em;
+}
+
+/* Code blocks */
+.ibm-content code {
+  background: #262626;
+  color: #78a9ff;
+  padding: 0.2em 0.5em;
+  border-radius: 2px;
+  font-size: 0.9em;
+  font-family: 'IBM Plex Mono', 'Monaco', 'Consolas', monospace;
+  border: 1px solid #393939;
+}
+
+.ibm-content pre {
+  background: #262626;
+  color: #f4f4f4;
+  padding: 1.5rem;
+  border-radius: 0;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  border-left: 4px solid #0f62fe;
+  box-shadow: inset 0 0 0 1px #393939;
+}
+
+.ibm-content pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  border: none;
+  font-size: 0.875rem;
+}
+
+/* Blockquotes */
+.ibm-content blockquote {
+  border-left: 4px solid #0f62fe;
+  padding-left: 1.5rem;
+  margin: 2rem 0;
+  color: #c6c6c6;
+  font-style: italic;
+  background: #262626;
+  padding: 1rem 1.5rem;
+  border-radius: 0;
+}
+
+/* Tables */
+.ibm-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 2rem 0;
+  background: #262626;
+  border: 1px solid #393939;
+}
+
+.ibm-content th {
+  background: #0f62fe;
+  color: #ffffff;
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border-bottom: 1px solid #393939;
+}
+
+.ibm-content td {
+  padding: 1rem;
+  border-bottom: 1px solid #393939;
+  color: #c6c6c6;
+}
+
+.ibm-content tr:last-child td {
+  border-bottom: none;
+}
+
+.ibm-content tr:hover {
+  background: #353535;
+}
+
+/* HR */
+.ibm-content hr {
+  border: none;
+  height: 1px;
+  background: #393939;
+  margin: 3rem 0;
+}
+
+/* Strong/Bold */
+.ibm-content strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Images */
+.ibm-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0;
+  margin: 1.5rem 0;
+  border: 1px solid #393939;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .ibm-template {
+    flex-direction: column;
+  }
+
+  .ibm-sidebar {
+    width: 100%;
+    height: 8px;
+  }
+
+  .ibm-content {
+    padding: 40px 24px;
+  }
+
+  .ibm-content h1 {
+    font-size: 2.25rem;
+  }
+
+  .ibm-content h2 {
+    font-size: 1rem;
+  }
+}
+
+/* Print styles */
+@media print {
+  .ibm-template {
+    background: #ffffff;
+  }
+
+  .ibm-sidebar {
+    display: none;
+  }
+
+  .ibm-content {
+    padding: 20px;
+    max-width: 100%;
+    color: #000000;
+  }
+
+  .ibm-content h1,
+  .ibm-content h3,
+  .ibm-content strong {
+    color: #000000;
+  }
+
+  .ibm-content h2 {
+    color: #0f62fe;
+  }
+
+  .ibm-content p,
+  .ibm-content li,
+  .ibm-content td {
+    color: #333333;
+  }
+
+  .ibm-content a {
+    color: #0f62fe;
+    border-bottom: none;
+  }
+}

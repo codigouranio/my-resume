@@ -470,6 +470,9 @@ export function EditorPage() {
               <option value="default">Classic - Traditional resume layout</option>
               <option value="modern">Modern - Contemporary with gradients</option>
               <option value="minimal">Minimal - Clean typography-focused</option>
+              <option value="professional">Professional - Clean gradient SaaS design</option>
+              <option value="ibm">IBM - Dark corporate theme</option>
+              <option value="cloudflare">Cloudflare - Tech-forward with orange accents</option>
             </select>
           </div>
 
