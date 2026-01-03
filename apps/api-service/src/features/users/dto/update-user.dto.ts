@@ -21,4 +21,9 @@ export class UpdateUserDto {
     message: 'Subdomain must contain only lowercase letters, numbers, and hyphens (no hyphens at start/end)'
   })
   customDomain?: string;
+
+  @ApiProperty({ required: false, description: 'Default resume to show at custom subdomain root (PRO feature)' })
+  @IsOptional()
+  @IsString()
+  defaultResumeId?: string;
 }

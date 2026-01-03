@@ -52,6 +52,7 @@ export class UsersService {
         subscriptionTier: true,
         subscriptionEndsAt: true,
         customDomain: true,
+        defaultResumeId: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -86,6 +87,28 @@ export class UsersService {
       }
     }
 
+    // Check if trying to set default resume
+    if (updateUserDto.defaultResumeId !== undefined) {
+      // Only PRO users can set default resume
+      if (user.subscriptionTier !== 'PRO') {
+        throw new ConflictException('Default resume is only available for PRO users');
+      }
+
+      // Verify the resume belongs to the user
+      if (updateUserDto.defaultResumeId) {
+        const resume = await this.prisma.resume.findFirst({
+          where: {
+            id: updateUserDto.defaultResumeId,
+            userId: id,
+          },
+        });
+
+        if (!resume) {
+          throw new NotFoundException('Resume not found or does not belong to you');
+        }
+      }
+    }
+
     return this.prisma.user.update({
       where: { id },
       data: updateUserDto,
@@ -97,6 +120,7 @@ export class UsersService {
         role: true,
         subscriptionTier: true,
         customDomain: true,
+        defaultResumeId: true,
         updatedAt: true,
       },
     });

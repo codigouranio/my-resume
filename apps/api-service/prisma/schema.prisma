@@ -37,6 +37,7 @@ model User {
   
   // Custom subdomain (PRO feature)
   customDomain           String?          @unique
+  defaultResumeId        String?          // Resume to show at custom subdomain root
   
   // Metadata
   createdAt DateTime @default(now())
@@ -45,6 +46,7 @@ model User {
   // Relations
   resumes       Resume[]
   refreshTokens RefreshToken[]
+  defaultResume Resume?  @relation("DefaultResume", fields: [defaultResumeId], references: [id])
   
   @@index([email])
   @@index([stripeCustomerId])
@@ -96,6 +98,7 @@ model Resume {
   template          Template?           @relation(fields: [templateId], references: [id])
   recruiterInterests RecruiterInterest[]
   views             ResumeView[]
+  defaultForUsers   User[]              @relation("DefaultResume")
   
   @@index([userId])
   @@index([slug])

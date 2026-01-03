@@ -155,34 +155,60 @@ export class ResumesService {
     // Find user with this custom domain
     const user = await this.prisma.user.findUnique({
       where: { customDomain },
-      select: { id: true },
+      select: { id: true, defaultResumeId: true },
     });
 
     if (!user) {
       throw new NotFoundException('Custom domain not found');
     }
 
-    // Find user's first public published resume
-    const resume = await this.prisma.resume.findFirst({
-      where: {
-        userId: user.id,
-        isPublic: true,
-        isPublished: true,
-      },
-      include: {
-        template: true,
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
+    let resume;
+
+    // If user has set a default resume, use that
+    if (user.defaultResumeId) {
+      resume = await this.prisma.resume.findFirst({
+        where: {
+          id: user.defaultResumeId,
+          userId: user.id,
+          isPublic: true,
+          isPublished: true,
+        },
+        include: {
+          template: true,
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+            },
           },
         },
-      },
-      orderBy: {
-        createdAt: 'desc', // Get most recent resume
-      },
-    });
+      });
+    }
+
+    // Fallback: Find user's first public published resume if no default set or default not found
+    if (!resume) {
+      resume = await this.prisma.resume.findFirst({
+        where: {
+          userId: user.id,
+          isPublic: true,
+          isPublished: true,
+        },
+        include: {
+          template: true,
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc', // Get most recent resume
+        },
+      });
+    }
 
     if (!resume) {
       throw new NotFoundException('No public resume found for this domain');

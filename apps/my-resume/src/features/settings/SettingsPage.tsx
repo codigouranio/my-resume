@@ -15,12 +15,27 @@ export function SettingsPage() {
   const [domainSuccess, setDomainSuccess] = useState('');
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
+  const [userResumes, setUserResumes] = useState<any[]>([]);
+  const [defaultResumeId, setDefaultResumeId] = useState<string>('');
+  const [isSavingDefaultResume, setIsSavingDefaultResume] = useState(false);
+
+  const loadUserResumes = async () => {
+    try {
+      const resumes = await apiClient.getMyResumes();
+      setUserResumes(resumes);
+      if (user?.defaultResumeId) {
+        setDefaultResumeId(user.defaultResumeId);
+      }
+    } catch (error) {
+      console.error('Failed to load resumes:', error);
+    }
+  };
 
   useEffect(() => {
     // Check if returning from Stripe customer portal
     const urlParams = new URLSearchParams(window.location.search);
     const fromPortal = urlParams.get('from_portal');
-    
+
     if (fromPortal === 'true') {
       // User just came back from customer portal, refresh their data
       refreshUser().then(() => {
@@ -31,6 +46,11 @@ export function SettingsPage() {
 
     if (user?.customDomain) {
       setCustomDomain(user.customDomain);
+    }
+
+    // Load user's resumes if PRO
+    if (user?.subscriptionTier === 'PRO') {
+      loadUserResumes();
     }
   }, [user]);
 
@@ -66,6 +86,23 @@ export function SettingsPage() {
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const handleSaveDefaultResume = async () => {
+    setIsSavingDefaultResume(true);
+    try {
+      await apiClient.updateCurrentUser({ defaultResumeId: defaultResumeId || null });
+      await refreshUser();
+      // Show success message
+      setDomainSuccess('Default resume updated successfully!');
+      setTimeout(() => setDomainSuccess(''), 3000);
+    } catch (error) {
+      console.error('Failed to save default resume:', error);
+      setDomainError('Failed to update default resume');
+      setTimeout(() => setDomainError(''), 3000);
+    } finally {
+      setIsSavingDefaultResume(false);
+    }
   };
 
   const handleSaveCustomDomain = async () => {
@@ -224,7 +261,7 @@ export function SettingsPage() {
                             disabled={!isEditingDomain || isSavingDomain}
                             placeholder="yourname"
                             className={`input input-bordered flex-1 ${isEditingDomain && customDomain.length >= 3 && isAvailable === true ? 'input-success' :
-                                isEditingDomain && customDomain.length >= 3 && isAvailable === false ? 'input-error' : ''
+                              isEditingDomain && customDomain.length >= 3 && isAvailable === false ? 'input-error' : ''
                               }`}
                             minLength={3}
                             maxLength={63}
@@ -252,7 +289,7 @@ export function SettingsPage() {
                           </p>
                           {isEditingDomain && customDomain.length >= 3 && !isCheckingAvailability && (
                             <p className={`text-sm font-medium ${isAvailable === true ? 'text-success' :
-                                isAvailable === false ? 'text-error' : ''
+                              isAvailable === false ? 'text-error' : ''
                               }`}>
                               {isAvailable === true && '✓ This subdomain is available!'}
                               {isAvailable === false && '✗ This subdomain is already taken'}
@@ -321,6 +358,60 @@ export function SettingsPage() {
                         </div>
                       </div>
                     </div>
+
+                    {/* Default Resume Selector */}
+                    {user?.customDomain && userResumes.length > 0 && (
+                      <div className="card bg-base-100 shadow-xl">
+                        <div className="card-body">
+                          <h2 className="card-title text-lg">Default Resume for Subdomain</h2>
+                          <p className="text-sm text-base-content/70">
+                            Choose which resume displays when visitors go to <strong>{user.customDomain}.resumecast.ai</strong> without a specific path.
+                          </p>
+
+                          <div className="form-control">
+                            <label className="label">
+                              <span className="label-text font-semibold">Default Resume</span>
+                            </label>
+                            <select
+                              className="select select-bordered w-full"
+                              value={defaultResumeId}
+                              onChange={(e) => setDefaultResumeId(e.target.value)}
+                            >
+                              <option value="">No default (show 404)</option>
+                              {userResumes.map((resume) => (
+                                <option key={resume.id} value={resume.id}>
+                                  {resume.title} ({resume.slug})
+                                </option>
+                              ))}
+                            </select>
+                            <label className="label">
+                              <span className="label-text-alt">
+                                {defaultResumeId
+                                  ? 'Visitors will see this resume at your custom subdomain'
+                                  : 'No resume selected - visitors will see a 404 page'}
+                              </span>
+                            </label>
+                          </div>
+
+                          <div className="flex gap-2 mt-4">
+                            <button
+                              className="btn btn-primary btn-sm"
+                              onClick={handleSaveDefaultResume}
+                              disabled={isSavingDefaultResume}
+                            >
+                              {isSavingDefaultResume ? (
+                                <>
+                                  <span className="loading loading-spinner loading-xs"></span>
+                                  Saving...
+                                </>
+                              ) : (
+                                'Save Default Resume'
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
               </div>
