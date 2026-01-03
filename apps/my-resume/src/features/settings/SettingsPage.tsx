@@ -48,8 +48,8 @@ export function SettingsPage() {
       setCustomDomain(user.customDomain);
     }
 
-    // Load user's resumes if PRO
-    if (user?.subscriptionTier === 'PRO') {
+    // Load user's resumes if PRO and has custom subdomain
+    if (user?.subscriptionTier === 'PRO' && user?.customDomain) {
       loadUserResumes();
     }
   }, [user]);
@@ -360,7 +360,7 @@ export function SettingsPage() {
                     </div>
 
                     {/* Default Resume Selector */}
-                    {user?.customDomain && userResumes.length > 0 && (
+                    {user?.customDomain && (
                       <div className="card bg-base-100 shadow-xl">
                         <div className="card-body">
                           <h2 className="card-title text-lg">Default Resume for Subdomain</h2>
@@ -368,47 +368,58 @@ export function SettingsPage() {
                             Choose which resume displays when visitors go to <strong>{user.customDomain}.resumecast.ai</strong> without a specific path.
                           </p>
 
-                          <div className="form-control">
-                            <label className="label">
-                              <span className="label-text font-semibold">Default Resume</span>
-                            </label>
-                            <select
-                              className="select select-bordered w-full"
-                              value={defaultResumeId}
-                              onChange={(e) => setDefaultResumeId(e.target.value)}
-                            >
-                              <option value="">No default (show 404)</option>
-                              {userResumes.map((resume) => (
-                                <option key={resume.id} value={resume.id}>
-                                  {resume.title} ({resume.slug})
-                                </option>
-                              ))}
-                            </select>
-                            <label className="label">
-                              <span className="label-text-alt">
-                                {defaultResumeId
-                                  ? 'Visitors will see this resume at your custom subdomain'
-                                  : 'No resume selected - visitors will see a 404 page'}
-                              </span>
-                            </label>
-                          </div>
+                          {userResumes.length === 0 ? (
+                            <div className="alert alert-info">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <span>You don't have any resumes yet. Create a resume first to set it as default.</span>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="form-control">
+                                <label className="label">
+                                  <span className="label-text font-semibold">Default Resume</span>
+                                </label>
+                                <select
+                                  className="select select-bordered w-full"
+                                  value={defaultResumeId}
+                                  onChange={(e) => setDefaultResumeId(e.target.value)}
+                                >
+                                  <option value="">No default (show most recent)</option>
+                                  {userResumes.map((resume) => (
+                                    <option key={resume.id} value={resume.id}>
+                                      {resume.title} ({resume.slug})
+                                    </option>
+                                  ))}
+                                </select>
+                                <label className="label">
+                                  <span className="label-text-alt">
+                                    {defaultResumeId
+                                      ? 'Visitors will see this resume at your custom subdomain'
+                                      : 'Will show your most recent published resume'}
+                                  </span>
+                                </label>
+                              </div>
 
-                          <div className="flex gap-2 mt-4">
-                            <button
-                              className="btn btn-primary btn-sm"
-                              onClick={handleSaveDefaultResume}
-                              disabled={isSavingDefaultResume}
-                            >
-                              {isSavingDefaultResume ? (
-                                <>
-                                  <span className="loading loading-spinner loading-xs"></span>
-                                  Saving...
-                                </>
-                              ) : (
-                                'Save Default Resume'
-                              )}
-                            </button>
-                          </div>
+                              <div className="flex gap-2 mt-4">
+                                <button
+                                  className="btn btn-primary btn-sm"
+                                  onClick={handleSaveDefaultResume}
+                                  disabled={isSavingDefaultResume}
+                                >
+                                  {isSavingDefaultResume ? (
+                                    <>
+                                      <span className="loading loading-spinner loading-xs"></span>
+                                      Saving...
+                                    </>
+                                  ) : (
+                                    'Save Default Resume'
+                                  )}
+                                </button>
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     )}
