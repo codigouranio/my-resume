@@ -159,14 +159,29 @@ export class EmbeddingProcessor {
   }
 
   /**
+   * Truncate text to fit within nomic-embed-text context window
+   * Max ~8000 tokens ≈ 6000 chars (rough estimate: 1.3 chars/token)
+   */
+  private truncateText(text: string, maxChars: number = 6000): string {
+    if (text.length <= maxChars) {
+      return text;
+    }
+    this.logger.warn(`Truncating text from ${text.length} to ${maxChars} chars`);
+    return text.substring(0, maxChars);
+  }
+
+  /**
    * Generate embedding for a text via LLM service
    */
   private async generateEmbedding(text: string): Promise<EmbeddingResponse> {
     try {
+      // Truncate text to fit in model context window
+      const truncatedText = this.truncateText(text);
+      
       const response = await axios.post<EmbeddingResponse>(
         `${this.llmServiceUrl}/api/embed`,
         {
-          text,
+          text: truncatedText,
           model: 'nomic-embed-text',
         },
         {
