@@ -420,7 +420,7 @@ export function EditorPage() {
             />
             <label className="label">
               <span className="label-text-alt">
-                {user?.customDomain 
+                {user?.customDomain
                   ? `${user.customDomain}.resumecast.ai/${formData.slug || 'slug'}`
                   : `resumecast.ai/resume/${formData.slug || 'slug'}`
                 }
