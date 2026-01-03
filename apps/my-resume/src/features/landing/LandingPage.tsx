@@ -4,28 +4,15 @@ import './LandingPage.css';
 export function LandingPage() {
   return (
     <div className="landing-container">
-      {/* Navigation Bar */}
-      <div className="navbar bg-base-100 shadow-lg fixed top-0 z-50">
-        <div className="navbar-start">
-          <Link to="/" className="btn btn-ghost normal-case text-xl flex items-center gap-2">
-            <img src="/logo.png" alt="RC" className="w-8 h-8" />
-            <span style={{ color: '#00C2CB', fontWeight: 700 }}>ResumeCast</span>
-            <span style={{ color: '#007BFF', fontWeight: 700 }}>.ai</span>
-          </Link>
-        </div>
-        <div className="navbar-center hidden lg:flex">
-          <ul className="menu menu-horizontal px-1">
-            <li><Link to="/pricing">Pricing</Link></li>
-          </ul>
-        </div>
-        <div className="navbar-end gap-2">
-          <Link to="/login" className="btn btn-ghost">Login</Link>
-          <Link to="/register" className="btn btn-primary">Get Started</Link>
-        </div>
+      {/* Login Button in Corner */}
+      <div className="fixed top-4 right-4 z-50">
+        <Link to="/login" className="btn btn-ghost">
+          Login
+        </Link>
       </div>
 
       {/* Hero Section */}
-      <div className="hero min-h-screen bg-gradient-to-br from-primary to-secondary pt-16">
+      <div className="hero min-h-screen bg-gradient-to-br from-primary to-secondary">
         <div className="hero-content text-center text-primary-content">
           <div className="max-w-4xl">
             <h1 className="text-6xl font-bold mb-6">
