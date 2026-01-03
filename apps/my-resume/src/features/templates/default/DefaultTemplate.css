@@ -1,0 +1,48 @@
+.default-template {
+  @apply bg-base-100 rounded-box shadow-xl p-8 md:p-12 max-w-5xl mx-auto;
+  min-height: 60vh;
+}
+
+.default-template .prose {
+  @apply text-base-content;
+  max-width: none;
+}
+
+.default-template .prose h1 {
+  @apply text-4xl font-bold mb-4 text-primary;
+}
+
+.default-template .prose h2 {
+  @apply text-2xl font-semibold mt-8 mb-3 text-secondary;
+  border-bottom: 2px solid;
+  @apply border-primary;
+  padding-bottom: 0.5rem;
+}
+
+.default-template .prose h3 {
+  @apply text-xl font-semibold mt-4 mb-2;
+}
+
+.default-template .prose p {
+  @apply mb-4 leading-relaxed;
+}
+
+.default-template .prose ul {
+  @apply list-disc ml-6 mb-4;
+}
+
+.default-template .prose li {
+  @apply mb-2;
+}
+
+.default-template .prose a {
+  @apply text-primary hover:underline;
+}
+
+.default-template .template-footer {
+  @apply mt-8 pt-4 border-t border-base-300 flex justify-between items-center;
+}
+
+.default-template .view-count {
+  @apply flex items-center gap-2 text-sm text-base-content/60;
+}

@@ -6,6 +6,7 @@ import rehypeRaw from 'rehype-raw';
 import { apiClient } from '../../shared/api/client';
 import { ChatWidget } from '../chat';
 import { GitHubStats, CourseraCertificate } from '../badges';
+import { TEMPLATES, TemplateType } from '../templates';
 import './Resume.css';
 
 interface ResumeProps {
@@ -216,157 +217,167 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
         </div>
       </div>
 
-      <article className="prose prose-lg max-w-none">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeRaw]}
-          components={{
-            pre: ({ node, children, ...props }: any) => {
-              // Check if the child is a coursera code block
-              if (isValidElement(children)) {
-                const childProps = children.props as any;
-                if (childProps?.className?.includes('language-coursera')) {
-                  // Return just the child without the pre wrapper
-                  return <>{children}</>;
-                }
+      {/* Template-based Resume Rendering */}
+      {(() => {
+        const templateType = (resumeData?.theme || 'default') as TemplateType;
+        const TemplateComponent = TEMPLATES[templateType]?.component || TEMPLATES.default.component;
+
+        const customComponents = {
+          pre: ({ node, children, ...props }: any) => {
+            // Check if the child is a coursera code block
+            if (isValidElement(children)) {
+              const childProps = children.props as any;
+              if (childProps?.className?.includes('language-coursera')) {
+                // Return just the child without the pre wrapper
+                return <>{children}</>;
               }
-              // For all other code blocks, keep the pre tag
-              return <pre {...props}>{children}</pre>;
-            },
-            code: ({ node, inline, className, children, ...props }: any) => {
-              const match = /language-(\w+)/.exec(className || '');
-              const language = match ? match[1] : '';
+            }
+            // For all other code blocks, keep the pre tag
+            return <pre {...props}>{children}</pre>;
+          },
+          code: ({ node, inline, className, children, ...props }: any) => {
+            const match = /language-(\w+)/.exec(className || '');
+            const language = match ? match[1] : '';
 
-              if (!inline && language === 'video') {
-                const content = String(children).trim();
-                const urls = content.split('\n').filter(url => url.trim());
+            if (!inline && language === 'video') {
+              const content = String(children).trim();
+              const urls = content.split('\n').filter(url => url.trim());
 
-                return (
-                  <>
-                    {urls.map((url, index) => {
-                      const videoId = url.match(/(?:embed\/|v=|youtu\.be\/)([a-zA-Z0-9_-]+)/)?.[1];
+              return (
+                <>
+                  {urls.map((url, index) => {
+                    const videoId = url.match(/(?:embed\/|v=|youtu\.be\/)([a-zA-Z0-9_-]+)/)?.[1];
 
-                      if (videoId) {
-                        const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-                        const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                    if (videoId) {
+                      const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+                      const embedUrl = `https://www.youtube.com/embed/${videoId}`;
 
-                        return (
-                          <div
-                            key={index}
-                            className="video-thumbnail-wrapper"
-                            onClick={() => setExpandedVideo(embedUrl)}
-                          >
-                            <img
-                              src={thumbnailUrl}
-                              alt="Video thumbnail"
-                              className="video-thumbnail-image"
-                            />
-                            <div className="video-play-button">
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M8 5v14l11-7z" />
-                              </svg>
-                            </div>
+                      return (
+                        <div
+                          key={index}
+                          className="video-thumbnail-wrapper"
+                          onClick={() => setExpandedVideo(embedUrl)}
+                        >
+                          <img
+                            src={thumbnailUrl}
+                            alt="Video thumbnail"
+                            className="video-thumbnail-image"
+                          />
+                          <div className="video-play-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M8 5v14l11-7z" />
+                            </svg>
                           </div>
-                        );
-                      }
-                      return null;
-                    })}
-                  </>
-                );
-              }
-
-              // Handle Coursera certificate code block
-              if (!inline && language === 'coursera') {
-                const content = String(children).trim();
-                const lines = content.split('\n');
-                const certData: Record<string, string> = {};
-
-                // Parse key-value pairs
-                lines.forEach(line => {
-                  const colonIndex = line.indexOf(':');
-                  if (colonIndex > -1) {
-                    const key = line.substring(0, colonIndex).trim();
-                    const value = line.substring(colonIndex + 1).trim();
-                    certData[key] = value;
-                  }
-                });
-
-                if (certData['name']) {
-                  return (
-                    <CourseraCertificate
-                      title={certData['name']}
-                      organization={certData['issuing organization']}
-                      date={certData['issue date']}
-                      credentialId={certData['credential id']}
-                      credentialUrl={certData['credential url']}
-                    />
-                  );
-                }
-              }
-
-              return inline ? (
-                <code className={className} {...props}>{children}</code>
-              ) : (
-                <code className={className} {...props}>{children}</code>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })}
+                </>
               );
-            },
-            iframe: ({ node, ...props }: any) => (
-              <div className="video-container">
-                <iframe {...props} />
-              </div>
-            ),
-            img: ({ node, src, alt, ...props }: any) => {
-              // Handle GitHub Stats component
-              if (src?.startsWith('github?') || src?.includes('username=')) {
-                try {
-                  const urlParams = new URLSearchParams(src.replace('github?', ''));
-                  const username = urlParams.get('username');
-                  const theme = urlParams.get('theme') || 'dark';
+            }
 
-                  if (username) {
-                    return <GitHubStats username={username} theme={theme as 'light' | 'dark'} />;
-                  }
-                } catch (error) {
-                  console.error('Error parsing GitHub stats URL:', error);
+            // Handle Coursera certificate code block
+            if (!inline && language === 'coursera') {
+              const content = String(children).trim();
+              const lines = content.split('\n');
+              const certData: Record<string, string> = {};
+
+              // Parse key-value pairs
+              lines.forEach(line => {
+                const colonIndex = line.indexOf(':');
+                if (colonIndex > -1) {
+                  const key = line.substring(0, colonIndex).trim();
+                  const value = line.substring(colonIndex + 1).trim();
+                  certData[key] = value;
                 }
-              }
+              });
 
-              // Handle Coursera Certificate component
-              if (src?.startsWith('coursera?') || src?.includes('accomplishments=')) {
-                try {
-                  const urlParams = new URLSearchParams(src.replace('coursera?', ''));
-                  const certId = urlParams.get('accomplishments');
-                  const title = urlParams.get('title') || 'Certificate';
-                  const date = urlParams.get('date');
-
-                  if (certId) {
-                    return <CourseraCertificate certId={certId} title={title} date={date || undefined} />;
-                  }
-                } catch (error) {
-                  console.error('Error parsing Coursera certificate URL:', error);
-                }
-              }
-
-              // Handle badge images from our API
-              if (src?.startsWith('/badges/')) {
+              if (certData['name']) {
                 return (
-                  <img
-                    src={src}
-                    alt={alt}
-                    {...props}
-                    className="inline-block max-w-full h-auto"
+                  <CourseraCertificate
+                    title={certData['name']}
+                    organization={certData['issuing organization']}
+                    date={certData['issue date']}
+                    credentialId={certData['credential id']}
+                    credentialUrl={certData['credential url']}
                   />
                 );
               }
+            }
 
-              // Default image rendering
-              return <img src={src} alt={alt} {...props} />;
-            },
-          }}
-        >
-          {markdown}
-        </ReactMarkdown>
-      </article>
+            return inline ? (
+              <code className={className} {...props}>{children}</code>
+            ) : (
+              <code className={className} {...props}>{children}</code>
+            );
+          },
+          iframe: ({ node, ...props }: any) => (
+            <div className="video-container">
+              <iframe {...props} />
+            </div>
+          ),
+          img: ({ node, src, alt, ...props }: any) => {
+            // Handle GitHub Stats component
+            if (src?.startsWith('github?') || src?.includes('username=')) {
+              try {
+                const urlParams = new URLSearchParams(src.replace('github?', ''));
+                const username = urlParams.get('username');
+                const theme = urlParams.get('theme') || 'dark';
+
+                if (username) {
+                  return <GitHubStats username={username} theme={theme as 'light' | 'dark'} />;
+                }
+              } catch (error) {
+                console.error('Error parsing GitHub stats URL:', error);
+              }
+            }
+
+            // Handle Coursera Certificate component
+            if (src?.startsWith('coursera?') || src?.includes('accomplishments=')) {
+              try {
+                const urlParams = new URLSearchParams(src.replace('coursera?', ''));
+                const certId = urlParams.get('accomplishments');
+                const title = urlParams.get('title') || 'Certificate';
+                const date = urlParams.get('date');
+
+                if (certId) {
+                  return <CourseraCertificate certId={certId} title={title} date={date || undefined} />;
+                }
+              } catch (error) {
+                console.error('Error parsing Coursera certificate URL:', error);
+              }
+            }
+
+            // Handle badge images from our API
+            if (src?.startsWith('/badges/')) {
+              return (
+                <img
+                  src={src}
+                  alt={alt}
+                  {...props}
+                  className="inline-block max-w-full h-auto"
+                />
+              );
+            }
+
+            // Default image rendering
+            return <img src={src} alt={alt} {...props} />;
+          },
+        };
+
+        // Dynamically render the appropriate template
+        if (templateType === 'modern') {
+          const { ModernTemplate } = require('../templates');
+          return <ModernTemplate content={markdown} viewCount={viewCount} components={customComponents} />;
+        } else if (templateType === 'minimal') {
+          const { MinimalTemplate } = require('../templates');
+          return <MinimalTemplate content={markdown} viewCount={viewCount} components={customComponents} />;
+        } else {
+          const { DefaultTemplate } = require('../templates');
+          return <DefaultTemplate content={markdown} viewCount={viewCount} components={customComponents} />;
+        }
+      })()}
 
       {/* Resume Footer */}
       {resumeData && (

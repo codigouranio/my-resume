@@ -14,7 +14,7 @@ export class SubscriptionsService {
     }
     
     this.stripe = new Stripe(stripeSecretKey, {
-      apiVersion: '2025-12-15.clover',
+      apiVersion: '2025-02-24.acacia',
     });
   }
 

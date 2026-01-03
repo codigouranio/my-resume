@@ -1,0 +1,58 @@
+.minimal-template {
+  @apply bg-white rounded-none shadow-sm p-12 md:p-16 max-w-4xl mx-auto;
+  min-height: 60vh;
+  font-family: 'Georgia', serif;
+}
+
+.minimal-template .prose {
+  @apply text-gray-900;
+  max-width: none;
+  line-height: 1.8;
+}
+
+.minimal-template .prose h1 {
+  @apply text-4xl font-light mb-8 tracking-tight text-black;
+  font-weight: 300;
+  letter-spacing: -0.5px;
+}
+
+.minimal-template .prose h2 {
+  @apply text-2xl font-light mt-12 mb-4 text-black tracking-tight;
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 0.875rem;
+}
+
+.minimal-template .prose h3 {
+  @apply text-lg font-normal mt-6 mb-2 text-gray-800;
+}
+
+.minimal-template .prose p {
+  @apply mb-4 text-gray-700;
+  font-size: 1rem;
+}
+
+.minimal-template .prose ul {
+  @apply list-disc ml-6 mb-4;
+}
+
+.minimal-template .prose li {
+  @apply mb-2 text-gray-700;
+}
+
+.minimal-template .prose a {
+  @apply text-black underline hover:no-underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.minimal-template .template-footer {
+  @apply mt-12 pt-4 border-t border-gray-200 flex justify-end items-center;
+}
+
+.minimal-template .view-count {
+  @apply flex items-center gap-2 text-xs text-gray-500 tracking-wide;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
