@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EmbeddingsController } from './embeddings.controller';
 import { EmbeddingQueueService } from './embedding-queue.service';
 import { EmbeddingProcessor } from './embedding.processor';
+import { SearchService } from './search.service';
 import { PrismaModule } from '@shared/database/prisma.module';
 
 @Module({
@@ -34,7 +35,7 @@ import { PrismaModule } from '@shared/database/prisma.module';
     }),
   ],
   controllers: [EmbeddingsController],
-  providers: [EmbeddingQueueService, EmbeddingProcessor],
+  providers: [EmbeddingQueueService, EmbeddingProcessor, SearchService],
   exports: [EmbeddingQueueService], // Export for use in ResumesModule
 })
 export class EmbeddingsModule {}
