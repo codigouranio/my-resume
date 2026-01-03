@@ -3,12 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import { useAuth } from '../../shared/contexts/AuthContext';
 import { apiClient } from '../../shared/api/client';
 import './Editor.css';
 
 export function EditorPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const isNew = id === 'new';
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -417,7 +419,12 @@ export function EditorPage() {
               placeholder="my-resume"
             />
             <label className="label">
-              <span className="label-text-alt">yoursite.com/resume/{formData.slug || 'slug'}</span>
+              <span className="label-text-alt">
+                {user?.customDomain 
+                  ? `${user.customDomain}.resumecast.ai/${formData.slug || 'slug'}`
+                  : `resumecast.ai/resume/${formData.slug || 'slug'}`
+                }
+              </span>
             </label>
           </div>
 
