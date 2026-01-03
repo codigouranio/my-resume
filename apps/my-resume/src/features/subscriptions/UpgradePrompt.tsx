@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../shared/api/client';
 import './UpgradePrompt.css';
 
@@ -7,6 +8,7 @@ interface UpgradePromptProps {
 }
 
 export const UpgradePrompt: React.FC<UpgradePromptProps> = ({ onClose }) => {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -85,6 +87,15 @@ export const UpgradePrompt: React.FC<UpgradePromptProps> = ({ onClose }) => {
             ) : (
               'Upgrade Now'
             )}
+          </button>
+          <button
+            className="btn btn-outline"
+            onClick={() => {
+              if (onClose) onClose();
+              navigate('/pricing');
+            }}
+          >
+            View Plans
           </button>
           {onClose && (
             <button className="btn btn-ghost" onClick={onClose}>
