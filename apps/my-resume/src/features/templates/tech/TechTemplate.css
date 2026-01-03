@@ -1,12 +1,12 @@
-/* Cloudflare Template - Clean tech-forward design with orange accents */
+/* Tech Template - Clean tech-forward design with orange accents */
 
-.cloudflare-template {
+.tech-template {
   min-height: 100vh;
   background: #ffffff;
   position: relative;
 }
 
-.cloudflare-accent-bar {
+.tech-accent-bar {
   position: fixed;
   top: 0;
   left: 0;
@@ -16,7 +16,7 @@
   z-index: 100;
 }
 
-.cloudflare-content {
+.tech-content {
   max-width: 920px;
   margin: 0 auto;
   padding: 80px 48px 60px;
@@ -26,7 +26,7 @@
 }
 
 /* Headers */
-.cloudflare-content h1 {
+.tech-content h1 {
   font-size: 3.5rem;
   font-weight: 700;
   color: #111827;
@@ -37,7 +37,7 @@
   padding-bottom: 1rem;
 }
 
-.cloudflare-content h1::after {
+.tech-content h1::after {
   content: '';
   position: absolute;
   bottom: 0;
@@ -47,7 +47,7 @@
   background: linear-gradient(90deg, #f38020 0%, #fb923c 100%);
 }
 
-.cloudflare-content h2 {
+.tech-content h2 {
   font-size: 1.875rem;
   font-weight: 700;
   color: #f38020;
@@ -58,7 +58,7 @@
   position: relative;
 }
 
-.cloudflare-content h2::before {
+.tech-content h2::before {
   content: '';
   position: absolute;
   left: -24px;
@@ -70,7 +70,7 @@
   border-radius: 2px;
 }
 
-.cloudflare-content h3 {
+.tech-content h3 {
   font-size: 1.5rem;
   font-weight: 600;
   color: #111827;
@@ -79,7 +79,7 @@
 }
 
 /* Paragraphs */
-.cloudflare-content p {
+.tech-content p {
   color: #4b5563;
   font-size: 1.0625rem;
   margin-bottom: 1.25rem;
@@ -88,7 +88,7 @@
 }
 
 /* Links */
-.cloudflare-content a {
+.tech-content a {
   color: #f38020;
   text-decoration: none;
   font-weight: 500;
@@ -96,7 +96,7 @@
   position: relative;
 }
 
-.cloudflare-content a::after {
+.tech-content a::after {
   content: '';
   position: absolute;
   bottom: -2px;
@@ -107,39 +107,39 @@
   transition: width 0.2s ease;
 }
 
-.cloudflare-content a:hover::after {
+.tech-content a:hover::after {
   width: 100%;
 }
 
-.cloudflare-content a:hover {
+.tech-content a:hover {
   color: #fb923c;
 }
 
 /* Lists */
-.cloudflare-content ul,
-.cloudflare-content ol {
+.tech-content ul,
+.tech-content ol {
   margin-left: 1.5rem;
   margin-bottom: 1.5rem;
   color: #4b5563;
 }
 
-.cloudflare-content li {
+.tech-content li {
   margin-bottom: 0.75rem;
   padding-left: 0.5rem;
 }
 
-.cloudflare-content ul li::marker {
+.tech-content ul li::marker {
   color: #f38020;
   font-size: 1.3em;
 }
 
-.cloudflare-content ol li::marker {
+.tech-content ol li::marker {
   color: #f38020;
   font-weight: 600;
 }
 
 /* Code blocks */
-.cloudflare-content code {
+.tech-content code {
   background: #fef3f2;
   color: #f38020;
   padding: 0.25em 0.5em;
@@ -150,7 +150,7 @@
   font-weight: 500;
 }
 
-.cloudflare-content pre {
+.tech-content pre {
   background: #1f2937;
   color: #f3f4f6;
   padding: 1.75rem;
@@ -161,7 +161,7 @@
   border: 1px solid #374151;
 }
 
-.cloudflare-content pre code {
+.tech-content pre code {
   background: transparent;
   color: inherit;
   padding: 0;
@@ -170,7 +170,7 @@
 }
 
 /* Blockquotes */
-.cloudflare-content blockquote {
+.tech-content blockquote {
   border-left: 4px solid #f38020;
   padding-left: 1.5rem;
   margin: 2rem 0;
@@ -183,7 +183,7 @@
 }
 
 /* Tables */
-.cloudflare-content table {
+.tech-content table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
@@ -195,7 +195,7 @@
   border: 1px solid #e5e7eb;
 }
 
-.cloudflare-content th {
+.tech-content th {
   background: linear-gradient(135deg, #f38020 0%, #fb923c 100%);
   color: white;
   padding: 1.25rem 1rem;
@@ -206,22 +206,22 @@
   letter-spacing: 0.05em;
 }
 
-.cloudflare-content td {
+.tech-content td {
   padding: 1.25rem 1rem;
   border-bottom: 1px solid #f3f4f6;
   color: #4b5563;
 }
 
-.cloudflare-content tr:last-child td {
+.tech-content tr:last-child td {
   border-bottom: none;
 }
 
-.cloudflare-content tbody tr:hover {
+.tech-content tbody tr:hover {
   background: #fffbeb;
 }
 
 /* HR */
-.cloudflare-content hr {
+.tech-content hr {
   border: none;
   height: 2px;
   background: linear-gradient(90deg, transparent, #f38020, #fb923c, transparent);
@@ -230,13 +230,13 @@
 }
 
 /* Strong/Bold */
-.cloudflare-content strong {
+.tech-content strong {
   color: #111827;
   font-weight: 700;
 }
 
 /* Images */
-.cloudflare-content img {
+.tech-content img {
   max-width: 100%;
   height: auto;
   border-radius: 12px;
@@ -247,39 +247,39 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .cloudflare-content {
+  .tech-content {
     padding: 60px 24px 40px;
   }
 
-  .cloudflare-content h1 {
+  .tech-content h1 {
     font-size: 2.5rem;
   }
 
-  .cloudflare-content h2 {
+  .tech-content h2 {
     font-size: 1.5rem;
   }
 
-  .cloudflare-content h2::before {
+  .tech-content h2::before {
     left: -16px;
   }
 }
 
 /* Print styles */
 @media print {
-  .cloudflare-accent-bar {
+  .tech-accent-bar {
     display: none;
   }
 
-  .cloudflare-content {
+  .tech-content {
     padding: 20px;
     max-width: 100%;
   }
 
-  .cloudflare-content a {
+  .tech-content a {
     color: #111827;
   }
 
-  .cloudflare-content a::after {
+  .tech-content a::after {
     display: none;
   }
 }

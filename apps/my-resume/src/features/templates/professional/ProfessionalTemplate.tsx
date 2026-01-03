@@ -4,9 +4,9 @@ import rehypeRaw from 'rehype-raw';
 import type { TemplateProps } from '../types';
 import './ProfessionalTemplate.css';
 
-export function ProfessionalTemplate({ 
-  content, 
-  components 
+export function ProfessionalTemplate({
+  content,
+  components
 }: TemplateProps) {
   return (
     <div className="professional-template">
