@@ -53,14 +53,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const response = await apiClient.login({ email, password });
     apiClient.setToken(response.access_token);
     apiClient.setRefreshToken(response.refresh_token);
-    setUser(response.user);
+    // Fetch fresh user data instead of using the response
+    await refreshUser();
   };
 
   const register = async (data: { email: string; password: string; firstName?: string; lastName?: string }) => {
     const response = await apiClient.register(data);
     apiClient.setToken(response.access_token);
     apiClient.setRefreshToken(response.refresh_token);
-    setUser(response.user);
+    // Fetch fresh user data instead of using the response
+    await refreshUser();
   };
 
   const logout = async () => {

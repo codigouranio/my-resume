@@ -5,7 +5,7 @@ import { apiClient } from '../../shared/api/client';
 import './SettingsPage.css';
 
 export function SettingsPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'profile' | 'subscription'>('profile');
   const [customDomain, setCustomDomain] = useState('');
@@ -17,6 +17,18 @@ export function SettingsPage() {
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
 
   useEffect(() => {
+    // Check if returning from Stripe customer portal
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromPortal = urlParams.get('from_portal');
+    
+    if (fromPortal === 'true') {
+      // User just came back from customer portal, refresh their data
+      refreshUser().then(() => {
+        // Clean up URL
+        window.history.replaceState({}, '', window.location.pathname);
+      });
+    }
+
     if (user?.customDomain) {
       setCustomDomain(user.customDomain);
     }

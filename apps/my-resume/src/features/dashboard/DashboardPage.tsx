@@ -32,7 +32,7 @@ interface RecruiterInterest {
 }
 
 export function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [recruiterInterests, setRecruiterInterests] = useState<RecruiterInterest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,6 +45,18 @@ export function DashboardPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check if returning from Stripe checkout
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id');
+
+    if (sessionId) {
+      // User just completed checkout, refresh their data
+      refreshUser().then(() => {
+        // Clean up URL
+        window.history.replaceState({}, '', window.location.pathname);
+      });
+    }
+
     fetchResumes();
     fetchRecruiterInterests();
   }, []);
