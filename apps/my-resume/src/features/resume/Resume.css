@@ -180,32 +180,75 @@
   margin-left: 4px;
 }
 
-/* Coursera Certificate Card Styles */
-.resume-container .prose .coursera-certificate-card {
+/* Coursera Certificate Card Styles - Override template styles */
+.coursera-certificate-card,
+.resume-container .coursera-certificate-card,
+.resume-container .prose .coursera-certificate-card,
+div[class*="template"] .coursera-certificate-card {
   @apply bg-gradient-to-br from-blue-600 to-indigo-700 shadow-lg w-52 h-72 border border-blue-400 rounded-xl;
-  transition: transform 0.1s ease-out, box-shadow 0.3s ease-out;
-  transform-style: preserve-3d;
-  position: relative;
-  overflow: hidden;
+  transition: transform 0.1s ease-out, box-shadow 0.3s ease-out !important;
+  transform-style: preserve-3d !important;
+  position: relative !important;
+  overflow: hidden !important;
+  background: linear-gradient(to bottom right, rgb(37 99 235), rgb(67 56 202)) !important;
+  width: 13rem !important;
+  height: 18rem !important;
+  border-radius: 0.75rem !important;
+  border: 1px solid rgb(96 165 250) !important;
 }
 
-.resume-container .prose .coursera-certificate-card:hover {
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+.coursera-certificate-card:hover,
+.resume-container .coursera-certificate-card:hover,
+.resume-container .prose .coursera-certificate-card:hover,
+div[class*="template"] .coursera-certificate-card:hover {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
 }
 
-.resume-container .prose .coursera-certificate-card .card-body {
+.coursera-certificate-card .card-body,
+.resume-container .coursera-certificate-card .card-body,
+.resume-container .prose .coursera-certificate-card .card-body,
+div[class*="template"] .coursera-certificate-card .card-body {
   @apply p-3 relative flex flex-col h-full justify-between;
-  z-index: 10;
+  z-index: 10 !important;
+  padding: 0.75rem !important;
 }
 
-.resume-container .prose .coursera-certificate-card h3 {
+.coursera-certificate-card h3,
+.resume-container .coursera-certificate-card h3,
+.resume-container .prose .coursera-certificate-card h3,
+div[class*="template"] .coursera-certificate-card h3 {
   @apply mt-2 text-lg font-bold;
-  line-height: 1.2;
+  line-height: 1.2 !important;
+  margin-top: 0.5rem !important;
+  font-size: 1.125rem !important;
+  font-weight: 700 !important;
+  color: white !important;
 }
 
-.resume-container .prose .coursera-certificate-card p {
+.coursera-certificate-card p,
+.resume-container .coursera-certificate-card p,
+.resume-container .prose .coursera-certificate-card p,
+div[class*="template"] .coursera-certificate-card p {
   @apply text-xs text-white mt-1;
   flex-grow: 1;
+  font-size: 0.75rem !important;
+  color: white !important;
+  margin-top: 0.25rem !important;
+}
+
+.coursera-certificate-card span,
+.resume-container .coursera-certificate-card span,
+.resume-container .prose .coursera-certificate-card span,
+div[class*="template"] .coursera-certificate-card span {
+  color: white !important;
+}
+
+.coursera-certificate-card a,
+.resume-container .coursera-certificate-card a,
+.resume-container .prose .coursera-certificate-card a,
+div[class*="template"] .coursera-certificate-card a {
+  color: white !important;
+  text-decoration: underline !important;
 }
 
 /* .resume-container .prose .coursera-certificate-card h3 {
@@ -321,10 +364,12 @@
     widows: 3;
   }
 
-  /* Make certificate cards print-friendly */
-  .coursera-certificate-card {
-    page-break-inside: avoid;
-    break-inside: avoid;
+  /* Make certificate cards print-friendly - Override all template styles */
+  .coursera-certificate-card,
+  .resume-container .coursera-certificate-card,
+  div[class*="template"] .coursera-certificate-card {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
     background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%) !important;
     border: 2px solid #1e40af !important;
     color: white !important;
@@ -332,7 +377,9 @@
     print-color-adjust: exact !important;
   }
 
-  .coursera-certificate-card * {
+  .coursera-certificate-card *,
+  .resume-container .coursera-certificate-card *,
+  div[class*="template"] .coursera-certificate-card * {
     color: white !important;
   }
 
