@@ -7,6 +7,7 @@ import { DashboardPage } from './features/dashboard';
 import { EditorPage } from './features/editor';
 import { PricingPage } from './features/pricing';
 import { SettingsPage } from './features/settings';
+import { SearchPage } from './features/search';
 import Resume from './features/resume/Resume';
 import './shared/styles/App.css';
 
@@ -55,6 +56,7 @@ const App = () => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/search" element={<SearchPage />} />
           <Route path="/resume/:slug" element={<Resume />} />
 
           {/* Protected Routes */}

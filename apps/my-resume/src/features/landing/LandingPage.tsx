@@ -4,8 +4,13 @@ import './LandingPage.css';
 export function LandingPage() {
   return (
     <div className="landing-container">
-      {/* Login Button in Corner */}
-      <div className="fixed top-4 right-4 z-50">
+      {/* Header Navigation */}
+      <div className="fixed top-4 right-4 z-50 flex gap-2">
+        <Link to="/search" className="btn btn-circle btn-outline btn-accent text-white border-white hover:bg-white hover:text-primary" aria-label="Search">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </Link>
         <Link to="/login" className="btn btn-circle btn-outline btn-accent text-white border-white hover:bg-white hover:text-primary" aria-label="Login">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -42,6 +47,14 @@ export function LandingPage() {
           <h2 className="text-4xl font-bold text-center mb-12">Why Choose ResumeCast.ai?</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body items-center text-center">
+                <div className="text-5xl mb-4">🔍</div>
+                <h3 className="card-title">AI-Powered Search</h3>
+                <p>Find the perfect candidate with semantic search that understands skills and experience</p>
+              </div>
+            </div>
+
             <div className="card bg-base-100 shadow-xl">
               <div className="card-body items-center text-center">
                 <div className="text-5xl mb-4">✨</div>
