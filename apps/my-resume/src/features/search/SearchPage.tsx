@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 interface SearchResult {
   id: string;
@@ -214,14 +215,12 @@ export const SearchPage = () => {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h2 className="card-title text-xl">
-                          <a
-                            href={`/${result.slug}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <Link
+                            to={`/resume/${result.slug}`}
                             className="link link-hover"
                           >
                             {result.title}
-                          </a>
+                          </Link>
                         </h2>
                         <div className="badge badge-neutral">#{result.rank}</div>
                       </div>
@@ -251,14 +250,12 @@ export const SearchPage = () => {
                   </div>
 
                   <div className="card-actions justify-end mt-4">
-                    <a
-                      href={`/${result.slug}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <Link
+                      to={`/resume/${result.slug}`}
                       className="btn btn-primary btn-sm"
                     >
                       View Resume
-                    </a>
+                    </Link>
                   </div>
                 </div>
               </div>
