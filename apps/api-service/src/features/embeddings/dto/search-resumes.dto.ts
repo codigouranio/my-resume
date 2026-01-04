@@ -58,13 +58,13 @@ export class SearchResumesDto {
   @ApiProperty({
     description: 'Minimum similarity score (0-1), where 1 is perfect match',
     required: false,
-    default: 0.7,
+    default: 0.4,
     minimum: 0,
     maximum: 1,
   })
   @IsOptional()
   @Type(() => Number)
-  minSimilarity?: number = 0.7;
+  minSimilarity?: number = 0.4;
 }
 
 export class SearchResultItem {
