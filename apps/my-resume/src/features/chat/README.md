@@ -1,6 +1,6 @@
 # Chat Feature
 
-AI-powered chat widget for answering questions about Jose's career.
+AI-powered chat widget for answering questions about the candidate's career.
 
 ## Components
 

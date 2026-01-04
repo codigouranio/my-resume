@@ -80,11 +80,11 @@ class TestChatEndpoint:
     @patch("app_remote.requests.post")
     def test_chat_success(self, mock_post, mock_load_resume, client):
         """Test chat endpoint with valid request"""
-        mock_load_resume.return_value = "Resume content for Jose Blanco"
+        mock_load_resume.return_value = "Resume content for the candidate"
 
         mock_response = Mock()
         mock_response.json.return_value = {
-            "response": "Jose has experience with Python and AWS"
+            "response": "The candidate has experience with Python and AWS"
         }
         mock_response.raise_for_status = Mock()
         mock_post.return_value = mock_response
@@ -92,8 +92,8 @@ class TestChatEndpoint:
         response = client.post(
             "/api/chat",
             json={
-                "message": "What experience does Jose have?",
-                "slug": "jose-blanco-swe",
+                "message": "What experience does this person have?",
+                "slug": "candidate-resume",
             },
         )
 
@@ -221,13 +221,13 @@ class TestIntegration:
         """Test complete chat flow from request to response"""
         # Setup
         mock_load_resume.return_value = (
-            "Jose Blanco - Senior Software Engineer\n"
+            "Sample Candidate - Senior Software Engineer\n"
             "Skills: Python, AWS, Docker, FastAPI"
         )
 
         mock_response = Mock()
         mock_response.json.return_value = {
-            "response": "Jose has extensive experience with Python, AWS, and Docker."
+            "response": "The candidate has extensive experience with Python, AWS, and Docker."
         }
         mock_response.raise_for_status = Mock()
         mock_post.return_value = mock_response
@@ -235,14 +235,14 @@ class TestIntegration:
         # Execute
         response = client.post(
             "/api/chat",
-            json={"message": "What are Jose's main skills?", "slug": "jose-blanco-swe"},
+            json={"message": "What are the main skills?", "slug": "candidate-resume"},
         )
 
         # Verify
         assert response.status_code == 200
         data = json.loads(response.data)
         assert "response" in data
-        mock_load_resume.assert_called_once_with("jose-blanco-swe")
+        mock_load_resume.assert_called_once_with("candidate-resume")
         mock_post.assert_called_once()
 
 

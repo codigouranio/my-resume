@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Flask API service for resume chatbot using LLAMA on RTX 3090.
-Provides endpoints for conversational AI about Jose Blanco's career.
+Flask API service for resume chatbot using LLAMA.
+Provides endpoints for conversational AI about candidate careers.
 """
 
 from flask import Flask, request, jsonify
@@ -23,7 +23,7 @@ CORS(app)  # Enable CORS for all routes
 # Adjust path to your model file location
 MODEL_PATH = os.getenv("LLAMA_MODEL_PATH", "./models/llama-2-7b-chat.gguf")
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:3000/api")
-RESUME_SLUG = os.getenv("RESUME_SLUG", "jose-blanco-swe")
+RESUME_SLUG = os.getenv("RESUME_SLUG", "default-resume")
 llm = None
 
 
@@ -84,8 +84,8 @@ IMPORTANT GUIDELINES:
 3. If asked about information not in the context, politely say you don't have that information
 4. Never make up or infer information that isn't explicitly stated
 5. Never provide negative, critical, or speculative information
-6. Focus on Jose's professional achievements, skills, and experience
-7. Maintain a helpful and encouraging tone when discussing his career
+6. Focus on the candidate's professional achievements, skills, and experience
+7. Maintain a helpful and encouraging tone when discussing their career
 8. If asked inappropriate questions, redirect to professional topics
 """
 
@@ -117,7 +117,7 @@ def chat():
         resume_context = get_resume_context()
 
         # Build prompt with context and safety guardrails
-        prompt = f"""You are a professional AI assistant helping visitors learn about Jose Blanco's career and qualifications.
+        prompt = f"""You are a professional AI assistant helping visitors learn about a candidate's career and qualifications.
 
 {SAFETY_INSTRUCTIONS}
 
@@ -127,8 +127,8 @@ PROFESSIONAL INFORMATION:
 Instructions:
 - Answer questions accurately based only on the information provided above
 - Be professional, positive, and helpful
-- If information is not available, say "I don't have that specific information in Jose's profile"
-- Focus on his accomplishments, skills, and professional experience
+- If information is not available, say "I don't have that specific information in the profile"
+- Focus on their accomplishments, skills, and professional experience
 - Never speculate or make up information
 
 User Question: {user_message}
@@ -174,7 +174,7 @@ def chat_stream():
         # Get dynamic resume content
         resume_context = get_resume_context()
 
-        prompt = f"""You are a professional AI assistant helping visitors learn about Jose Blanco's career and qualifications.
+        prompt = f"""You are a professional AI assistant helping visitors learn about a candidate's career and qualifications.
 
 {SAFETY_INSTRUCTIONS}
 
@@ -184,8 +184,8 @@ PROFESSIONAL INFORMATION:
 Instructions:
 - Answer questions accurately based only on the information provided above
 - Be professional, positive, and helpful
-- If information is not available, say "I don't have that specific information in Jose's profile"
-- Focus on his accomplishments, skills, and professional experience
+- If information is not available, say "I don't have that specific information in the profile"
+- Focus on their accomplishments, skills, and professional experience
 - Never speculate or make up information
 
 User Question: {user_message}

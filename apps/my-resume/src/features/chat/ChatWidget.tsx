@@ -16,7 +16,7 @@ export default function ChatWidget() {
   const [messages, setMessages] = useState([
     {
       type: 'bot',
-      text: "Hi! I'm Jose's AI assistant. Feel free to ask me about his career, skills, or experience!"
+      text: "Hi! I'm an AI assistant. Feel free to ask me about this person's career, skills, or experience!"
     }
   ]);
   const [inputValue, setInputValue] = useState('');
@@ -82,7 +82,8 @@ export default function ChatWidget() {
     if (question.includes('experience') || question.includes('work')) {
       return "Jose has over 15 years of experience in full-stack development, working with companies like Asurion, Interactions LLC, Carbon Black, and more. He specializes in TypeScript, React, Node.js, and AWS infrastructure.";
     } else if (question.includes('skill') || question.includes('technology')) {
-      return "Jose's core skills include: TypeScript, JavaScript, Python, React, Node.js, AWS (Lambda, API Gateway, CDK), Docker, Kubernetes, and GraphQL. He's also experienced in system design and microservices architecture.";
+      // Fallback for skills question - should be answered by LLM with actual resume data
+      return "I can help you learn about this person's skills and experience. Please ask me a specific question about their background!";
     } else if (question.includes('contact') || question.includes('email') || question.includes('reach')) {
       return "You can reach out to Jose through LinkedIn or check the contact section. Would you like to know more about any specific project or experience?";
     } else if (question.includes('education')) {
@@ -90,7 +91,7 @@ export default function ChatWidget() {
     } else if (question.includes('project')) {
       return "Jose has worked on notable projects including building a multi-tenant platform at Interactions, developing an API Gateway handling millions of events per minute at Carbon Black, and creating a flagship threat detection interface. Check out the YouTube demo in the resume!";
     } else {
-      return "That's a great question! Feel free to ask me about Jose's experience, skills, projects, or education. I'm here to help you learn more about his career!";
+      return "That's a great question! Feel free to ask me about their experience, skills, projects, or education. I'm here to help you learn more about their career!";
     }
   };
 
@@ -172,7 +173,7 @@ export default function ChatWidget() {
           <div className="chat-input">
             <input
               type="text"
-              placeholder="Ask about Jose's experience..."
+              placeholder="Ask about their experience..."
               className="input input-bordered w-full"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}

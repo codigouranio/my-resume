@@ -1,13 +1,13 @@
 # LLM Service for Resume Chatbot
 
-Flask API service that uses LLAMA running on RTX 3090 to answer questions about Jose Blanco's resume.
+Flask API service that uses LLAMA (via Ollama) to answer questions about resumes stored in the database.
 
 ## Requirements
 
 - Python 3.10+
-- NVIDIA RTX 3090 GPU
-- CUDA 11.8+ and cuDNN
-- LLAMA model file (GGUF format)
+- Ollama server running (localhost:11434)
+- PostgreSQL database with resume data
+- LLAMA model (e.g., llama3.1:latest or gemma3:27b)
 
 ## Setup
 
@@ -146,14 +146,14 @@ POST /api/chat
 Content-Type: application/json
 
 {
-  "message": "What is Jose's experience with Python?"
+  "message": "What is the experience with Python?"
 }
 ```
 
 Response:
 ```json
 {
-  "response": "Jose Blanco has extensive experience with Python...",
+  "response": "The candidate has extensive experience with Python...",
   "tokens_used": 145
 }
 ```
@@ -164,7 +164,7 @@ POST /api/chat/stream
 Content-Type: application/json
 
 {
-  "message": "Tell me about Jose's cloud experience"
+  "message": "Tell me about the cloud experience"
 }
 ```
 

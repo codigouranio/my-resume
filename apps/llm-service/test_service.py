@@ -56,10 +56,10 @@ if __name__ == "__main__":
 
     # Test various chat queries
     test_questions = [
-        "What programming languages does Jose know?",
-        "Tell me about Jose's experience at Asurion",
-        "What cloud technologies has Jose worked with?",
-        "Does Jose have experience with AI and machine learning?",
+        "What programming languages are listed?",
+        "Tell me about the experience in the most recent role",
+        "What cloud technologies are mentioned?",
+        "Is there experience with AI and machine learning?",
     ]
 
     for question in test_questions:
