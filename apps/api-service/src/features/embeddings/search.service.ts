@@ -92,7 +92,8 @@ export class SearchService {
 
       params.push(queryEmbeddingStr, limit, offset, minSimilarity);
 
-      this.logger.debug(`Executing search with ${filters.length} filters, limit=${limit}, offset=${offset}`);
+      this.logger.debug(`Executing search with ${filters.length} filters, limit=${limit}, offset=${offset}, minSimilarity=${minSimilarity}`);
+      this.logger.debug(`SQL params: embedding dims=${queryEmbedding.dimensions}, limit=${limit}, offset=${offset}, threshold=${minSimilarity}`);
       
       const results = await this.prisma.$queryRawUnsafe<any[]>(sql, ...params);
 
