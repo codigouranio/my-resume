@@ -80,16 +80,16 @@ export default function ChatWidget() {
 
   const getBotResponseFallback = (question: string): string => {
     if (question.includes('experience') || question.includes('work')) {
-      return "Jose has over 15 years of experience in full-stack development, working with companies like Asurion, Interactions LLC, Carbon Black, and more. He specializes in TypeScript, React, Node.js, and AWS infrastructure.";
+      return "This person has extensive experience in full-stack development, working with leading technology companies. They specialize in TypeScript, React, Node.js, and AWS infrastructure.";
     } else if (question.includes('skill') || question.includes('technology')) {
       // Fallback for skills question - should be answered by LLM with actual resume data
       return "I can help you learn about this person's skills and experience. Please ask me a specific question about their background!";
     } else if (question.includes('contact') || question.includes('email') || question.includes('reach')) {
-      return "You can reach out to Jose through LinkedIn or check the contact section. Would you like to know more about any specific project or experience?";
+      return "You can reach out through LinkedIn or check the contact section. Would you like to know more about any specific project or experience?";
     } else if (question.includes('education')) {
-      return "Jose has an AS in Electronic Products Development and is currently pursuing a BS in Mathematics at UNED. He also continues learning through platforms like LeetCode, AlgoMonster, and Coursera.";
+      return "Check the education section for academic background and certifications. Would you like to know more about their work experience instead?";
     } else if (question.includes('project')) {
-      return "Jose has worked on notable projects including building a multi-tenant platform at Interactions, developing an API Gateway handling millions of events per minute at Carbon Black, and creating a flagship threat detection interface. Check out the YouTube demo in the resume!";
+      return "They have worked on notable projects including building multi-tenant platforms, developing API gateways handling millions of events, and creating threat detection interfaces. Check out the details in the resume!";
     } else {
       return "That's a great question! Feel free to ask me about their experience, skills, projects, or education. I'm here to help you learn more about their career!";
     }
