@@ -222,26 +222,26 @@ def call_llama_cpp_server(prompt: str, max_tokens: int = 256) -> dict:
 
 
 def call_ollama_server(prompt: str, max_tokens: int = 256) -> dict:
-    """Call Ollama API."""
+    """Call Ollama API using chat endpoint."""
     try:
         response = requests.post(
-            f"{LLAMA_SERVER_URL}/api/generate",
+            f"{LLAMA_SERVER_URL}/api/chat",
             json={
-                "model": os.getenv("OLLAMA_MODEL", "llama2"),
-                "prompt": prompt,
+                "model": os.getenv("OLLAMA_MODEL", "llama3.1"),
+                "messages": [{"role": "user", "content": prompt}],
                 "stream": False,
                 "options": {
                     "temperature": 0.7,
                     "top_p": 0.9,
                     "num_predict": max_tokens,
-                    "stop": ["User:", "\n\n"],
                 },
             },
             timeout=60,
         )
         response.raise_for_status()
         data = response.json()
-        return {"text": data.get("response", ""), "tokens": 0}
+        message = data.get("message", {})
+        return {"text": message.get("content", ""), "tokens": 0}
     except Exception as e:
         logger.error(f"Error calling Ollama server: {e}")
         raise
@@ -250,26 +250,26 @@ def call_ollama_server(prompt: str, max_tokens: int = 256) -> dict:
 def call_ollama_for_completion(
     prompt: str, max_tokens: int = 256, temperature: float = 0.3
 ) -> dict:
-    """Call Ollama API with specific settings for text completion (not chat)."""
+    """Call Ollama API with specific settings for text completion using chat endpoint."""
     try:
         response = requests.post(
-            f"{LLAMA_SERVER_URL}/api/generate",
+            f"{LLAMA_SERVER_URL}/api/chat",
             json={
-                "model": os.getenv("OLLAMA_MODEL", "llama2"),
-                "prompt": prompt,
+                "model": os.getenv("OLLAMA_MODEL", "llama3.1"),
+                "messages": [{"role": "user", "content": prompt}],
                 "stream": False,
                 "options": {
                     "temperature": temperature,
                     "top_p": 0.95,
                     "num_predict": max_tokens,
-                    "stop": ["\n\nExample:", "\n\nRewrite:", "Example:", "Rewrite:"],
                 },
             },
             timeout=60,
         )
         response.raise_for_status()
         data = response.json()
-        return {"text": data.get("response", ""), "tokens": 0}
+        message = data.get("message", {})
+        return {"text": message.get("content", ""), "tokens": 0}
     except Exception as e:
         logger.error(f"Error calling Ollama server: {e}")
         raise
