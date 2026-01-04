@@ -77,9 +77,9 @@ node_env: production
 enable_source_maps: true
 enable_debug_logging: false
 
-# Analytics Configuration
-gtm_id: GTM-KC5CWRP
-ga_id: G-1S7FR5H9NV
+# Analytics Configuration (optional - set in production)
+gtm_id: ""  # e.g., GTM-XXXXXXX
+ga_id: ""  # e.g., G-XXXXXXXXXX
 
 # CORS Configuration
 cors_origins: 
