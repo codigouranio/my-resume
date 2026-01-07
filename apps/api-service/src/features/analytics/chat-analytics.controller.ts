@@ -30,7 +30,7 @@ export class ChatAnalyticsController {
     // Verify ownership
     const isOwner = await this.chatAnalyticsService.verifyResumeOwnership(
       resumeId,
-      req.user.userId,
+      req.user.id,
     );
     if (!isOwner) {
       throw new ForbiddenException(
@@ -54,7 +54,7 @@ export class ChatAnalyticsController {
   async getTopics(@Param('resumeId') resumeId: string, @Request() req?: any) {
     const isOwner = await this.chatAnalyticsService.verifyResumeOwnership(
       resumeId,
-      req.user.userId,
+      req.user.id,
     );
     if (!isOwner) {
       throw new ForbiddenException(
@@ -79,7 +79,7 @@ export class ChatAnalyticsController {
   ) {
     const isOwner = await this.chatAnalyticsService.verifyResumeOwnership(
       resumeId,
-      req.user.userId,
+      req.user.id,
     );
     if (!isOwner) {
       throw new ForbiddenException(
@@ -106,7 +106,7 @@ export class ChatAnalyticsController {
   ) {
     const isOwner = await this.chatAnalyticsService.verifyResumeOwnership(
       resumeId,
-      req.user.userId,
+      req.user.id,
     );
     if (!isOwner) {
       throw new ForbiddenException(
@@ -129,7 +129,7 @@ export class ChatAnalyticsController {
   ) {
     const isOwner = await this.chatAnalyticsService.verifyResumeOwnership(
       resumeId,
-      req.user.userId,
+      req.user.id,
     );
     if (!isOwner) {
       throw new ForbiddenException(
