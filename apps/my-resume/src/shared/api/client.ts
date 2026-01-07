@@ -297,6 +297,34 @@ class ApiClient {
   async getTemplate(id: string) {
     return this.request(`/templates/${id}`);
   }
+
+  // Chat Analytics
+  async getChatAnalyticsSummary(resumeId: string, days: number = 30) {
+    return this.request(`/analytics/chat/${resumeId}/summary?days=${days}`);
+  }
+
+  async getChatTopics(resumeId: string) {
+    return this.request(`/analytics/chat/${resumeId}/topics`);
+  }
+
+  async getChatLearningGaps(resumeId: string) {
+    return this.request(`/analytics/chat/${resumeId}/learning-gaps`);
+  }
+
+  async getChatTrends(resumeId: string, period: 'daily' | 'weekly' | 'monthly' = 'daily', startDate?: string, endDate?: string) {
+    let url = `/analytics/chat/${resumeId}/trends?period=${period}`;
+    if (startDate) url += `&startDate=${startDate}`;
+    if (endDate) url += `&endDate=${endDate}`;
+    return this.request(url);
+  }
+
+  async getChatInteractions(resumeId: string, startDate?: string, endDate?: string, sentiment?: string) {
+    let url = `/analytics/chat/${resumeId}/interactions?`;
+    if (startDate) url += `&startDate=${startDate}`;
+    if (endDate) url += `&endDate=${endDate}`;
+    if (sentiment) url += `&sentiment=${sentiment}`;
+    return this.request(url);
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);

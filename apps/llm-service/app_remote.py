@@ -34,6 +34,150 @@ def get_db_connection():
     return psycopg2.connect(DATABASE_URL)
 
 
+def extract_topics_from_question(question: str) -> list:
+    """Extract topics/keywords from question for categorization."""
+    question_lower = question.lower()
+    topics = []
+
+    # Define topic keywords
+    topic_keywords = {
+        "skills": [
+            "skill",
+            "technology",
+            "programming",
+            "language",
+            "tool",
+            "framework",
+            "proficient",
+        ],
+        "experience": [
+            "experience",
+            "work",
+            "job",
+            "role",
+            "position",
+            "company",
+            "employer",
+        ],
+        "education": [
+            "education",
+            "degree",
+            "university",
+            "college",
+            "study",
+            "certification",
+            "course",
+        ],
+        "projects": ["project", "built", "created", "developed", "portfolio"],
+        "aws": ["aws", "amazon", "cloud", "ec2", "s3", "lambda"],
+        "python": ["python"],
+        "javascript": ["javascript", "js", "node", "react", "typescript"],
+        "docker": ["docker", "container", "kubernetes", "k8s"],
+        "leadership": ["lead", "manage", "team", "mentor", "supervise"],
+        "compensation": ["salary", "compensation", "pay", "rate", "budget"],
+    }
+
+    for topic, keywords in topic_keywords.items():
+        if any(keyword in question_lower for keyword in keywords):
+            topics.append(topic)
+
+    return topics if topics else ["general"]
+
+
+def log_chat_interaction(
+    resume_slug: str, question: str, answer: str, response_time: int, request_obj
+):
+    """Log chat interaction to database for analytics."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Get resume ID from slug
+        cursor.execute('SELECT id FROM "Resume" WHERE slug = %s', (resume_slug,))
+        result = cursor.fetchone()
+
+        if not result:
+            logger.warning(
+                f"Resume not found for slug: {resume_slug}, skipping analytics"
+            )
+            cursor.close()
+            conn.close()
+            return
+
+        resume_id = result[0]
+
+        # Extract visitor info
+        ip_address = (
+            request_obj.headers.get("X-Real-IP")
+            or request_obj.headers.get("X-Forwarded-For")
+            or request_obj.remote_addr
+        )
+        user_agent = request_obj.headers.get("User-Agent", "")[:500]  # Limit length
+        referrer = request_obj.headers.get("Referer", "")[:500]
+
+        # Simple sentiment analysis based on answer
+        sentiment = "NEUTRAL"
+        was_answered_well = True
+        answer_lower = answer.lower()
+
+        negative_indicators = [
+            "i don't have",
+            "not mentioned",
+            "cannot provide",
+            "i don't know",
+            "no information",
+            "not available",
+            "not specified",
+        ]
+
+        if any(indicator in answer_lower for indicator in negative_indicators):
+            sentiment = "NEGATIVE"
+            was_answered_well = False
+        elif len(answer) > 100:  # Substantial answer
+            sentiment = "POSITIVE"
+
+        # Extract topics from question
+        topics = extract_topics_from_question(question)
+
+        # Insert chat interaction
+        cursor.execute(
+            """
+            INSERT INTO "ChatInteraction" 
+            ("id", "resumeId", "question", "answer", "sentiment", "wasAnsweredWell", 
+             "topics", "ipAddress", "userAgent", "referrer", "responseTime", "createdAt")
+            VALUES (gen_random_uuid()::text, %s, %s, %s, %s::\"ChatSentiment\", %s, %s, %s, %s, %s, %s, NOW())
+        """,
+            (
+                resume_id,
+                question,
+                answer,
+                sentiment,
+                was_answered_well,
+                topics,
+                ip_address,
+                user_agent,
+                referrer,
+                response_time,
+            ),
+        )
+
+        conn.commit()
+        logger.info(
+            f"Logged chat interaction for resume {resume_slug} (sentiment: {sentiment})"
+        )
+
+    except Exception as e:
+        logger.error(f"Error logging chat interaction: {e}")
+        import traceback
+
+        logger.error(traceback.format_exc())
+    finally:
+        if "cursor" in locals():
+            cursor.close()
+        if "conn" in locals():
+            conn.close()
+
+
 def load_resume_from_db(slug: str):
     """Load resume context from database by slug."""
     try:
@@ -387,6 +531,10 @@ def chat():
     Expects JSON: {"message": "user question", "slug": "resume-slug"}
     Returns JSON: {"response": "AI answer"}
     """
+    import time
+
+    start_time = time.time()
+
     try:
         data = request.get_json()
         user_message = data.get("message", "").strip()
@@ -439,6 +587,18 @@ Professional Answer:"""
         answer = result["text"].strip()
 
         logger.info(f"Generated response: {answer[:100]}")
+
+        # Calculate response time
+        response_time_ms = int((time.time() - start_time) * 1000)
+
+        # Log chat interaction for analytics (async, don't block response)
+        if slug:
+            try:
+                log_chat_interaction(
+                    slug, user_message, answer, response_time_ms, request
+                )
+            except Exception as log_error:
+                logger.error(f"Failed to log chat analytics: {log_error}")
 
         return jsonify(
             {

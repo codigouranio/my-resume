@@ -12,6 +12,10 @@ all:
     llm_service_path: "{{ app_root }}/apps/llm-service"
     frontend_path: "{{ app_root }}/apps/my-resume"
     
+    # Repository
+    repo_url: "https://github.com/codigouranio/my-resume.git"
+    repo_branch: main
+    
     # Service ports
     api_port: 3000
     llm_port: 5000
@@ -19,9 +23,10 @@ all:
     
     # Database
     postgres_version: 15
+    postgres_port: 5432
     db_name: resume_db
     db_user: resume_user
-    db_password: "resume_password_change_me"  # Change this in production or use ansible-vault
+    db_password: "secure_db_password_change_me"  # Change this in production or use ansible-vault
     
     # Legacy variable names for compatibility
     postgres_db: "{{ db_name }}"

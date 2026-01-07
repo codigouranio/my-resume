@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { apiClient } from '../../shared/api/client';
-import { AnalyticsDashboard } from '../analytics';
+import { AnalyticsDashboard, ChatAnalyticsDashboard } from '../analytics';
 import './Dashboard.css';
 
 interface Resume {
@@ -40,6 +40,7 @@ export function DashboardPage() {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'resumes' | 'interests'>('resumes');
   const [selectedResumeForAnalytics, setSelectedResumeForAnalytics] = useState<string | null>(null);
+  const [analyticsView, setAnalyticsView] = useState<'views' | 'chat'>('views');
   const [analytics, setAnalytics] = useState<any>(null);
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
   const navigate = useNavigate();
@@ -468,15 +469,45 @@ export function DashboardPage() {
       {/* Analytics Modal */}
       {selectedResumeForAnalytics && (
         <div className="modal modal-open">
-          <div className="modal-box max-w-5xl">
-            <h3 className="font-bold text-2xl mb-6">
-              {resumes.find(r => r.id === selectedResumeForAnalytics)?.title}
+          <div className="modal-box max-w-6xl max-h-[90vh] overflow-y-auto">
+            <h3 className="font-bold text-2xl mb-4">
+              Analytics: {resumes.find(r => r.id === selectedResumeForAnalytics)?.title}
             </h3>
 
-            <AnalyticsDashboard resumeId={selectedResumeForAnalytics} />
+            {/* Analytics Tabs */}
+            <div className="tabs tabs-boxed mb-6">
+              <a
+                className={`tab tab-lg ${analyticsView === 'views' ? 'tab-active' : ''}`}
+                onClick={() => setAnalyticsView('views')}
+              >
+                👁️ Page Views
+              </a>
+              <a
+                className={`tab tab-lg ${analyticsView === 'chat' ? 'tab-active' : ''}`}
+                onClick={() => setAnalyticsView('chat')}
+              >
+                💬 Chat Analytics
+              </a>
+            </div>
+
+            {/* Analytics Content */}
+            {analyticsView === 'views' ? (
+              <AnalyticsDashboard resumeId={selectedResumeForAnalytics} />
+            ) : (
+              <ChatAnalyticsDashboard resumeId={selectedResumeForAnalytics} />
+            )}
 
             <div className="modal-action mt-6">
-              <button className="btn" onClick={() => { setSelectedResumeForAnalytics(null); setAnalytics(null); }}>Close</button>
+              <button
+                className="btn"
+                onClick={() => {
+                  setSelectedResumeForAnalytics(null);
+                  setAnalytics(null);
+                  setAnalyticsView('views');
+                }}
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

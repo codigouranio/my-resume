@@ -12,6 +12,7 @@ import { TemplatesModule } from './features/templates/templates.module';
 import { BadgesModule } from './features/badges/badges.module';
 import { SubscriptionsModule } from './features/subscriptions/subscriptions.module';
 import { EmbeddingsModule } from './features/embeddings/embeddings.module';
+import { ChatAnalyticsModule } from './features/analytics/chat-analytics.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { EmbeddingsModule } from './features/embeddings/embeddings.module';
     BadgesModule,
     SubscriptionsModule,
     EmbeddingsModule,
+    ChatAnalyticsModule,
   ],
 })
 export class AppModule {}

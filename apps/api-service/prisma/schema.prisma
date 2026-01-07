@@ -23,6 +23,13 @@ enum SubscriptionTier {
   ENTERPRISE
 }
 
+enum ChatSentiment {
+  POSITIVE
+  NEUTRAL
+  NEGATIVE
+  UNKNOWN
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -102,6 +109,8 @@ model Resume {
   views             ResumeView[]
   defaultForUsers   User[]              @relation("DefaultResume")
   embeddings        ResumeEmbedding?
+  chatInteractions  ChatInteraction[]
+  chatAnalytics     ChatAnalytics[]
   
   @@index([userId])
   @@index([slug])
@@ -200,4 +209,86 @@ model ResumeEmbedding {
   resume                Resume                       @relation(fields: [resumeId], references: [id], onDelete: Cascade)
   
   @@index([resumeId])
+}
+
+model ChatInteraction {
+  id               String         @id @default(cuid())
+  resumeId         String
+  sessionId        String?
+  
+  // Q&A content
+  question         String         @db.Text
+  answer           String         @db.Text
+  
+  // Analysis
+  sentiment        ChatSentiment? @default(UNKNOWN)
+  wasAnsweredWell  Boolean?       @default(true)
+  topics           String[]       // Extracted topics/keywords
+  
+  // Visitor information
+  ipAddress        String?
+  userAgent        String?        @db.Text
+  country          String?
+  referrer         String?        @db.Text
+  
+  // Performance
+  responseTime     Int?           // Response time in milliseconds
+  
+  // Metadata
+  createdAt        DateTime       @default(now())
+  
+  // Relations
+  resume           Resume         @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  
+  @@index([resumeId])
+  @@index([sessionId])
+  @@index([createdAt])
+  @@index([sentiment])
+  @@index([wasAnsweredWell])
+}
+
+model ChatTopic {
+  id              String   @id @default(cuid())
+  name            String   @unique
+  category        String   // e.g., "skills", "experience", "education", "projects"
+  keywords        String[] // Keywords to match
+  questionCount   Int      @default(0)
+  negativeCount   Int      @default(0) // Questions that weren't answered well
+  
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([category])
+  @@index([questionCount])
+}
+
+model ChatAnalytics {
+  id              String    @id @default(cuid())
+  resumeId        String
+  date            DateTime  @db.Date
+  
+  // Aggregated metrics
+  totalQuestions  Int       @default(0)
+  uniqueSessions  Int       @default(0)
+  avgResponseTime Float?
+  
+  // Sentiment breakdown
+  positiveCount   Int       @default(0)
+  neutralCount    Int       @default(0)
+  negativeCount   Int       @default(0)
+  
+  // Topic analysis
+  topTopics       Json?     // Array of {topic: string, count: number, negativeCount: number}
+  
+  // Metadata
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  resume          Resume    @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  
+  @@unique([resumeId, date])
+  @@index([resumeId])
+  @@index([date])
 }
