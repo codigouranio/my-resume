@@ -470,6 +470,18 @@ export function DashboardPage() {
       {selectedResumeForAnalytics && (
         <div className="modal modal-open">
           <div className="modal-box max-w-6xl max-h-[90vh] overflow-y-auto">
+            {/* Close button - top right */}
+            <button
+              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+              onClick={() => {
+                setSelectedResumeForAnalytics(null);
+                setAnalytics(null);
+                setAnalyticsView('views');
+              }}
+            >
+              ✕
+            </button>
+
             <h3 className="font-bold text-2xl mb-4">
               Analytics: {resumes.find(r => r.id === selectedResumeForAnalytics)?.title}
             </h3>
