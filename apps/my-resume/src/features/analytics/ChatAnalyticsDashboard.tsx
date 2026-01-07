@@ -72,11 +72,11 @@ export function ChatAnalyticsDashboard({ resumeId }: ChatAnalyticsDashboardProps
       setError('');
 
       const [summaryData, topicsData, gapsData, trendsData, interactionsData] = await Promise.all([
-        apiClient.get(`/analytics/chat/${resumeId}/summary?days=${days}`),
-        apiClient.get(`/analytics/chat/${resumeId}/topics`),
-        apiClient.get(`/analytics/chat/${resumeId}/learning-gaps`),
-        apiClient.get(`/analytics/chat/${resumeId}/trends?period=${period}`),
-        apiClient.get(`/analytics/chat/${resumeId}/interactions`),
+        apiClient.getChatAnalyticsSummary(resumeId, days),
+        apiClient.getChatTopics(resumeId),
+        apiClient.getChatLearningGaps(resumeId),
+        apiClient.getChatTrends(resumeId, period),
+        apiClient.getChatInteractions(resumeId),
       ]);
 
       setSummary(summaryData);
