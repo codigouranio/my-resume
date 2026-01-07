@@ -10,7 +10,7 @@ import {
 import { ChatAnalyticsService } from './chat-analytics.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
-@Controller('api/analytics/chat')
+@Controller('analytics/chat')
 @UseGuards(JwtAuthGuard)
 export class ChatAnalyticsController {
   constructor(private readonly chatAnalyticsService: ChatAnalyticsService) {}

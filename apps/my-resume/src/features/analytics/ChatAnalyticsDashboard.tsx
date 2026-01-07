@@ -407,10 +407,10 @@ export function ChatAnalyticsDashboard({ resumeId }: ChatAnalyticsDashboardProps
                       <td>
                         <span
                           className={`badge badge-sm ${interaction.sentiment === 'POSITIVE'
-                              ? 'badge-success'
-                              : interaction.sentiment === 'NEUTRAL'
-                                ? 'badge-warning'
-                                : 'badge-error'
+                            ? 'badge-success'
+                            : interaction.sentiment === 'NEUTRAL'
+                              ? 'badge-warning'
+                              : 'badge-error'
                             }`}
                         >
                           {interaction.sentiment}
