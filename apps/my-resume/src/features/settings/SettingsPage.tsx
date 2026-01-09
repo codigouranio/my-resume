@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { apiClient } from '../../shared/api/client';
+import { getDisplayBaseDomain, formatCustomDomainUrl } from '../../shared/utils/domain';
 import './SettingsPage.css';
 
 export function SettingsPage() {
@@ -266,7 +267,7 @@ export function SettingsPage() {
                             minLength={3}
                             maxLength={63}
                           />
-                          <span className="text-sm text-base-content/60">.resumecast.ai</span>
+                          <span className="text-sm text-base-content/60">.{getDisplayBaseDomain()}</span>
                           {isEditingDomain && customDomain.length >= 3 && (
                             <div className="flex items-center">
                               {isCheckingAvailability ? (
@@ -314,7 +315,7 @@ export function SettingsPage() {
                             <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <span>Your resume is accessible at: <a href={`https://${user.customDomain}.resumecast.ai`} target="_blank" rel="noopener noreferrer" className="link">{user.customDomain}.resumecast.ai</a></span>
+                            <span>Your resume is accessible at: <a href={`https://${formatCustomDomainUrl(user.customDomain)}`} target="_blank" rel="noopener noreferrer" className="link">{formatCustomDomainUrl(user.customDomain)}</a></span>
                           </div>
                         )}
 
@@ -365,7 +366,7 @@ export function SettingsPage() {
                         <div className="card-body">
                           <h2 className="card-title text-lg">Default Resume for Subdomain</h2>
                           <p className="text-sm text-base-content/70">
-                            Choose which resume displays when visitors go to <strong>{user.customDomain}.resumecast.ai</strong> without a specific path.
+                            Choose which resume displays when visitors go to <strong>{formatCustomDomainUrl(user.customDomain)}</strong> without a specific path.
                           </p>
 
                           {userResumes.length === 0 ? (

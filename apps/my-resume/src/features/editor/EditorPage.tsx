@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { apiClient } from '../../shared/api/client';
+import { formatResumeDisplayPath } from '../../shared/utils/domain';
 import './Editor.css';
 
 export function EditorPage() {
@@ -420,10 +421,7 @@ export function EditorPage() {
             />
             <label className="label">
               <span className="label-text-alt">
-                {user?.customDomain
-                  ? `${user.customDomain}.resumecast.ai/${formData.slug || 'slug'}`
-                  : `resumecast.ai/resume/${formData.slug || 'slug'}`
-                }
+                {formatResumeDisplayPath(formData.slug || 'slug', user?.customDomain)}
               </span>
             </label>
           </div>

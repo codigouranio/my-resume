@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../shared/api/client';
+import { getDisplayBaseDomain } from '../../shared/utils/domain';
 import './UpgradePrompt.css';
 
 interface UpgradePromptProps {
@@ -40,7 +41,7 @@ export const UpgradePrompt: React.FC<UpgradePromptProps> = ({ onClose }) => {
         <div className="upgrade-icon">⭐</div>
         <h3 className="upgrade-title">Upgrade to PRO</h3>
         <p className="upgrade-description">
-          Unlock detailed analytics, custom subdomain, and more features with ResumeCast.ai PRO.
+          Unlock detailed analytics, custom subdomain, and more features with {getDisplayBaseDomain().replace(/^\w+-/, '').split('.')[0].toUpperCase()} PRO.
         </p>
 
         <div className="upgrade-features">
@@ -50,7 +51,7 @@ export const UpgradePrompt: React.FC<UpgradePromptProps> = ({ onClose }) => {
           </div>
           <div className="feature-item">
             <span className="feature-icon">🌐</span>
-            <span>Custom Subdomain (yourname.resumecast.ai)</span>
+            <span>Custom Subdomain (yourname.{getDisplayBaseDomain()})</span>
           </div>
           <div className="feature-item">
             <span className="feature-icon">📈</span>

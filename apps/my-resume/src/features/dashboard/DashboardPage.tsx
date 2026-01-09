@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { apiClient } from '../../shared/api/client';
 import { AnalyticsDashboard, ChatAnalyticsDashboard } from '../analytics';
+import { formatResumeDisplayPath, formatResumeUrl } from '../../shared/utils/domain';
 import './Dashboard.css';
 
 interface Resume {
@@ -276,13 +277,7 @@ export function DashboardPage() {
                     <div className="card-body">
                       <h2 className="card-title">{resume.title}</h2>
                       <p className="text-sm text-base-content/60">
-                        {user?.customDomain ? (
-                          <>
-                            {user.customDomain}.resumecast.ai/{resume.slug}
-                          </>
-                        ) : (
-                          <>/resume/{resume.slug}</>
-                        )}
+                        {formatResumeDisplayPath(resume.slug, user?.customDomain)}
                       </p>
 
                       <div className="flex gap-2 mt-2">
@@ -310,7 +305,7 @@ export function DashboardPage() {
                       <div className="card-actions justify-end mt-4">
                         {resume.isPublic && resume.isPublished && (
                           <a
-                            href={user?.customDomain ? `https://${user.customDomain}.resumecast.ai/${resume.slug}` : `/resume/${resume.slug}`}
+                            href={formatResumeUrl(resume.slug, user?.customDomain)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="btn btn-sm btn-ghost gap-1"

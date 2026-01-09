@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { apiClient } from '../../shared/api/client';
+import { getDisplayBaseDomain } from '../../shared/utils/domain';
 import './PricingPage.css';
 
 const STRIPE_PRICE_ID = 'price_1SlG7BQaUmXjtzSFZCut7Kw6';
@@ -95,7 +96,7 @@ export function PricingPage() {
               <ul className="space-y-3 mb-6">
                 <li className="flex items-start gap-2">
                   <span className="text-success text-xl">✓</span>
-                  <span>Public resume at <code className="text-sm bg-base-200 px-2 py-1 rounded">resumecast.ai/resume/yourname</code></span>
+                  <span>Public resume at <code className="text-sm bg-base-200 px-2 py-1 rounded">{getDisplayBaseDomain()}/resume/yourname</code></span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-success text-xl">✓</span>
@@ -145,7 +146,7 @@ export function PricingPage() {
               <ul className="space-y-3 mb-6">
                 <li className="flex items-start gap-2">
                   <span className="text-warning text-xl">★</span>
-                  <span><strong>Custom subdomain:</strong> <code className="text-sm bg-primary-content/20 px-2 py-1 rounded">yourname.resumecast.ai</code></span>
+                  <span><strong>Custom subdomain:</strong> <code className="text-sm bg-primary-content/20 px-2 py-1 rounded">yourname.{getDisplayBaseDomain()}</code></span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-warning text-xl">★</span>
@@ -222,7 +223,7 @@ export function PricingPage() {
                 How does the custom subdomain work?
               </div>
               <div className="collapse-content">
-                <p>With PRO, you get your own subdomain like <code>yourname.resumecast.ai</code>. This gives you a professional, memorable URL to share with recruiters and on your LinkedIn profile.</p>
+                <p>With PRO, you get your own subdomain like <code>yourname.{getDisplayBaseDomain()}</code>. This gives you a professional, memorable URL to share with recruiters and on your LinkedIn profile.</p>
               </div>
             </div>
 

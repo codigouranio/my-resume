@@ -15,16 +15,32 @@ import './shared/styles/App.css';
 function getCustomSubdomain(): string | null {
   const hostname = window.location.hostname;
 
+  // Get base domain from env or use default
+  const baseDomain = import.meta.env.PUBLIC_BASE_DOMAIN || 'resumecast.ai';
+  const baseDomainParts = baseDomain.split('.');
+  const baseDomainCore = baseDomainParts.slice(-2).join('.'); // e.g., "paskot.com" or "resumecast.ai"
+  const baseDomainPrefix = baseDomainParts.length > 2 ? baseDomainParts.slice(0, -2).join('.') : null; // e.g., "my-resume"
+
   // Check if it's a subdomain (not main domain)
-  if (hostname !== 'resumecast.ai' &&
-    hostname !== 'www.resumecast.ai' &&
+  if (hostname !== baseDomain &&
+    hostname !== `www.${baseDomain}` &&
     hostname !== 'localhost' &&
     !hostname.match(/^\d+\.\d+\.\d+\.\d+$/)) { // Not IP address
 
     // Extract subdomain
     const parts = hostname.split('.');
-    if (parts.length >= 3 && parts[parts.length - 2] === 'resumecast') {
-      return parts[0]; // Return the subdomain part
+
+    // Handle multi-level base domains like my-resume.paskot.com
+    if (baseDomainPrefix) {
+      // Check if hostname ends with the base domain
+      if (hostname.endsWith(`.${baseDomain}`) && parts.length > baseDomainParts.length) {
+        return parts[0]; // Return the subdomain part
+      }
+    } else {
+      // Simple two-part domain like resumecast.ai
+      if (parts.length >= 3 && parts.slice(-2).join('.') === baseDomainCore) {
+        return parts[0]; // Return the subdomain part
+      }
     }
   }
 
