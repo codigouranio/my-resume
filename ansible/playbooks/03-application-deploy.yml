@@ -49,6 +49,9 @@
           NODE_ENV={{ node_env }}
           LLM_SERVICE_URL="http://localhost:{{ llm_port }}"
           CORS_ORIGINS="{{ cors_origins | join(',') }}"
+          STRIPE_SECRET_KEY={{ stripe_secret_key | default('sk_test_placeholder_not_configured') }}
+          STRIPE_WEBHOOK_SECRET={{ stripe_webhook_secret | default('whsec_placeholder_not_configured') }}
+          STRIPE_PRICE_ID={{ stripe_price_id | default('price_placeholder_not_configured') }}
         owner: "{{ ansible_user }}"
         mode: '0600'
     
@@ -205,6 +208,7 @@
         content: |
           PUBLIC_API_URL=/api
           PUBLIC_LLM_API_URL=/llm
+          PUBLIC_BASE_DOMAIN={{ domain }}
         owner: "{{ ansible_user }}"
         mode: '0644'
     

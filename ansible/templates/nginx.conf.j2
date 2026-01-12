@@ -1,7 +1,7 @@
 # Frontend - Serve built React app
 server {
     listen 80;
-    server_name {{ domain }} {{ ansible_host }};
+    server_name {{ domain }} *.{{ domain }} {{ ansible_host }};
     
     # Frontend static files
     location / {

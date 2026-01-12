@@ -1,0 +1,66 @@
+---
+- name: Setup Cloudflare Tunnel
+  hosts: production
+  become: yes
+  
+  vars:
+    cloudflare_tunnel_name: "my-resume-tunnel"
+    
+  tasks:
+    - name: Install cloudflared
+      shell: |
+        curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+        dpkg -i cloudflared.deb
+        rm cloudflared.deb
+      args:
+        creates: /usr/bin/cloudflared
+        
+    - name: Check if tunnel already exists
+      stat:
+        path: /root/.cloudflared/cert.pem
+      register: tunnel_cert
+      
+    - name: Display tunnel setup instructions
+      debug:
+        msg: |
+          ========================================
+          CLOUDFLARE TUNNEL SETUP REQUIRED
+          ========================================
+          
+          Run these commands on the server (172.16.23.127):
+          
+          1. Login to Cloudflare:
+             sudo cloudflared tunnel login
+          
+          2. Create a tunnel:
+             sudo cloudflared tunnel create {{ cloudflare_tunnel_name }}
+          
+          3. Create config file:
+             sudo nano /etc/cloudflared/config.yml
+             
+             Add this content:
+             ---
+             tunnel: <TUNNEL-ID-FROM-STEP-2>
+             credentials-file: /root/.cloudflared/<TUNNEL-ID>.json
+             
+             ingress:
+               - hostname: my-resume.paskot.com
+                 service: http://localhost:80
+               - hostname: www.my-resume.paskot.com
+                 service: http://localhost:80
+               - service: http_status:404
+          
+          4. Route DNS:
+             sudo cloudflared tunnel route dns {{ cloudflare_tunnel_name }} my-resume.paskot.com
+             sudo cloudflared tunnel route dns {{ cloudflare_tunnel_name }} www.my-resume.paskot.com
+          
+          5. Install as service:
+             sudo cloudflared service install
+             sudo systemctl start cloudflared
+             sudo systemctl enable cloudflared
+          
+          6. Check status:
+             sudo systemctl status cloudflared
+             
+          ========================================
+      when: not tunnel_cert.stat.exists
