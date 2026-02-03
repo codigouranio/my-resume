@@ -17,10 +17,32 @@ async function bootstrap() {
     }),
   );
 
-  // CORS configuration
+  // CORS configuration - Allow all resumecast.ai subdomains
   app.enableCors({
-    origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3001'],
+    origin: (origin, callback) => {
+      const allowedOrigins = process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3001'];
+      const allowedDomains = ['.resumecast.ai', '.paskot.com'];
+      
+      // Allow if no origin (like server-to-server) or in allowed list
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      
+      // Allow any subdomain of allowed domains
+      const isAllowedDomain = allowedDomains.some(domain => 
+        origin.endsWith(domain) || origin === `https://${domain.slice(1)}`
+      );
+      
+      if (isAllowedDomain) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   });
 
   // Global prefix
