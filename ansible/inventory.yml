@@ -39,5 +39,9 @@ all:
     # Node.js version
     nodejs_version: "20.x"
     
-    # Domain (optional, for Nginx)
-    domain: myresume.example.com  # Change this
+    # Domain (for Nginx and SSL certificates)
+    domain: resumecast.ai
+    
+    # SSL Configuration - Disable when using Cloudflare Tunnel
+    enable_ssl: false
+    cloudflare_real_ip: false

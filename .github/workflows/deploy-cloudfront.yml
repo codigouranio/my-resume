@@ -1,0 +1,137 @@
+name: Deploy to CloudFront
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/my-resume/**'
+      - 'infra/**'
+      - '.github/workflows/deploy-cloudfront.yml'
+  workflow_dispatch:
+    inputs:
+      api_domain:
+        description: 'API domain (e.g., api.yourdomain.com)'
+        required: true
+        type: string
+
+env:
+  NODE_VERSION: '20'
+  PYTHON_VERSION: '3.11'
+  AWS_REGION: 'us-east-1'
+
+jobs:
+  deploy:
+    name: Build and Deploy to CloudFront
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: apps/my-resume/package-lock.json
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install CDK
+        run: npm install -g aws-cdk
+
+      - name: Get API domain
+        id: api-domain
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "domain=${{ inputs.api_domain }}" >> $GITHUB_OUTPUT
+          else
+            echo "domain=${{ secrets.API_DOMAIN }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update frontend environment
+        run: |
+          cat > apps/my-resume/.env.production <<EOF
+          PUBLIC_API_URL=https://${{ steps.api-domain.outputs.domain }}/api
+          PUBLIC_LLM_API_URL=https://${{ steps.api-domain.outputs.domain }}/llm
+          EOF
+
+      - name: Install frontend dependencies
+        working-directory: apps/my-resume
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: apps/my-resume
+        run: npm run build
+
+      - name: Verify build
+        run: |
+          if [ ! -d "apps/my-resume/dist" ]; then
+            echo "❌ Build failed - dist directory not found"
+            exit 1
+          fi
+          echo "✅ Build successful"
+          ls -lah apps/my-resume/dist/
+
+      - name: Install CDK dependencies
+        working-directory: infra
+        run: |
+          pip install -r requirements.txt
+
+      - name: CDK Diff
+        working-directory: infra
+        run: cdk diff
+        continue-on-error: true
+
+      - name: CDK Deploy
+        working-directory: infra
+        run: cdk deploy --require-approval never
+
+      - name: Get CloudFront Distribution ID
+        id: cloudfront
+        run: |
+          DISTRIBUTION_ID=$(aws cloudformation describe-stacks \
+            --stack-name MyResumeCloudFrontStack \
+            --query "Stacks[0].Outputs[?OutputKey=='DistributionId'].OutputValue" \
+            --output text)
+          echo "distribution_id=$DISTRIBUTION_ID" >> $GITHUB_OUTPUT
+          
+          CLOUDFRONT_URL=$(aws cloudformation describe-stacks \
+            --stack-name MyResumeCloudFrontStack \
+            --query "Stacks[0].Outputs[?OutputKey=='DistributionDomainName'].OutputValue" \
+            --output text)
+          echo "cloudfront_url=$CLOUDFRONT_URL" >> $GITHUB_OUTPUT
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ steps.cloudfront.outputs.distribution_id }} \
+            --paths "/*"
+
+      - name: Deployment summary
+        run: |
+          echo "## 🚀 Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **CloudFront URL:** https://${{ steps.cloudfront.outputs.cloudfront_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **API Domain:** https://${{ steps.api-domain.outputs.domain }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Distribution ID:** ${{ steps.cloudfront.outputs.distribution_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📝 Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Configure Cloudflare DNS CNAME for your domain" >> $GITHUB_STEP_SUMMARY
+          echo "2. Test frontend: https://${{ steps.cloudfront.outputs.cloudfront_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "3. Test API: https://${{ steps.api-domain.outputs.domain }}/health" >> $GITHUB_STEP_SUMMARY

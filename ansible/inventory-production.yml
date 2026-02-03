@@ -11,7 +11,7 @@ all:
           ansible_user: jose
           ansible_python_interpreter: /usr/bin/python3
           # Override domain for this specific server
-          domain: resumecast.ai
+          domain: resumecast.ai 
           enable_cloudflare: true
           cloudflare_real_ip: true
           

@@ -1,0 +1,24 @@
+# Cloudflare Tunnel Configuration for Home LLM Cluster
+# Place this file at: /etc/cloudflared/config.yml
+
+tunnel: YOUR_TUNNEL_ID  # Get this from: cloudflared tunnel list
+credentials-file: /root/.cloudflared/YOUR_TUNNEL_ID.json
+
+ingress:
+  # Route llm.yourdomain.com to local HAProxy load balancer
+  - hostname: llm.yourdomain.com
+    service: http://localhost:11430
+    originRequest:
+      connectTimeout: 60s
+      noTLSVerify: false
+      keepAliveConnections: 100
+      keepAliveTimeout: 90s
+      httpHostHeader: llm.yourdomain.com
+  
+  # Catch-all rule (required)
+  - service: http_status:404
+
+# Optional: Enable Cloudflare Access for authentication
+# Add this in Cloudflare Dashboard:
+# Zero Trust > Access > Applications > Add an application
+# Policy: Allow for your AWS IP ranges only

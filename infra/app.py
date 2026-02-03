@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import aws_cdk as cdk
-from stacks.cloudfront_stack import CloudFrontStack
+from stacks.s3_website_stack import S3WebsiteStack
 
 app = cdk.App()
 
@@ -10,12 +10,12 @@ env = cdk.Environment(
     region=app.node.try_get_context("region") or "us-east-1",
 )
 
-# Create the CloudFront stack
-CloudFrontStack(
+# Create S3 static website stack (no CloudFront - account not verified yet)
+S3WebsiteStack(
     app,
-    "MyResumeCloudFrontStack",
+    "MyResumeWebsiteStack",
     env=env,
-    description="CloudFront distribution for React resume app",
+    description="S3 static website for React resume app",
 )
 
 app.synth()

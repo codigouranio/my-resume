@@ -101,7 +101,7 @@
             --non-interactive
             --agree-tos
             --email admin@{{ domain }}
-            --domains {{ domain }}
+            --domains {{ domain }},*.{{ domain }},api.{{ domain }},llm.{{ domain }}
             --redirect
           when: not cert_exists.stat.exists
         

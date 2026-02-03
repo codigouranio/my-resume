@@ -17,6 +17,10 @@ class CloudFrontStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
+        # Get custom domain from context (optional)
+        custom_domain = self.node.try_get_context("domain_name")
+        certificate_arn = self.node.try_get_context("certificate_arn")
+
         # S3 bucket to host the static website
         website_bucket = s3.Bucket(
             self,
@@ -38,11 +42,9 @@ class CloudFrontStack(Stack):
         # Grant CloudFront read access to the bucket
         website_bucket.grant_read(oai)
 
-        # CloudFront distribution
-        distribution = cloudfront.Distribution(
-            self,
-            "Distribution",
-            default_behavior=cloudfront.BehaviorOptions(
+        # Configure domain names and certificate if provided
+        distribution_config = {
+            "default_behavior": cloudfront.BehaviorOptions(
                 origin=origins.S3Origin(website_bucket, origin_access_identity=oai),
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 allowed_methods=cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
@@ -50,8 +52,8 @@ class CloudFrontStack(Stack):
                 cache_policy=cloudfront.CachePolicy.CACHING_OPTIMIZED,
                 compress=True,
             ),
-            default_root_object="index.html",
-            error_responses=[
+            "default_root_object": "index.html",
+            "error_responses": [
                 cloudfront.ErrorResponse(
                     http_status=403,
                     response_http_status=200,
@@ -65,15 +67,23 @@ class CloudFrontStack(Stack):
                     ttl=Duration.minutes(5),
                 ),
             ],
-            price_class=cloudfront.PriceClass.PRICE_CLASS_100,  # US, Canada, Europe
-            comment="My Resume CloudFront Distribution",
-            # Uncomment and configure for custom domain:
-            # domain_names=["resume.yourdomain.com"],
-            # certificate=acm.Certificate.from_certificate_arn(
-            #     self,
-            #     "Certificate",
-            #     "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/CERTIFICATE_ID"
-            # ),
+            "price_class": cloudfront.PriceClass.PRICE_CLASS_100,
+            "comment": "ResumeCast CloudFront Distribution",
+        }
+
+        # Add custom domain configuration if provided
+        if custom_domain and certificate_arn:
+            distribution_config["domain_names"] = [
+                custom_domain,
+                f"www.{custom_domain}",
+            ]
+            distribution_config["certificate"] = acm.Certificate.from_certificate_arn(
+                self, "Certificate", certificate_arn
+            )
+
+        # CloudFront distribution
+        distribution = cloudfront.Distribution(
+            self, "Distribution", **distribution_config
         )
 
         # Deploy site contents to S3 bucket
