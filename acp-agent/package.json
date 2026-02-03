@@ -1,0 +1,28 @@
+{
+  "name": "resumecast-acp-agent",
+  "version": "1.0.0",
+  "description": "ACP Agent that connects Ollama with ResumeCast platform",
+  "main": "resumecast-agent.js",
+  "scripts": {
+    "start": "node resumecast-agent.js",
+    "dev": "nodemon resumecast-agent.js",
+    "test": "node test-agent.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.14.2",
+    "axios": "^1.6.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": [
+    "acp",
+    "ollama",
+    "resume",
+    "ai",
+    "agent"
+  ],
+  "author": "ResumeCast Team",
+  "license": "MIT"
+}
