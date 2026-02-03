@@ -3,9 +3,9 @@ server {
     listen 80;
     server_name api.{{ domain }};
     
-    # API Service proxy - Forward all requests to backend
+    # API Service proxy - Backend has /api prefix globally
     location / {
-        proxy_pass http://localhost:{{ api_port }}/;
+        proxy_pass http://localhost:{{ api_port }}/api/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
