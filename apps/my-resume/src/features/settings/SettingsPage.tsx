@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { apiClient } from '../../shared/api/client';
 import { getDisplayBaseDomain, formatCustomDomainUrl } from '../../shared/utils/domain';
+import { ChangePasswordForm } from './ChangePasswordForm';
 import './SettingsPage.css';
 
 export function SettingsPage() {
@@ -242,6 +243,12 @@ export function SettingsPage() {
                       🚪 Logout
                     </button>
                   </div>
+                </div>
+
+                <div className="divider"></div>
+
+                <div>
+                  <ChangePasswordForm />
                 </div>
 
                 {/* Custom Subdomain - PRO Only */}
