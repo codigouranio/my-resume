@@ -192,8 +192,10 @@ export class ChatAnalyticsService {
     ).length;
 
     const avgResponseTime =
-      interactions.reduce((sum, i) => sum + (i.responseTime || 0), 0) /
-      totalQuestions;
+      totalQuestions > 0
+        ? interactions.reduce((sum, i) => sum + (i.responseTime || 0), 0) /
+          totalQuestions
+        : 0;
 
     // Get unique sessions
     const uniqueSessions = new Set(
