@@ -277,7 +277,7 @@ export function DashboardPage() {
                     <div className="card-body">
                       <h2 className="card-title">{resume.title}</h2>
                       {user?.customDomain ? (
-                        <a 
+                        <a
                           href={`https://${formatCustomDomainUrl(user.customDomain, '')}`}
                           target="_blank"
                           rel="noopener noreferrer"
