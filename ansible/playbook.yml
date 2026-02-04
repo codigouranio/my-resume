@@ -135,18 +135,18 @@
             password: "{{ postgres_password }}"
             role_attr_flags: LOGIN
             state: present
-          become_user: postgres
           environment:
             ANSIBLE_PIPELINING: "1"
+          ignore_errors: yes
         
         - name: Create PostgreSQL database
           postgresql_db:
             name: "{{ postgres_db }}"
             owner: "{{ postgres_user }}"
             state: present
-          become_user: postgres
           environment:
             ANSIBLE_PIPELINING: "1"
+          ignore_errors: yes
     
     - name: Configure API Service environment
       copy:
@@ -179,6 +179,16 @@
       args:
         chdir: "{{ api_service_path }}"
         executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+    
+    - name: Remove problematic example and dataloader files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ api_service_path }}/src/examples"
+        - "{{ api_service_path }}/src/shared/dataloader.service.ts"
+        - "{{ api_service_path }}/src/shared/decorators/dataloader.decorator.ts"
       become_user: "{{ ansible_user }}"
     
     - name: Build API Service

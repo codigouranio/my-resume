@@ -9,6 +9,7 @@ import { PricingPage } from './features/pricing';
 import { SettingsPage } from './features/settings';
 import { SearchPage } from './features/search';
 import Resume from './features/resume/Resume';
+import VersionBadge from './shared/components/VersionBadge';
 import './shared/styles/App.css';
 
 // Check if we're on a custom subdomain
@@ -99,6 +100,7 @@ const App = () => {
           {/* Catch all - redirect to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <VersionBadge />
       </BrowserRouter>
     </AuthProvider>
   );

@@ -81,10 +81,17 @@ enable_debug_logging: false
 gtm_id: ""  # e.g., GTM-XXXXXXX
 ga_id: ""  # e.g., G-XXXXXXXXXX
 
-# CORS Configuration
+# CORS Configuration - Updated for Cloudflare Tunnel subdomain routing
 cors_origins: 
-  - "http://{{ ansible_host }}"
-  - "http://{{ domain }}"
+  - "http://localhost:3001"
   - "https://{{ domain }}"
-  - "http://my-resume.paskot.com"
+  - "https://api.{{ domain }}"
+  - "https://llm.{{ domain }}"
   - "https://my-resume.paskot.com"
+  - "https://api.paskot.com"
+  - "https://llm.paskot.com"
+# AWS SES Email Service Configuration
+aws_region: "{{ vault_aws_region | default('us-east-1') }}"
+aws_access_key_id: "{{ vault_aws_access_key_id | default('') }}"
+aws_secret_access_key: "{{ vault_aws_secret_access_key | default('') }}"
+ses_from_email: "{{ vault_ses_from_email | default('noreply@resumecast.ai') }}"
