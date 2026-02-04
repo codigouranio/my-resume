@@ -28,6 +28,8 @@ import { ChatAnalyticsModule } from './features/analytics/chat-analytics.module'
             colorize: true,
             singleLine: false,
             translateTime: 'SYS:standard',
+            include: 'level,time',
+            ignore: 'pid,hostname',
           },
         },
         timestamp: true,

@@ -19,6 +19,7 @@ export class EmailService {
   }
 
   async sendSignupEmail(email: string, firstName: string): Promise<void> {
+    this.logger.debug(`Preparing signup email for ${email} (${firstName})`);
     const subject = 'Welcome to ResumeCast!';
     const htmlBody = `
       <h1>Welcome to ResumeCast, ${firstName}!</h1>
@@ -39,6 +40,7 @@ export class EmailService {
   }
 
   async sendPasswordChangeEmail(email: string, firstName: string): Promise<void> {
+    this.logger.debug(`Preparing password change email for ${email} (${firstName})`);
     const subject = 'Your Password Has Been Changed';
     const htmlBody = `
       <h1>Password Change Confirmation</h1>
@@ -66,6 +68,9 @@ export class EmailService {
     textBody: string,
   ): Promise<void> {
     try {
+      this.logger.debug(`[EmailService] Starting email send to ${recipient} with subject: "${subject}"`);
+      this.logger.debug(`[EmailService] Using SES sender: ${this.senderEmail}`);
+      
       const command = new SendEmailCommand({
         Source: this.senderEmail,
         Destination: {
@@ -86,10 +91,11 @@ export class EmailService {
         },
       });
 
+      this.logger.debug(`[EmailService] Sending email command via SES...`);
       const response = await this.sesClient.send(command);
-      this.logger.log(`Email sent to ${recipient}. MessageId: ${response.MessageId}`);
+      this.logger.log(`[EmailService] ✓ Email successfully sent to ${recipient}. MessageId: ${response.MessageId}`);
     } catch (error) {
-      this.logger.error(`Failed to send email to ${recipient}:`, error);
+      this.logger.error(`[EmailService] ✗ Failed to send email to ${recipient}: ${error.message}`, error.stack);
       // Don't throw - email service failure shouldn't block user signup/password change
     }
   }
