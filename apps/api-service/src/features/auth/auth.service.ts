@@ -155,4 +155,22 @@ export class AuthService {
 
     return { message: 'Password changed successfully' };
   }
+
+  async testEmail(email: string) {
+    try {
+      await this.emailService.sendSignupEmail(email, 'Test User');
+      return {
+        message: 'Test email sent successfully',
+        email,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      return {
+        message: 'Test email failed',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        email,
+        timestamp: new Date(),
+      };
+    }
+  }
 }

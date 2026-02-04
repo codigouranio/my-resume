@@ -59,4 +59,11 @@ export class AuthController {
   ) {
     return this.authService.changePassword(user.id, changePasswordDto);
   }
+
+  @Post('test-email')
+  @ApiOperation({ summary: 'Test email service (development only)' })
+  @ApiResponse({ status: 200, description: 'Email test initiated' })
+  async testEmail(@Body('email') email: string) {
+    return this.authService.testEmail(email);
+  }
 }

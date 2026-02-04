@@ -1,6 +1,9 @@
 // DataLoader para evitar N+1 queries
+import { Injectable } from '@nestjs/common';
 import * as DataLoader from 'dataloader';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from './database/prisma.service';
+
+@Injectable()
 
 @Injectable()
 export class DataLoaderService {

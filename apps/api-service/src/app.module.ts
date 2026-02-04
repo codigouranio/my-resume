@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { BullModule } from '@nestjs/bull';
+import { LoggerModule } from 'nestjs-pino';
 import { join } from 'path';
 import { PrismaModule } from './shared/database/prisma.module';
 import { AuthModule } from './features/auth/auth.module';
@@ -18,6 +19,19 @@ import { ChatAnalyticsModule } from './features/analytics/chat-analytics.module'
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+    }),
+    LoggerModule.forRoot({
+      pinoHttp: {
+        transport: {
+          target: 'pino-pretty',
+          options: {
+            colorize: true,
+            singleLine: false,
+            translateTime: 'SYS:standard',
+          },
+        },
+        timestamp: true,
+      },
     }),
     BullModule.forRootAsync({
       imports: [ConfigModule],
