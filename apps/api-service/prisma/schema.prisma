@@ -9,7 +9,7 @@ generator client {
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
-  extensions = [pgvector(map: "vector")]
+  // extensions = [pgvector(map: "vector")] // Temporarily disabled - requires superuser
 }
 
 enum Role {
