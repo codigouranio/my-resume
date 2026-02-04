@@ -2,8 +2,10 @@ import { Module } from '@nestjs/common';
 import { SubscriptionsController } from './subscriptions.controller';
 import { SubscriptionsService } from './subscriptions.service';
 import { PrismaService } from '@shared/database/prisma.service';
+import { EmailModule } from '@shared/email/email.module';
 
 @Module({
+  imports: [EmailModule],
   controllers: [SubscriptionsController],
   providers: [SubscriptionsService, PrismaService],
   exports: [SubscriptionsService],

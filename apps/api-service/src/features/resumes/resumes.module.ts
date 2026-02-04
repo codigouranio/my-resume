@@ -9,6 +9,7 @@ import {
   GetResumesHandler,
 } from './queries/handlers';
 import { EmbeddingsModule } from '../embeddings/embeddings.module';
+import { EmailModule } from '@shared/email/email.module';
 
 const QueryHandlers = [
   GetResumeHandler,
@@ -17,7 +18,7 @@ const QueryHandlers = [
 ];
 
 @Module({
-  imports: [CqrsModule, EmbeddingsModule],
+  imports: [CqrsModule, EmbeddingsModule, EmailModule],
   providers: [
     ResumesService,
     ResumesResolver,
