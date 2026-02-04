@@ -6,6 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../shared/database/prisma.service';
+import { EmailService } from '../../shared/email/email.service';
 import { CreateResumeDto } from './dto/create-resume.dto';
 import { UpdateResumeDto } from './dto/update-resume.dto';
 import { CreateRecruiterInterestDto } from './dto/create-recruiter-interest.dto';
@@ -20,6 +21,7 @@ export class ResumesService {
   constructor(
     private prisma: PrismaService,
     private embeddingQueueService: EmbeddingQueueService,
+    private emailService: EmailService,
   ) {}
 
   async create(userId: string, createResumeDto: CreateResumeDto) {
@@ -429,9 +431,18 @@ export class ResumesService {
   }
 
   async createRecruiterInterest(dto: CreateRecruiterInterestDto) {
-    // Find resume by slug
+    // Find resume by slug and include user info
     const resume = await this.prisma.resume.findUnique({
       where: { slug: dto.resumeSlug },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+          },
+        },
+      },
     });
 
     if (!resume) {
@@ -443,7 +454,7 @@ export class ResumesService {
     }
 
     // Create recruiter interest
-    return this.prisma.recruiterInterest.create({
+    const recruiterInterest = await this.prisma.recruiterInterest.create({
       data: {
         resumeId: resume.id,
         name: dto.name,
@@ -452,6 +463,25 @@ export class ResumesService {
         message: dto.message,
       },
     });
+
+    // Send email to resume owner
+    try {
+      await this.emailService.sendRecruiterInterestEmail(
+        resume.user.email,
+        resume.user.firstName,
+        dto.name,
+        dto.company,
+        dto.message,
+        resume.title,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send recruiter interest email to ${resume.user.email}: ${error.message}`,
+      );
+      // Don't throw - recruiter interest was created successfully
+    }
+
+    return recruiterInterest;
   }
 
   async getRecruiterInterests(userId: string) {

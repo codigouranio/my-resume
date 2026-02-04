@@ -101,6 +101,99 @@ export class EmailService {
     await this.sendEmail(email, subject, htmlBody, textBody);
   }
 
+  async sendSubscriptionUpgradeEmail(email: string, firstName: string): Promise<void> {
+    this.logger.debug(`Preparing subscription upgrade email for ${email} (${firstName})`);
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'https://resumecast.ai');
+    const subject = '🎉 Welcome to ResumeCast PRO!';
+    const htmlBody = `
+      <h1>Welcome to ResumeCast PRO! 🎉</h1>
+      <p>Hi ${firstName},</p>
+      <p>Congratulations! Your PRO subscription is now active. You now have access to premium features:</p>
+      <ul style="font-size: 16px; line-height: 1.8;">
+        <li><strong>Custom Subdomain:</strong> Get your own memorable URL like <code>yourname.resumecast.ai</code></li>
+        <li><strong>Custom Domain:</strong> Set a fully custom domain for your professional presence</li>
+        <li><strong>Advanced Analytics:</strong> Track who views your resume with detailed insights</li>
+        <li><strong>Priority Support:</strong> Get help when you need it</li>
+      </ul>
+      <p>
+        <a href="${frontendUrl}/settings" 
+           style="display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
+          Go to Settings
+        </a>
+      </p>
+      <p>Start by setting up your custom subdomain in the settings page!</p>
+      <p>Thank you for supporting ResumeCast!</p>
+      <p>Best regards,<br>ResumeCast Team</p>
+    `;
+
+    const textBody = `Hi ${firstName},\n\nCongratulations! Your PRO subscription is now active.\n\nYou now have access to premium features:\n\n• Custom Subdomain: Get your own memorable URL\n• Custom Domain: Set a fully custom domain\n• Advanced Analytics: Track resume viewers\n• Priority Support: Get help when you need it\n\nGo to Settings: ${frontendUrl}/settings\n\nThank you for supporting ResumeCast!\n\nBest regards,\nResumeCast Team`;
+
+    await this.sendEmail(email, subject, htmlBody, textBody);
+  }
+
+  async sendRecruiterInterestEmail(
+    email: string,
+    firstName: string,
+    recruiterName: string,
+    company: string,
+    message: string,
+    resumeTitle: string,
+  ): Promise<void> {
+    this.logger.debug(`Preparing recruiter interest email for ${email} (${firstName})`);
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'https://resumecast.ai');
+    const subject = `🎯 ${recruiterName} from ${company} is interested in your resume!`;
+    const htmlBody = `
+      <h1>Someone's Interested! 🎯</h1>
+      <p>Hi ${firstName},</p>
+      <p><strong>${recruiterName}</strong> from <strong>${company}</strong> has shown interest in your resume <strong>"${resumeTitle}"</strong>.</p>
+      <p><strong>Their Message:</strong></p>
+      <blockquote style="border-left: 4px solid #007BFF; padding-left: 16px; margin: 16px 0; color: #333;">
+        ${message.replace(/\n/g, '<br>')}
+      </blockquote>
+      <p>Check your dashboard to see more details and respond to recruiting opportunities.</p>
+      <p>
+        <a href="${frontendUrl}/dashboard" 
+           style="display: inline-block; padding: 12px 24px; background-color: #007BFF; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
+          View in Dashboard
+        </a>
+      </p>
+      <p>Best regards,<br>ResumeCast Team</p>
+    `;
+
+    const textBody = `Hi ${firstName},\n\n${recruiterName} from ${company} has shown interest in your resume "${resumeTitle}".\n\nTheir Message:\n${message}\n\nCheck your dashboard for more details.\n\nGo to: ${frontendUrl}/dashboard\n\nBest regards,\nResumeCast Team`;
+
+    await this.sendEmail(email, subject, htmlBody, textBody);
+  }
+
+  async sendSubdomainSetEmail(email: string, firstName: string, customDomain: string): Promise<void> {
+    this.logger.debug(`Preparing subdomain setup email for ${email} (${firstName})`);
+    const baseDomain = this.configService.get<string>('FRONTEND_URL', 'https://resumecast.ai').replace('https://', '').replace('http://', '');
+    const subdomainUrl = `https://${customDomain}.${baseDomain}`;
+    const subject = '✨ Your Custom Subdomain is Ready!';
+    const htmlBody = `
+      <h1>Your Custom Subdomain is Ready! ✨</h1>
+      <p>Hi ${firstName},</p>
+      <p>Great news! Your custom subdomain has been successfully set up.</p>
+      <p><strong>Your New URL:</strong></p>
+      <p style="font-size: 18px; font-weight: bold; color: #007BFF;">
+        <a href="${subdomainUrl}" target="_blank" rel="noopener noreferrer">${customDomain}.${baseDomain}</a>
+      </p>
+      <p>Share this professional URL with recruiters, on your LinkedIn profile, and anywhere you want to showcase your work.</p>
+      <p>You can update your default resume or manage your subdomains anytime in your settings.</p>
+      <p>
+        <a href="${subdomainUrl}" 
+           style="display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
+          View Your Subdomain
+        </a>
+      </p>
+      <p>Best regards,<br>ResumeCast Team</p>
+    `;
+
+    const textBody = `Hi ${firstName},\n\nGreat news! Your custom subdomain has been successfully set up.\n\nYour New URL: ${subdomainUrl}\n\nShare this professional URL with recruiters and on your LinkedIn profile.\n\nBest regards,\nResumeCast Team`;
+
+    await this.sendEmail(email, subject, htmlBody, textBody);
+  }
+
   private async sendEmail(
     recipient: string,
     subject: string,

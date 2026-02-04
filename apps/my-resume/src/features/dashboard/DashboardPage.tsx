@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { apiClient } from '../../shared/api/client';
 import { AnalyticsDashboard, ChatAnalyticsDashboard } from '../analytics';
-import { formatResumeDisplayPath, formatResumeUrl } from '../../shared/utils/domain';
+import { formatResumeDisplayPath, formatResumeUrl, formatCustomDomainUrl } from '../../shared/utils/domain';
 import './Dashboard.css';
 
 interface Resume {
@@ -277,7 +277,7 @@ export function DashboardPage() {
                     <div className="card-body">
                       <h2 className="card-title">{resume.title}</h2>
                       <p className="text-sm text-base-content/60">
-                        {formatResumeDisplayPath(resume.slug, user?.customDomain)}
+                        {user?.customDomain ? formatCustomDomainUrl(user.customDomain) : formatResumeDisplayPath(resume.slug)}
                       </p>
 
                       <div className="flex gap-2 mt-2">

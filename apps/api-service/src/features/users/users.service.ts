@@ -4,12 +4,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../shared/database/prisma.service';
+import { EmailService } from '../../shared/email/email.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private emailService: EmailService,
+  ) {}
 
   async create(createUserDto: CreateUserDto) {
     const existingUser = await this.prisma.user.findUnique({
@@ -109,7 +113,7 @@ export class UsersService {
       }
     }
 
-    return this.prisma.user.update({
+    const updatedUser = await this.prisma.user.update({
       where: { id },
       data: updateUserDto,
       select: {
@@ -124,6 +128,22 @@ export class UsersService {
         updatedAt: true,
       },
     });
+
+    // Send email if custom domain was set (and is new or was changed)
+    if (updateUserDto.customDomain && updateUserDto.customDomain !== user.customDomain) {
+      try {
+        await this.emailService.sendSubdomainSetEmail(
+          updatedUser.email,
+          updatedUser.firstName,
+          updatedUser.customDomain,
+        );
+      } catch (error) {
+        // Log error but don't throw - domain was set successfully
+        console.error(`Failed to send subdomain setup email: ${error.message}`);
+      }
+    }
+
+    return updatedUser;
   }
 
   async remove(id: string) {

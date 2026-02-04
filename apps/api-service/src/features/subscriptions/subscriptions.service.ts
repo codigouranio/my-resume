@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@shared/database/prisma.service';
+import { EmailService } from '@shared/email/email.service';
 import Stripe from 'stripe';
 
 @Injectable()
@@ -7,7 +8,10 @@ export class SubscriptionsService {
   private readonly logger = new Logger(SubscriptionsService.name);
   private stripe: Stripe;
 
-  constructor(private prisma: PrismaService) {
+  constructor(
+    private prisma: PrismaService,
+    private emailService: EmailService,
+  ) {
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
     if (!stripeSecretKey) {
       throw new Error('STRIPE_SECRET_KEY is not configured');
@@ -124,16 +128,24 @@ export class SubscriptionsService {
     const subscriptionId = session.subscription as string;
     const subscription: any = await this.stripe.subscriptions.retrieve(subscriptionId);
     
-    await this.prisma.user.update({
+    const user = await this.prisma.user.update({
       where: { id: userId },
       data: {
         subscriptionTier: 'PRO',
         stripeSubscriptionId: subscriptionId,
         subscriptionEndsAt: subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null,
       },
+      select: { email: true, firstName: true },
     });
 
     this.logger.log(`User ${userId} upgraded to PRO`);
+
+    // Send subscription upgrade email
+    try {
+      await this.emailService.sendSubscriptionUpgradeEmail(user.email, user.firstName);
+    } catch (error) {
+      this.logger.error(`Failed to send subscription upgrade email: ${error.message}`);
+    }
   }
 
   /**
