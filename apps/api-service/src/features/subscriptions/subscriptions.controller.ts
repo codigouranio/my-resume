@@ -7,6 +7,7 @@ import {
   Req,
   UseGuards,
   BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -93,5 +94,26 @@ export class SubscriptionsController {
     await this.subscriptionsService.handleWebhook(event);
 
     return { received: true };
+  }
+
+  /**
+   * Admin endpoint to upgrade a user to PRO (requires admin token)
+   */
+  @Post('admin/upgrade-user')
+  async upgradeUserToPro(
+    @Headers('x-admin-token') adminToken: string,
+    @Body() body: { email: string },
+  ) {
+    const expectedToken = process.env.ADMIN_UPGRADE_TOKEN || 'change-me-in-production';
+    
+    if (!adminToken || adminToken !== expectedToken) {
+      throw new UnauthorizedException('Invalid admin token');
+    }
+
+    if (!body.email) {
+      throw new BadRequestException('Email is required');
+    }
+
+    return this.subscriptionsService.upgradeUserToProByEmail(body.email);
   }
 }

@@ -216,4 +216,33 @@ export class SubscriptionsService {
 
     this.logger.log(`User ${userId} resumes unpublished and custom domain cleared due to downgrade`);
   }
+
+  /**
+   * Admin method to upgrade a user to PRO by email
+   */
+  async upgradeUserToProByEmail(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      select: { id, email, subscriptionTier: true },
+    });
+
+    if (!user) {
+      throw new Error(`User with email ${email} not found`);
+    }
+
+    if (user.subscriptionTier === 'PRO') {
+      return { message: 'User is already PRO', user };
+    }
+
+    // Upgrade to PRO
+    const updatedUser = await this.prisma.user.update({
+      where: { id: user.id },
+      data: { subscriptionTier: 'PRO' },
+      select: { id, email, subscriptionTier: true, firstName: true, lastName: true },
+    });
+
+    this.logger.log(`User ${email} upgraded to PRO`);
+
+    return { message: 'User upgraded to PRO successfully', user: updatedUser };
+  }
 }
