@@ -223,7 +223,7 @@ export class SubscriptionsService {
   async upgradeUserToProByEmail(email: string) {
     const user = await this.prisma.user.findUnique({
       where: { email },
-      select: { id, email, subscriptionTier: true },
+      select: { id: true, email: true, subscriptionTier: true },
     });
 
     if (!user) {
@@ -238,7 +238,7 @@ export class SubscriptionsService {
     const updatedUser = await this.prisma.user.update({
       where: { id: user.id },
       data: { subscriptionTier: 'PRO' },
-      select: { id, email, subscriptionTier: true, firstName: true, lastName: true },
+      select: { id: true, email: true, subscriptionTier: true, firstName: true, lastName: true },
     });
 
     this.logger.log(`User ${email} upgraded to PRO`);
