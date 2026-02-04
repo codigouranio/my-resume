@@ -108,7 +108,7 @@ model Resume {
   recruiterInterests RecruiterInterest[]
   views             ResumeView[]
   defaultForUsers   User[]              @relation("DefaultResume")
-  embeddings        ResumeEmbedding?
+  // embeddings        ResumeEmbedding?  // Temporarily disabled - pgvector not available
   chatInteractions  ChatInteraction[]
   chatAnalytics     ChatAnalytics[]
   
@@ -187,29 +187,29 @@ model ResumeView {
   @@index([country])
 }
 
-model ResumeEmbedding {
-  id                    String                       @id @default(cuid())
-  resumeId              String                       @unique
-  
-  // Embeddings (nomic-embed-text produces 768-dimensional vectors)
-  contentEmbedding      Unsupported("vector(768)")?  // Public resume content
-  llmContextEmbedding   Unsupported("vector(768)")?  // Hidden AI context
-  combinedEmbedding     Unsupported("vector(768)")?  // Weighted combination for search
-  
-  // Metadata for tracking
-  embeddingModel        String                       @default("nomic-embed-text")
-  contentHash           String?                      // MD5 hash to detect changes
-  llmContextHash        String?
-  
-  // Timestamps
-  createdAt             DateTime                     @default(now())
-  updatedAt             DateTime                     @updatedAt
-  
-  // Relations
-  resume                Resume                       @relation(fields: [resumeId], references: [id], onDelete: Cascade)
-  
-  @@index([resumeId])
-}
+// model ResumeEmbedding {
+//   id                    String                       @id @default(cuid())
+//   resumeId              String                       @unique
+//   
+//   // Embeddings (nomic-embed-text produces 768-dimensional vectors)
+//   contentEmbedding      Unsupported("vector(768)")?  // Public resume content
+//   llmContextEmbedding   Unsupported("vector(768)")?  // Hidden AI context
+//   combinedEmbedding     Unsupported("vector(768)")?  // Weighted combination for search
+//   
+//   // Metadata for tracking
+//   embeddingModel        String                       @default("nomic-embed-text")
+//   contentHash           String?                      // MD5 hash to detect changes
+//   llmContextHash        String?
+//   
+//   // Timestamps
+//   createdAt             DateTime                     @default(now())
+//   updatedAt             DateTime                     @updatedAt
+//   
+//   // Relations
+//   resume                Resume                       @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+//   
+//   @@index([resumeId])
+// }
 
 model ChatInteraction {
   id               String         @id @default(cuid())
