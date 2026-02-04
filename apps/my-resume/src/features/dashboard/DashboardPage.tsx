@@ -276,9 +276,20 @@ export function DashboardPage() {
                   <div key={resume.id} className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
                     <div className="card-body">
                       <h2 className="card-title">{resume.title}</h2>
-                      <p className="text-sm text-base-content/60">
-                        {user?.customDomain ? formatCustomDomainUrl(user.customDomain, '') : formatResumeDisplayPath(resume.slug)}
-                      </p>
+                      {user?.customDomain ? (
+                        <a 
+                          href={`https://${formatCustomDomainUrl(user.customDomain, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary hover:text-primary-focus underline cursor-pointer"
+                        >
+                          {formatCustomDomainUrl(user.customDomain, '')}
+                        </a>
+                      ) : (
+                        <p className="text-sm text-base-content/60">
+                          {formatResumeDisplayPath(resume.slug)}
+                        </p>
+                      )}
 
                       <div className="flex gap-2 mt-2">
                         {resume.isPublished ? (
