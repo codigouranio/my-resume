@@ -277,7 +277,7 @@ export function DashboardPage() {
                     <div className="card-body">
                       <h2 className="card-title">{resume.title}</h2>
                       <p className="text-sm text-base-content/60">
-                        {user?.customDomain ? formatCustomDomainUrl(user.customDomain) : formatResumeDisplayPath(resume.slug)}
+                        {user?.customDomain ? formatCustomDomainUrl(user.customDomain, '') : formatResumeDisplayPath(resume.slug)}
                       </p>
 
                       <div className="flex gap-2 mt-2">
