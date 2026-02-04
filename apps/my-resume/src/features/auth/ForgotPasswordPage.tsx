@@ -16,14 +16,26 @@ export function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      // Note: This endpoint needs to be implemented in the backend
-      // For now, show a message about emailing support
-      setSuccess('Password reset instructions have been sent to your email. Please check your inbox and follow the link.');
+      const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
+      const response = await fetch(`${apiUrl}/auth/forgot-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
 
-      // Redirect to login after 3 seconds
+      if (!response.ok) {
+        throw new Error('Failed to send reset email. Please try again.');
+      }
+
+      const data = await response.json();
+      setSuccess(data.message || 'Password reset instructions have been sent to your email. Please check your inbox and follow the link.');
+
+      // Redirect to login after 5 seconds
       setTimeout(() => {
         navigate('/login');
-      }, 3000);
+      }, 5000);
     } catch (err: any) {
       setError(err.message || 'Failed to send reset email. Please try again.');
     } finally {

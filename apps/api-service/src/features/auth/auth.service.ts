@@ -1,10 +1,12 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { PrismaService } from '../../shared/database/prisma.service';
 import { EmailService } from '../../shared/email/email.service';
 
@@ -172,5 +174,80 @@ export class AuthService {
         timestamp: new Date(),
       };
     }
+  }
+
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto): Promise<{ message: string }> {
+    const user = await this.usersService.findByEmail(forgotPasswordDto.email);
+    
+    // Don't reveal if user exists (security best practice)
+    if (!user) {
+      return { message: 'If an account exists with this email, you will receive a password reset link.' };
+    }
+
+    // Generate reset token
+    const token = randomBytes(32).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 1); // Token expires in 1 hour
+
+    // Store token in database
+    await this.prisma.passwordResetToken.create({
+      data: {
+        token,
+        userId: user.id,
+        expiresAt,
+      },
+    });
+
+    // Send password reset email (non-blocking)
+    this.emailService.sendPasswordResetEmail(user.email, user.firstName || 'User', token).catch((err) => {
+      console.error('Failed to send password reset email:', err);
+    });
+
+    return { message: 'If an account exists with this email, you will receive a password reset link.' };
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
+    // Find the reset token
+    const resetToken = await this.prisma.passwordResetToken.findUnique({
+      where: { token: resetPasswordDto.token },
+      include: { user: true },
+    });
+
+    if (!resetToken) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    // Check if token has expired
+    if (resetToken.expiresAt < new Date()) {
+      await this.prisma.passwordResetToken.delete({ where: { id: resetToken.id } });
+      throw new BadRequestException('Reset token has expired');
+    }
+
+    // Check if token has been used
+    if (resetToken.used) {
+      throw new BadRequestException('Reset token has already been used');
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(resetPasswordDto.newPassword, 10);
+
+    // Update password
+    await this.prisma.user.update({
+      where: { id: resetToken.userId },
+      data: { password: hashedPassword },
+    });
+
+    // Mark token as used
+    await this.prisma.passwordResetToken.update({
+      where: { id: resetToken.id },
+      data: { used: true },
+    });
+
+    // Send confirmation email (non-blocking)
+    this.emailService.sendPasswordChangeEmail(resetToken.user.email, resetToken.user.firstName || 'User').catch((err) => {
+      console.error('Failed to send password change confirmation email:', err);
+    });
+
+    return { message: 'Password has been reset successfully' };
   }
 }

@@ -19,6 +19,9 @@ import { ChatAnalyticsModule } from './features/analytics/chat-analytics.module'
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: '.env',
+      cache: true,
+      expandVariables: true,
     }),
     LoggerModule.forRoot({
       pinoHttp: {
