@@ -82,6 +82,15 @@ export function AnalyticsDashboard({ resumeId }: AnalyticsDashboardProps) {
       }
     } catch (error) {
       console.error('Failed to load analytics:', error);
+      // Set default empty analytics on error to avoid showing error message
+      setAnalytics({
+        totalViews: 0,
+        uniqueVisitors: 0,
+        avgDuration: 0,
+        topReferrers: [],
+        topCountries: [],
+        recentViews: [],
+      });
     } finally {
       setLoading(false);
     }
