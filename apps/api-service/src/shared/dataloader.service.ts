@@ -4,8 +4,6 @@ import * as DataLoader from 'dataloader';
 import { PrismaService } from './database/prisma.service';
 
 @Injectable()
-
-@Injectable()
 export class DataLoaderService {
   constructor(private readonly prisma: PrismaService) {}
 
