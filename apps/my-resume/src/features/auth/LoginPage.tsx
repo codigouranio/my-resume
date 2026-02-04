@@ -56,6 +56,9 @@ export function LoginPage() {
           <div className="form-control w-full">
             <label className="label">
               <span className="label-text">Password</span>
+              <Link to="/forgot-password" className="label-text-alt link link-hover text-sm">
+                Forgot password?
+              </Link>
             </label>
             <input
               type="password"
