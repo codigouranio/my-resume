@@ -28,6 +28,7 @@
         npm install
       args:
         chdir: "{{ api_service_path }}"
+        executable: /bin/bash
       when: git_result.changed
 
     - name: Generate Prisma Client
@@ -37,6 +38,7 @@
         npx prisma generate
       args:
         chdir: "{{ api_service_path }}"
+        executable: /bin/bash
       when: git_result.changed
 
     - name: Build API Service
@@ -46,6 +48,7 @@
         npm run build
       args:
         chdir: "{{ api_service_path }}"
+        executable: /bin/bash
       when: git_result.changed
 
     - name: Restart API Service
@@ -53,6 +56,8 @@
         source /opt/miniconda3/etc/profile.d/conda.sh
         conda activate {{ app_root }}/apps/api-service/conda-env
         pm2 restart api-service
+      args:
+        executable: /bin/bash
       when: git_result.changed
 
     # LLM Service (no build needed, Python)
@@ -61,6 +66,8 @@
         source /opt/miniconda3/etc/profile.d/conda.sh
         conda activate {{ app_root }}/apps/api-service/conda-env
         pm2 restart llm-service
+      args:
+        executable: /bin/bash
       when: git_result.changed
 
     # Frontend
@@ -71,6 +78,7 @@
         npm install
       args:
         chdir: "{{ frontend_path }}"
+        executable: /bin/bash
       when: git_result.changed
 
     - name: Build frontend
@@ -80,6 +88,7 @@
         npm run build
       args:
         chdir: "{{ frontend_path }}"
+        executable: /bin/bash
       when: git_result.changed
 
     - name: Display completion message
