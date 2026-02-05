@@ -22,41 +22,62 @@
 
     # API Service
     - name: Install API dependencies
-      command: npm install
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ app_root }}/apps/api-service/conda-env
+        npm install
       args:
         chdir: "{{ api_service_path }}"
       when: git_result.changed
 
     - name: Generate Prisma Client
-      command: npx prisma generate
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ app_root }}/apps/api-service/conda-env
+        npx prisma generate
       args:
         chdir: "{{ api_service_path }}"
       when: git_result.changed
 
     - name: Build API Service
-      command: npm run build
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ app_root }}/apps/api-service/conda-env
+        npm run build
       args:
         chdir: "{{ api_service_path }}"
       when: git_result.changed
 
     - name: Restart API Service
-      command: pm2 restart api-service
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ app_root }}/apps/api-service/conda-env
+        pm2 restart api-service
       when: git_result.changed
 
     # LLM Service (no build needed, Python)
     - name: Restart LLM Service
-      command: pm2 restart llm-service
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ app_root }}/apps/api-service/conda-env
+        pm2 restart llm-service
       when: git_result.changed
 
     # Frontend
     - name: Install frontend dependencies
-      command: npm install
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ app_root }}/apps/my-resume/conda-env
+        npm install
       args:
         chdir: "{{ frontend_path }}"
       when: git_result.changed
 
     - name: Build frontend
-      command: npm run build
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ app_root }}/apps/my-resume/conda-env
+        npm run build
       args:
         chdir: "{{ frontend_path }}"
       when: git_result.changed
