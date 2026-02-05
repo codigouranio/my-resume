@@ -52,12 +52,12 @@
       when: git_result.changed
 
     - name: Restart API Service
-      command: "{{ api_service_path }}/conda-env/bin/pm2 restart api-service"
+      command: "/home/{{ ansible_user }}/.npm-global/bin/pm2 restart api-service"
       when: git_result.changed
 
     # LLM Service (no build needed, Python)
     - name: Restart LLM Service
-      command: "{{ api_service_path }}/conda-env/bin/pm2 restart llm-service"
+      command: "/home/{{ ansible_user }}/.npm-global/bin/pm2 restart llm-service"
       when: git_result.changed
 
     # Frontend
