@@ -530,6 +530,7 @@ def chat():
     Chat endpoint for resume questions.
     Expects JSON: {"message": "user question", "slug": "resume-slug"}
     Returns JSON: {"response": "AI answer"}
+    Loads fresh resume data from database on every request for real-time updates.
     """
     import time
 
@@ -543,22 +544,63 @@ def chat():
         if not user_message:
             return jsonify({"error": "Message is required"}), 400
 
-        # Determine which resume context to use
-        resume_context = RESUME_CONTEXT  # Default fallback
+        # Always load fresh resume context from database
+        # This ensures every chat gets the latest resume updates (content + llmContext)
+        resume_context = None
 
         if slug:
-            # Try to load from database first
+            # Load from database for specific slug
             db_context = load_resume_from_db(slug)
             if db_context:
                 resume_context = db_context
-                logger.info(f"Using database resume for slug: {slug}")
+                logger.info(f"✓ Loaded fresh resume from database for slug: {slug}")
             else:
-                logger.warning(
-                    f"Slug '{slug}' not found in database, using default resume"
-                )
+                logger.warning(f"✗ Slug '{slug}' not found in database")
         else:
-            logger.info("No slug provided, using default resume context")
+            # If no slug provided, try to load the default/first resume from database
+            logger.info(
+                "No slug provided, attempting to load default resume from database..."
+            )
+            try:
+                conn = get_db_connection()
+                cursor = conn.cursor(cursor_factory=RealDictCursor)
 
+                # Get the most recently updated published resume as default
+                cursor.execute(
+                    """
+                    SELECT content, "llmContext" 
+                    FROM "Resume" 
+                    WHERE "isPublished" = true AND "isPublic" = true
+                    ORDER BY "updatedAt" DESC
+                    LIMIT 1
+                """
+                )
+
+                result = cursor.fetchone()
+                cursor.close()
+                conn.close()
+
+                if result:
+                    context = result["content"]
+                    if result["llmContext"] and result["llmContext"].strip():
+                        context = f"{context}\n\n{result['llmContext']}"
+                        logger.info(
+                            f"✓ Loaded default resume from database: {len(result['content'])} chars content + {len(result['llmContext'])} chars context"
+                        )
+                    else:
+                        logger.info(
+                            f"✓ Loaded default resume from database: {len(context)} chars (content only)"
+                        )
+                    resume_context = context
+            except Exception as e:
+                logger.error(f"Failed to load default resume from database: {e}")
+
+        # Only fall back to RESUME_CONTEXT if database queries completely failed
+        if not resume_context:
+            logger.warning(
+                "⚠ Database queries failed, falling back to cached resume context"
+            )
+            resume_context = RESUME_CONTEXT
         # Build prompt with context and safety guardrails
         prompt = f"""You are a professional AI assistant helping visitors learn about a candidate's career and qualifications.
 
