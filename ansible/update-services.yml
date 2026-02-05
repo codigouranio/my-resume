@@ -1,0 +1,70 @@
+---
+# Update services with latest code changes (no downtime)
+# Usage: ansible-playbook update-services.yml --ask-vault-pass --ask-become-pass
+
+- name: "🔄 Update Services with Latest Changes"
+  hosts: all
+  become: yes
+  become_user: "{{ ansible_user }}"
+  
+  tasks:
+    - name: Pull latest code from git
+      git:
+        repo: "{{ repo_url }}"
+        dest: "{{ app_root }}"
+        version: "{{ repo_branch }}"
+        force: yes
+      register: git_result
+
+    - name: Display git changes
+      debug:
+        msg: "Git updated: {{ git_result.changed }}"
+
+    # API Service
+    - name: Install API dependencies
+      command: npm install
+      args:
+        chdir: "{{ api_service_path }}"
+      when: git_result.changed
+
+    - name: Generate Prisma Client
+      command: npx prisma generate
+      args:
+        chdir: "{{ api_service_path }}"
+      when: git_result.changed
+
+    - name: Build API Service
+      command: npm run build
+      args:
+        chdir: "{{ api_service_path }}"
+      when: git_result.changed
+
+    - name: Restart API Service
+      command: pm2 restart api-service
+      when: git_result.changed
+
+    # LLM Service (no build needed, Python)
+    - name: Restart LLM Service
+      command: pm2 restart llm-service
+      when: git_result.changed
+
+    # Frontend
+    - name: Install frontend dependencies
+      command: npm install
+      args:
+        chdir: "{{ frontend_path }}"
+      when: git_result.changed
+
+    - name: Build frontend
+      command: npm run build
+      args:
+        chdir: "{{ frontend_path }}"
+      when: git_result.changed
+
+    - name: Display completion message
+      debug:
+        msg: |
+          ✅ Services updated successfully!
+          
+          Check status: pm2 status
+          View logs: pm2 logs

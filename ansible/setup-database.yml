@@ -1,0 +1,75 @@
+---
+# Setup PostgreSQL database on clean machine
+# Usage: ansible-playbook setup-database.yml --ask-vault-pass --ask-become-pass
+
+- name: "🗄️ Setup PostgreSQL Database"
+  hosts: all
+  become: yes
+  
+  tasks:
+    - name: Install PostgreSQL and dependencies
+      apt:
+        name:
+          - "postgresql-{{ postgres_version }}"
+          - postgresql-contrib
+          - python3-psycopg2
+        state: present
+        update_cache: yes
+
+    - name: Ensure PostgreSQL is running
+      systemd:
+        name: postgresql
+        state: started
+        enabled: yes
+
+    - name: Create database user
+      become_user: postgres
+      postgresql_user:
+        name: "{{ db_user }}"
+        password: "{{ db_password }}"
+        role_attr_flags: CREATEDB,LOGIN
+
+    - name: Create database
+      become_user: postgres
+      postgresql_db:
+        name: "{{ db_name }}"
+        owner: "{{ db_user }}"
+        encoding: UTF8
+
+    - name: Install pgvector extension
+      become_user: postgres
+      postgresql_ext:
+        name: vector
+        db: "{{ db_name }}"
+
+    - name: Allow local connections
+      lineinfile:
+        path: "/etc/postgresql/{{ postgres_version }}/main/pg_hba.conf"
+        line: "host    {{ db_name }}    {{ db_user }}    127.0.0.1/32    md5"
+        insertafter: "# IPv4 local connections:"
+      notify: restart postgresql
+
+    - name: Restart PostgreSQL
+      systemd:
+        name: postgresql
+        state: restarted
+
+  handlers:
+    - name: restart postgresql
+      systemd:
+        name: postgresql
+        state: restarted
+
+- name: "✅ Database Setup Complete"
+  hosts: all
+  tasks:
+    - name: Display connection info
+      debug:
+        msg: |
+          Database created successfully!
+          
+          Connection string:
+          postgresql://{{ db_user }}:****@localhost:5432/{{ db_name }}
+          
+          Test connection:
+          psql -h localhost -U {{ db_user }} -d {{ db_name }}

@@ -1,0 +1,39 @@
+---
+# Deploy all services to a clean/new machine
+# Usage: ansible-playbook deploy-new-server.yml --ask-vault-pass --ask-become-pass
+
+- name: "1️⃣ Install System Prerequisites"
+  import_playbook: playbooks/00-prerequisites.yml
+
+- name: "2️⃣ Setup System (Conda, PM2, etc)"
+  import_playbook: playbooks/01-system-setup.yml
+
+- name: "3️⃣ Setup Database (PostgreSQL + pgvector)"
+  import_playbook: playbooks/02-database-setup.yml
+
+- name: "4️⃣ Deploy Applications (API + LLM + Frontend)"
+  import_playbook: playbooks/03-application-deploy.yml
+
+- name: "5️⃣ Configure Nginx Reverse Proxy"
+  import_playbook: playbooks/04-nginx-setup.yml
+
+- name: "✅ Deployment Complete"
+  hosts: all
+  tasks:
+    - name: Display success message
+      debug:
+        msg: |
+          ╔═══════════════════════════════════════════════════════════╗
+          ║  🎉 DEPLOYMENT COMPLETE!                                  ║
+          ║                                                           ║
+          ║  Services Status:                                         ║
+          ║  • API Service: http://{{ ansible_host }}:3000            ║
+          ║  • LLM Service: http://{{ ansible_host }}:5000            ║
+          ║  • Frontend: http://{{ ansible_host }}                    ║
+          ║  • Database: PostgreSQL on port 5432                      ║
+          ║                                                           ║
+          ║  Next Steps:                                              ║
+          ║  1. Check services: ssh {{ ansible_user }}@{{ ansible_host }} 'pm2 status' ║
+          ║  2. View logs: ssh {{ ansible_user }}@{{ ansible_host }} 'pm2 logs'        ║
+          ║  3. Test API: curl http://{{ ansible_host }}:3000/health  ║
+          ╚═══════════════════════════════════════════════════════════╝

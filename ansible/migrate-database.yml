@@ -1,0 +1,85 @@
+---
+# Run database migrations and seed data
+# Usage: ansible-playbook migrate-database.yml --ask-vault-pass --ask-become-pass
+
+- name: "🔄 Database Migration & Seeding"
+  hosts: all
+  become: yes
+  become_user: "{{ ansible_user }}"
+  
+  tasks:
+    - name: Check if migrations directory exists
+      stat:
+        path: "{{ api_service_path }}/prisma/migrations"
+      register: migrations_dir
+
+    - name: Apply Prisma migrations (production safe)
+      command: npx prisma migrate deploy
+      args:
+        chdir: "{{ api_service_path }}"
+      environment:
+        DATABASE_URL: "postgresql://{{ db_user }}:{{ db_password }}@localhost:5432/{{ db_name }}?schema=public"
+      when: migrations_dir.stat.exists
+      register: migrate_result
+
+    - name: Fallback to db push if no migrations exist
+      command: npx prisma db push --accept-data-loss
+      args:
+        chdir: "{{ api_service_path }}"
+      environment:
+        DATABASE_URL: "postgresql://{{ db_user }}:{{ db_password }}@localhost:5432/{{ db_name }}?schema=public"
+      when: not migrations_dir.stat.exists
+      register: push_result
+
+    - name: Regenerate Prisma Client
+      command: npx prisma generate
+      args:
+        chdir: "{{ api_service_path }}"
+
+    - name: Verify database tables
+      postgresql_query:
+        login_host: localhost
+        login_user: "{{ db_user }}"
+        login_password: "{{ db_password }}"
+        db: "{{ db_name }}"
+        query: |
+          SELECT table_name 
+          FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          ORDER BY table_name;
+      register: tables
+
+    - name: Display created tables
+      debug:
+        msg: "Database tables: {{ tables.query_result | map(attribute='table_name') | list }}"
+
+    - name: Check if seed script exists
+      stat:
+        path: "{{ api_service_path }}/prisma/seed.ts"
+      register: seed_file
+
+    - name: Run database seed (if exists)
+      command: npx prisma db seed
+      args:
+        chdir: "{{ api_service_path }}"
+      environment:
+        DATABASE_URL: "postgresql://{{ db_user }}:{{ db_password }}@localhost:5432/{{ db_name }}?schema=public"
+      when: seed_file.stat.exists
+      ignore_errors: yes
+      register: seed_result
+
+    - name: Display seed result
+      debug:
+        msg: "{{ seed_result.stdout if seed_file.stat.exists else 'No seed file found, skipping...' }}"
+
+    - name: Restart API service to load new schema
+      command: pm2 restart api-service
+
+    - name: Display completion message
+      debug:
+        msg: |
+          ✅ Database migration complete!
+          
+          Tables: {{ tables.query_result | map(attribute='table_name') | list | join(', ') }}
+          Migrations: {{ 'Applied' if migrate_result.changed else 'None or already applied' }}
+          Seeding: {{ 'Done' if seed_file.stat.exists else 'No seed file' }}
