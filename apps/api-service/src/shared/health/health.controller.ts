@@ -4,7 +4,7 @@
  */
 
 import { Controller, Get } from '@nestjs/common';
-import { Public } from '../auth/decorators/public.decorator';
+import { Public } from '../../features/auth/decorators/public.decorator';
 
 export interface ServiceStatus {
   service: string;

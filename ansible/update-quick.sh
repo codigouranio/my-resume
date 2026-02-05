@@ -11,7 +11,7 @@ echo "════════════════════════�
 echo "  Quick Update"
 echo "════════════════════════════════════════════════════════"
 
-ansible-playbook -i "$INVENTORY" "$SCRIPT_DIR/playbooks/05-update.yml"
+ansible-playbook -i "$INVENTORY" "$SCRIPT_DIR/playbooks/05-update.yml" "$@"
 
 echo ""
 echo "✅ Update complete!"

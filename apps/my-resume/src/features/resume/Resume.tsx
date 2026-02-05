@@ -106,8 +106,17 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
     setIsSubmitting(true);
 
     try {
+      // Use slug from resumeData when available (custom domain case), otherwise use URL param
+      const resumeSlug = resumeData?.slug || slug || '';
+
+      if (!resumeSlug) {
+        alert('Resume slug is missing. Please try again.');
+        setIsSubmitting(false);
+        return;
+      }
+
       await apiClient.submitRecruiterInterest({
-        resumeSlug: slug || '',
+        resumeSlug,
         name: contactForm.name,
         email: contactForm.email,
         company: contactForm.company,

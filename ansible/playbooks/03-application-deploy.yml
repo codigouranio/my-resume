@@ -5,6 +5,9 @@
 - name: Deploy My Resume Application
   hosts: all
   become: yes
+  vars_files:
+    - ../group_vars/all.yml
+    - ../group_vars/all/vault.yml
   
   tasks:
     - name: Clone/Update repository

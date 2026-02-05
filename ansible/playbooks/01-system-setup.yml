@@ -5,6 +5,14 @@
 - name: System Setup and Base Dependencies
   hosts: all
   become: yes
+  vars:
+    enable_ssl: false
+    fail2ban_enabled: true
+    enable_firewall: true
+    allowed_ssh_ips: []
+    app_root: /opt/my-resume
+  vars_files:
+    - ../group_vars/all.yml
   
   pre_tasks:
     - name: Update apt cache
@@ -44,8 +52,17 @@
           - postgresql-contrib
           - python3-psycopg2
           - libpq-dev
+        state: present
+      register: pg_install
+      ignore_errors: yes
+    
+    - name: Install PostgreSQL pgvector (if available)
+      apt:
+        name:
           - postgresql-15-pgvector
         state: present
+      when: pg_install is not failed
+      ignore_errors: yes
     
     - name: Ensure PostgreSQL is running
       service:

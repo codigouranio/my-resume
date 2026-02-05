@@ -5,6 +5,11 @@
 - name: PostgreSQL Database Setup
   hosts: all
   become: yes
+  vars:
+    postgres_version: "16"
+  vars_files:
+    - ../group_vars/all.yml
+    - ../group_vars/all/vault.yml
   
   tasks:
     - name: Ensure PostgreSQL is running
