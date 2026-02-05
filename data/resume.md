@@ -167,5 +167,20 @@ credential url: https://www.coursera.org/account/accomplishments/verify/HKS47K4K
 
 =========================================================================================================
 
+For Asurion context, I was the highest net contributor on the team in 2025/26, a continuation of my strong performance in previous years, and delivered significant impact, including:
+Implementing the CQRS pattern to streamline data handling, along with a Screaming Architecture folder structure that inspired other teams to adopt similar implementations
+Resolving critical UI issues that substantially improved user experience
+Driving performance improvements, enhancing overall team efficiency, and fixing the PR review bottleneck that was harming team productivity
+Implementing authentication/authorization in Honeycomb and enabling the team to run a reliable local development environment
+Improving BullMQ distributed processing, which was critical for Honeycomb’s stability and performance
+Creating the real-time monitoring dashboard and significantly enhancing telemetry across all systems
+Proactively sharing deep technical knowledge through multiple team sessions
+Implementing complex React rendering designs to handle stress scenarios with massive datasets and queries, and resolving critical main-thread blocking issues
+Continuing to mentor team members on technical topics and best practices
+
+salary expected: 120K - 150K
+if start-up company, equity
+
+I am US citizen.
 
 

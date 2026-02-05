@@ -161,7 +161,7 @@ export default function ChatWidget() {
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`chat ${message.type === 'user' ? 'chat-end' : 'chat-start'}`}                onClick={() => inputRef.current?.focus()}              >
+                className={`chat ${message.type === 'user' ? 'chat-end' : 'chat-start'}`} onClick={() => inputRef.current?.focus()}              >
                 <div className="chat-bubble">
                   {message.text}
                 </div>
