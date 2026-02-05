@@ -25,9 +25,7 @@
     
     - name: Check if vLLM is already installed
       shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ api_service_path }}/conda-env
-        python -c "import vllm; print('installed')" 2>/dev/null || echo "not_installed"
+        /opt/miniconda3/bin/python3 -c "import vllm; print('installed')" 2>/dev/null || echo "not_installed"
       args:
         executable: /bin/bash
       register: vllm_check
@@ -41,9 +39,7 @@
       
     - name: Install vLLM and dependencies (this takes ~25 minutes, be patient!)
       shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ api_service_path }}/conda-env
-        pip install vllm
+        /opt/miniconda3/bin/pip3 install vllm
       args:
         executable: /bin/bash
       when: "'not_installed' in vllm_check.stdout"
@@ -54,9 +50,7 @@
       
     - name: Install Ray and xformers for vLLM
       shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ api_service_path }}/conda-env
-        pip install ray xformers
+        /opt/miniconda3/bin/pip3 install ray xformers
       args:
         executable: /bin/bash
       when: "'not_installed' in vllm_check.stdout"
@@ -64,9 +58,7 @@
       
     - name: Verify vLLM installation
       shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ api_service_path }}/conda-env
-        python -c "import vllm; print(f'✅ vLLM version: {vllm.__version__}')"
+        /opt/miniconda3/bin/python3 -c "import vllm; print(f'✅ vLLM version: {vllm.__version__}')"
       args:
         executable: /bin/bash
       register: vllm_version
@@ -87,9 +79,7 @@
         mode: '0755'
         content: |
           #!/bin/bash
-          source /opt/miniconda3/etc/profile.d/conda.sh
-          conda activate {{ api_service_path }}/conda-env
-          python -m vllm.entrypoints.openai.api_server \
+          /opt/miniconda3/bin/python3 -m vllm.entrypoints.openai.api_server \
             --model {{ vllm_model }} \
             --port {{ vllm_port }} \
             --dtype auto \
@@ -249,18 +239,14 @@
       
     - name: Uninstall vLLM packages
       shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ api_service_path }}/conda-env
-        pip uninstall -y vllm ray xformers
+        /opt/miniconda3/bin/pip3 uninstall -y vllm ray xformers
       args:
         executable: /bin/bash
       tags: [uninstall, never]
       
     - name: Verify vLLM is completely removed
       shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ api_service_path }}/conda-env
-        python -c "import vllm" 2>&1 | grep "No module" && echo "✅ vLLM removed" || echo "❌ vLLM still present"
+        /opt/miniconda3/bin/python3 -c "import vllm" 2>&1 | grep "No module" && echo "✅ vLLM removed" || echo "❌ vLLM still present"
       args:
         executable: /bin/bash
       register: verify_removal
