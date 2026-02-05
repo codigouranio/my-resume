@@ -10,6 +10,9 @@ Clean, organized automation for deploying and managing your resume platform.
 | **Update Code** | `ansible-playbook update-services.yml` | After git push, code changes |
 | **Setup Database** | `ansible-playbook setup-database.yml` | New server, database setup |
 | **Migrate Database** | `ansible-playbook migrate-database.yml` | Schema changes, migrations |
+| **Install vLLM** | `ansible-playbook setup-vllm.yml --tags install` | High-performance LLM (5-10x faster) |
+| **Test vLLM** | `ansible-playbook setup-vllm.yml --tags start,test` | Test vLLM (safe, parallel to Ollama) |
+| **Remove vLLM** | `ansible-playbook setup-vllm.yml --tags uninstall` | Rollback if not satisfied |
 
 ---
 

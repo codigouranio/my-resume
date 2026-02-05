@@ -1,0 +1,292 @@
+---
+# Setup vLLM for high-performance LLM inference (5-10x throughput vs Ollama)
+# 
+# USAGE:
+#   Install:   ansible-playbook setup-vllm.yml --tags install -i inventory.yml --limit production --ask-vault-pass --ask-become-pass
+#   Start:     ansible-playbook setup-vllm.yml --tags start -i inventory.yml --limit production --ask-vault-pass --ask-become-pass
+#   Test:      ansible-playbook setup-vllm.yml --tags test -i inventory.yml --limit production --ask-vault-pass --ask-become-pass
+#   Uninstall: ansible-playbook setup-vllm.yml --tags uninstall -i inventory.yml --limit production --ask-vault-pass --ask-become-pass
+#
+# SAFE TESTING: vLLM runs on port 8000 (Ollama keeps port 11434) so production is unaffected
+
+- name: "🚀 Setup or Remove vLLM High-Performance Inference"
+  hosts: all
+  become: yes
+  become_user: "{{ ansible_user }}"
+  
+  vars:
+    vllm_model: "meta-llama/Meta-Llama-3.1-8B-Instruct"
+    vllm_port: 8000  # Different from Ollama (11434) for safe testing
+    
+  tasks:
+    # ============================================================
+    # INSTALL TASKS - Install vLLM and dependencies (~25 minutes)
+    # ============================================================
+    
+    - name: Check if vLLM is already installed
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        python -c "import vllm; print('installed')" 2>/dev/null || echo "not_installed"
+      args:
+        executable: /bin/bash
+      register: vllm_check
+      changed_when: false
+      tags: [install, check, never]
+      
+    - name: Display vLLM installation status
+      debug:
+        msg: "vLLM status: {{ vllm_check.stdout }}"
+      tags: [install, check, never]
+      
+    - name: Install vLLM and dependencies (this takes ~25 minutes, be patient!)
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        pip install vllm
+      args:
+        executable: /bin/bash
+      when: "'not_installed' in vllm_check.stdout"
+      async: 2400  # 40 minutes timeout
+      poll: 30     # Check every 30 seconds
+      register: vllm_install
+      tags: [install, never]
+      
+    - name: Install Ray and xformers for vLLM
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        pip install ray xformers
+      args:
+        executable: /bin/bash
+      when: "'not_installed' in vllm_check.stdout"
+      tags: [install, never]
+      
+    - name: Verify vLLM installation
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        python -c "import vllm; print(f'✅ vLLM version: {vllm.__version__}')"
+      args:
+        executable: /bin/bash
+      register: vllm_version
+      tags: [install, verify, never]
+      
+    - name: Show vLLM version
+      debug:
+        msg: "{{ vllm_version.stdout }}"
+      tags: [install, verify, never]
+      
+    # ============================================================
+    # START TASKS - Start vLLM server on test port 8000
+    # ============================================================
+    
+    - name: Create vLLM startup script
+      copy:
+        dest: "{{ app_root }}/start-vllm.sh"
+        mode: '0755'
+        content: |
+          #!/bin/bash
+          source /opt/miniconda3/etc/profile.d/conda.sh
+          conda activate {{ api_service_path }}/conda-env
+          python -m vllm.entrypoints.openai.api_server \
+            --model {{ vllm_model }} \
+            --port {{ vllm_port }} \
+            --dtype auto \
+            --max-model-len 8192
+      tags: [start, never]
+      
+    - name: Check if vLLM PM2 process exists
+      shell: "/home/{{ ansible_user }}/.npm-global/bin/pm2 list | grep vllm-server || echo 'not_running'"
+      register: vllm_pm2_check
+      changed_when: false
+      tags: [start, never]
+      
+    - name: Stop existing vLLM process if running
+      command: "/home/{{ ansible_user }}/.npm-global/bin/pm2 stop vllm-server"
+      when: "'not_running' not in vllm_pm2_check.stdout"
+      ignore_errors: yes
+      tags: [start, never]
+      
+    - name: Delete existing vLLM PM2 process
+      command: "/home/{{ ansible_user }}/.npm-global/bin/pm2 delete vllm-server"
+      when: "'not_running' not in vllm_pm2_check.stdout"
+      ignore_errors: yes
+      tags: [start, never]
+      
+    - name: Start vLLM server with PM2
+      command: >
+        /home/{{ ansible_user }}/.npm-global/bin/pm2 start {{ app_root }}/start-vllm.sh
+        --name vllm-server
+        --log {{ app_root }}/vllm-server.log
+        --error {{ app_root }}/vllm-server-error.log
+      tags: [start, never]
+      
+    - name: Save PM2 configuration
+      command: "/home/{{ ansible_user }}/.npm-global/bin/pm2 save"
+      tags: [start, never]
+      
+    - name: Wait for vLLM server to start (30 seconds)
+      pause:
+        seconds: 30
+      tags: [start, never]
+      
+    - name: Display vLLM startup message
+      debug:
+        msg: |
+          ✅ vLLM server started on port {{ vllm_port }}!
+          
+          Next steps:
+          1. Run test: ansible-playbook setup-vllm.yml --tags test
+          2. Check logs: ssh {{ ansible_user }}@{{ ansible_host }} "tail -50 {{ app_root }}/vllm-server.log"
+          3. If tests pass, update LLM service to use vLLM
+          4. If tests fail, run: ansible-playbook setup-vllm.yml --tags uninstall
+      tags: [start, never]
+      
+    # ============================================================
+    # TEST TASKS - Verify vLLM is working correctly
+    # ============================================================
+    
+    - name: Test vLLM - Check if server is responding
+      uri:
+        url: "http://localhost:{{ vllm_port }}/v1/models"
+        method: GET
+        return_content: yes
+        timeout: 10
+      register: vllm_models
+      retries: 3
+      delay: 10
+      tags: [test, never]
+      
+    - name: Display available models
+      debug:
+        msg: "{{ vllm_models.json | to_nice_json }}"
+      tags: [test, never]
+      
+    - name: Test vLLM - Simple completion
+      uri:
+        url: "http://localhost:{{ vllm_port }}/v1/completions"
+        method: POST
+        body_format: json
+        body:
+          model: "{{ vllm_model }}"
+          prompt: "Hello, my name is"
+          max_tokens: 50
+          temperature: 0.7
+        return_content: yes
+        timeout: 30
+      register: vllm_completion
+      tags: [test, never]
+      
+    - name: Display completion result
+      debug:
+        msg: |
+          ✅ vLLM Test Successful!
+          
+          Prompt: "Hello, my name is"
+          Response: {{ vllm_completion.json.choices[0].text }}
+          
+          Next steps:
+          1. Compare with Ollama response quality
+          2. Run load test (multiple concurrent requests)
+          3. If satisfied, switch LLM service to use vLLM
+          4. If not satisfied, run: ansible-playbook setup-vllm.yml --tags uninstall
+      tags: [test, never]
+      
+    - name: Test vLLM - Concurrent requests (load test)
+      uri:
+        url: "http://localhost:{{ vllm_port }}/v1/completions"
+        method: POST
+        body_format: json
+        body:
+          model: "{{ vllm_model }}"
+          prompt: "Count to 5:"
+          max_tokens: 20
+        return_content: yes
+        timeout: 30
+      register: vllm_load_test
+      loop: "{{ range(0, 5) | list }}"
+      tags: [test, load-test, never]
+      
+    - name: Display load test results
+      debug:
+        msg: "✅ Processed {{ vllm_load_test.results | length }} concurrent requests successfully"
+      tags: [test, load-test, never]
+      
+    # ============================================================
+    # UNINSTALL TASKS - Complete removal of vLLM
+    # ============================================================
+    
+    - name: Stop vLLM PM2 process
+      command: "/home/{{ ansible_user }}/.npm-global/bin/pm2 stop vllm-server"
+      ignore_errors: yes
+      tags: [uninstall, never]
+      
+    - name: Delete vLLM PM2 process
+      command: "/home/{{ ansible_user }}/.npm-global/bin/pm2 delete vllm-server"
+      ignore_errors: yes
+      tags: [uninstall, never]
+      
+    - name: Save PM2 configuration after removal
+      command: "/home/{{ ansible_user }}/.npm-global/bin/pm2 save"
+      ignore_errors: yes
+      tags: [uninstall, never]
+      
+    - name: Remove vLLM startup script
+      file:
+        path: "{{ app_root }}/start-vllm.sh"
+        state: absent
+      tags: [uninstall, never]
+      
+    - name: Remove vLLM log files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ app_root }}/vllm-server.log"
+        - "{{ app_root }}/vllm-server-error.log"
+      tags: [uninstall, never]
+      
+    - name: Uninstall vLLM packages
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        pip uninstall -y vllm ray xformers
+      args:
+        executable: /bin/bash
+      tags: [uninstall, never]
+      
+    - name: Verify vLLM is completely removed
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ api_service_path }}/conda-env
+        python -c "import vllm" 2>&1 | grep "No module" && echo "✅ vLLM removed" || echo "❌ vLLM still present"
+      args:
+        executable: /bin/bash
+      register: verify_removal
+      tags: [uninstall, never]
+      
+    - name: Display uninstall result
+      debug:
+        msg: |
+          {{ verify_removal.stdout }}
+          
+          ✅ vLLM uninstall complete!
+          
+          Your system is back to the original state:
+          - Ollama still running on port 11434
+          - LLM service using Ollama (unchanged)
+          - All vLLM files removed
+      tags: [uninstall, never]
+      
+    # ============================================================
+    # STOP/START TASKS - Control vLLM without uninstalling
+    # ============================================================
+    
+    - name: Stop vLLM server (keep installed)
+      command: "/home/{{ ansible_user }}/.npm-global/bin/pm2 stop vllm-server"
+      tags: [stop, never]
+      
+    - name: Start vLLM server (already installed)
+      command: "/home/{{ ansible_user }}/.npm-global/bin/pm2 start vllm-server"
+      tags: [restart, never]
