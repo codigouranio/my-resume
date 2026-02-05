@@ -52,22 +52,12 @@
       when: git_result.changed
 
     - name: Restart API Service
-      shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ api_service_path }}/conda-env
-        pm2 restart api-service
-      args:
-        executable: /bin/bash
+      command: "{{ api_service_path }}/conda-env/bin/pm2 restart api-service"
       when: git_result.changed
 
     # LLM Service (no build needed, Python)
     - name: Restart LLM Service
-      shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ api_service_path }}/conda-env
-        pm2 restart llm-service
-      args:
-        executable: /bin/bash
+      command: "{{ api_service_path }}/conda-env/bin/pm2 restart llm-service"
       when: git_result.changed
 
     # Frontend
