@@ -22,6 +22,7 @@ export default function ChatWidget() {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -30,6 +31,13 @@ export default function ChatWidget() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Auto-focus input when chat opens
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [isOpen]);
 
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -153,8 +161,7 @@ export default function ChatWidget() {
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`chat ${message.type === 'user' ? 'chat-end' : 'chat-start'}`}
-              >
+                className={`chat ${message.type === 'user' ? 'chat-end' : 'chat-start'}`}                onClick={() => inputRef.current?.focus()}              >
                 <div className="chat-bubble">
                   {message.text}
                 </div>
@@ -172,6 +179,7 @@ export default function ChatWidget() {
 
           <div className="chat-input">
             <input
+              ref={inputRef}
               type="text"
               placeholder="Ask about their experience..."
               className="input input-bordered w-full"
@@ -179,6 +187,7 @@ export default function ChatWidget() {
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
               disabled={isLoading}
+              autoFocus
             />
             <button
               className="btn btn-primary btn-circle"
