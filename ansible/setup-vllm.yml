@@ -17,15 +17,45 @@
   vars:
     vllm_model: "meta-llama/Meta-Llama-3.1-8B-Instruct"
     vllm_port: 8000  # Different from Ollama (11434) for safe testing
+    vllm_conda_env: /opt/miniconda3/envs/vllm-env
     
   tasks:
     # ============================================================
     # INSTALL TASKS - Install vLLM and dependencies (~25 minutes)
     # ============================================================
     
+    - name: Check if vLLM conda environment exists
+      stat:
+        path: "{{ vllm_conda_env }}"
+      register: vllm_env_exists
+      tags: [install, check, never]
+      
+    - name: Create dedicated conda environment for vLLM with Python 3.11
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda create -n vllm-env python=3.11 -y
+      args:
+        executable: /bin/bash
+      when: not vllm_env_exists.stat.exists
+      tags: [install, never]
+      
+    - name: Install PyTorch with CUDA support via conda
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate vllm-env
+        conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia -y
+      args:
+        executable: /bin/bash
+      when: not vllm_env_exists.stat.exists
+      async: 1800  # 30 minutes timeout for PyTorch
+      poll: 30
+      tags: [install, never]
+    
     - name: Check if vLLM is already installed
       shell: |
-        /opt/miniconda3/bin/python3 -c "import vllm; print('installed')" 2>/dev/null || echo "not_installed"
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate vllm-env
+        python -c "import vllm; print('installed')" 2>/dev/null || echo "not_installed"
       args:
         executable: /bin/bash
       register: vllm_check
@@ -39,7 +69,9 @@
       
     - name: Install vLLM and dependencies (this takes ~25 minutes, be patient!)
       shell: |
-        /opt/miniconda3/bin/pip3 install vllm
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate vllm-env
+        pip install vllm
       args:
         executable: /bin/bash
       when: "'not_installed' in vllm_check.stdout"
@@ -50,7 +82,9 @@
       
     - name: Install Ray and xformers for vLLM
       shell: |
-        /opt/miniconda3/bin/pip3 install ray xformers
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate vllm-env
+        pip install ray xformers
       args:
         executable: /bin/bash
       when: "'not_installed' in vllm_check.stdout"
@@ -58,7 +92,9 @@
       
     - name: Verify vLLM installation
       shell: |
-        /opt/miniconda3/bin/python3 -c "import vllm; print(f'✅ vLLM version: {vllm.__version__}')"
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate vllm-env
+        python -c "import vllm; print(f'✅ vLLM version: {vllm.__version__}')"
       args:
         executable: /bin/bash
       register: vllm_version
@@ -79,7 +115,9 @@
         mode: '0755'
         content: |
           #!/bin/bash
-          /opt/miniconda3/bin/python3 -m vllm.entrypoints.openai.api_server \
+          source /opt/miniconda3/etc/profile.d/conda.sh
+          conda activate vllm-env
+          python -m vllm.entrypoints.openai.api_server \
             --model {{ vllm_model }} \
             --port {{ vllm_port }} \
             --dtype auto \
@@ -239,14 +277,26 @@
       
     - name: Uninstall vLLM packages
       shell: |
-        /opt/miniconda3/bin/pip3 uninstall -y vllm ray xformers
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate vllm-env
+        pip uninstall -y vllm ray xformers
+      args:
+        executable: /bin/bash
+      ignore_errors: yes
+      tags: [uninstall, never]
+      
+    - name: Remove vLLM conda environment
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda env remove -n vllm-env -y
       args:
         executable: /bin/bash
       tags: [uninstall, never]
       
     - name: Verify vLLM is completely removed
       shell: |
-        /opt/miniconda3/bin/python3 -c "import vllm" 2>&1 | grep "No module" && echo "✅ vLLM removed" || echo "❌ vLLM still present"
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda env list | grep vllm-env && echo "❌ Environment still exists" || echo "✅ vLLM environment removed"
       args:
         executable: /bin/bash
       register: verify_removal
