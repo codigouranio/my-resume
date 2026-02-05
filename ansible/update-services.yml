@@ -61,6 +61,15 @@
       when: git_result.changed
 
     # Frontend
+    - name: Clean frontend node_modules and lock file
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ frontend_path }}/node_modules"
+        - "{{ frontend_path }}/package-lock.json"
+      when: git_result.changed
+
     - name: Install frontend dependencies
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
