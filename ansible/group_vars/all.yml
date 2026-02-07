@@ -26,23 +26,34 @@ postgres_version: 15
 postgres_port: 5432
 postgres_max_connections: 100
 
+jwt_secret: "{{ vault_jwt_secret | default('CHANGE_ME_IN_PRODUCTION_USE_LONG_RANDOM_STRING') }}"
+
+aws_region: "{{ vault_aws_region | default('us-east-1') }}"
+aws_access_key_id: "{{ vault_aws_access_key_id | default('') }}"
+aws_secret_access_key: "{{ vault_aws_secret_access_key | default('') }}"
+ses_from_email: "{{ vault_ses_from_email | default('noreply@resumecast.ai') }}"
+
+ses_reply_to_email: "{{ vault_ses_reply_to_email | default('noreply@resumecast.ai') }}"
+ses_template_name: "ResumeAccessNotification"
+
+db_password: "{{ vault_db_password | default('CHANGE_ME_IN_PRODUCTION') }}"
+
+llm_admin_token: "{{ vault_llm_admin_token | default('CHANGE_ME_IN_PRODUCTION') }}"
+
+stripe_secret_key: "{{ vault_stripe_secret_key | default('') }}"
+stripe_webhook_secret: "{{ vault_stripe_webhook_secret | default('') }}"
+stripe_price_id: "{{ vault_stripe_price_id | default('') }}"
+
 # Database Configuration (use ansible-vault for passwords!)
 db_name: resume_db
 db_user: resume_user
-# CHANGE THIS - or better, use ansible-vault encrypt_string
-db_password: "{{ vault_db_password | default('CHANGE_ME_IN_PRODUCTION') }}"
 
 # Legacy compatibility
 postgres_db: "{{ db_name }}"
 postgres_user: "{{ db_user }}"
 postgres_password: "{{ db_password }}"
 
-# JWT Configuration
-# CHANGE THIS - or use ansible-vault
-jwt_secret: "{{ vault_jwt_secret | default('CHANGE_ME_IN_PRODUCTION_USE_LONG_RANDOM_STRING') }}"
-
 # LLM Service Configuration
-llm_admin_token: "{{ vault_llm_admin_token | default('CHANGE_ME_IN_PRODUCTION') }}"
 ollama_model: "llama3.1:latest"
 llama_server_url: "http://localhost:11434"
 
@@ -90,8 +101,4 @@ cors_origins:
   - "https://my-resume.paskot.com"
   - "https://api.paskot.com"
   - "https://llm.paskot.com"
-# AWS SES Email Service Configuration
-aws_region: "{{ vault_aws_region | default('us-east-1') }}"
-aws_access_key_id: "{{ vault_aws_access_key_id | default('') }}"
-aws_secret_access_key: "{{ vault_aws_secret_access_key | default('') }}"
-ses_from_email: "{{ vault_ses_from_email | default('noreply@resumecast.ai') }}"
+

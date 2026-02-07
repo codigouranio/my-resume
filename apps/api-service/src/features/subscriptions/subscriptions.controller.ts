@@ -55,11 +55,18 @@ export class SubscriptionsController {
   /**
    * Public endpoint to fetch Stripe price details for UI display
    */
-  @Get('prices/:priceId')
+  @Get('prices/:productId')
   @Public()
-  async getPrice(@Param('priceId') priceId: string) {
-    if (!priceId) {
-      throw new BadRequestException('priceId is required');
+  async getPrice(@Param('productId') productId: string) {
+    if (!productId) {
+      throw new BadRequestException('productId is required');
+    }
+
+    let priceId: string;
+    if (productId === 'SUBSCRIPTION_PRO') {
+      priceId = process.env.STRIPE_PRICE_ID ;
+    } else {
+      throw new BadRequestException('Invalid productId');
     }
 
     return this.subscriptionsService.getPriceDetails(priceId);

@@ -5,8 +5,6 @@ import { apiClient } from '../../shared/api/client';
 import { getDisplayBaseDomain } from '../../shared/utils/domain';
 import './PricingPage.css';
 
-const STRIPE_PRICE_ID = 'price_1SlFZEH4t2zAz3Hw1mXxxSDk';
-
 export function PricingPage() {
   const appVersion = import.meta.env.VITE_APP_VERSION || 'dev';
   const { isAuthenticated, user } = useAuth();
@@ -21,7 +19,7 @@ export function PricingPage() {
 
     const loadPrice = async () => {
       try {
-        const data = await apiClient.getPriceDetails(STRIPE_PRICE_ID);
+        const data = await apiClient.getPriceDetails('SUBSCRIPTION_PRO');
         if (!isMounted) return;
         if (typeof data?.unitAmount === 'number') {
           setPriceAmount(data.unitAmount / 100);
