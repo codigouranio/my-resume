@@ -48,6 +48,11 @@ export default function ChatWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const focusInput = () => {
+    if (!inputRef.current) return;
+    requestAnimationFrame(() => inputRef.current?.focus());
+  };
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -59,7 +64,7 @@ export default function ChatWidget() {
   // Auto-focus input when chat opens
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 100);
+      setTimeout(() => focusInput(), 100);
     }
   }, [isOpen]);
 
@@ -71,6 +76,7 @@ export default function ChatWidget() {
     const currentQuestion = inputValue;
     setInputValue('');
     setIsLoading(true);
+    focusInput();
 
     try {
       // Call Flask API
@@ -108,6 +114,7 @@ export default function ChatWidget() {
       setMessages(prev => [...prev, botResponse]);
     } finally {
       setIsLoading(false);
+      focusInput();
     }
   };
 
