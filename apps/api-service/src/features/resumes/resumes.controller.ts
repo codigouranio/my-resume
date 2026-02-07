@@ -15,14 +15,19 @@ import { ResumesService } from './resumes.service';
 import { CreateResumeDto } from './dto/create-resume.dto';
 import { UpdateResumeDto } from './dto/update-resume.dto';
 import { CreateRecruiterInterestDto } from './dto/create-recruiter-interest.dto';
+import { TestRecruiterInterestEmailDto } from './dto/test-recruiter-interest-email.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
+import { EmailService } from '@shared/email/email.service';
 
 @ApiTags('resumes')
 @Controller('resumes')
 export class ResumesController {
-  constructor(private readonly resumesService: ResumesService) {}
+  constructor(
+    private readonly resumesService: ResumesService,
+    private readonly emailService: EmailService,
+  ) {}
 
   @Post()
   @ApiBearerAuth()
@@ -132,6 +137,31 @@ export class ResumesController {
   @ApiOperation({ summary: 'Submit recruiter interest for a resume' })
   submitRecruiterInterest(@Body() dto: CreateRecruiterInterestDto) {
     return this.resumesService.createRecruiterInterest(dto);
+  }
+
+  @Post('recruiter-interest/test-email')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Send a test recruiter interest email' })
+  async sendRecruiterInterestTestEmail(
+    @Body() dto: TestRecruiterInterestEmailDto,
+  ) {
+    try {
+      await this.emailService.sendRecruiterInterestEmail(
+        dto.email,
+        dto.firstName,
+        dto.recruiterName,
+        dto.company ?? 'Company',
+        dto.message,
+        dto.resumeTitle,
+      );
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error?.message ?? 'Failed to send test email',
+      };
+    }
   }
 
   @Get('recruiter-interest/my-interests')
