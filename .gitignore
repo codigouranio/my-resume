@@ -3,6 +3,7 @@
 .env.local
 .env.*.local
 **/.env
+AWS_SES_DEPLOYMENT_STATUS.md
 
 # OS files
 .DS_Store
