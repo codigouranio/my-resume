@@ -7,6 +7,11 @@ import Stripe from 'stripe';
 export class SubscriptionsService {
   private readonly logger = new Logger(SubscriptionsService.name);
   private stripe: Stripe;
+  private readonly priceCache = new Map<
+    string,
+    { expiresAt: number; data: StripePriceResponse }
+  >();
+  private readonly priceCacheTtlMs = 5 * 60 * 1000;
 
   constructor(
     private prisma: PrismaService,
@@ -20,6 +25,40 @@ export class SubscriptionsService {
     this.stripe = new Stripe(stripeSecretKey, {
       apiVersion: '2025-02-24.acacia',
     });
+  }
+
+  async getPriceDetails(priceId: string): Promise<StripePriceResponse> {
+    const cached = this.priceCache.get(priceId);
+    const now = Date.now();
+
+    if (cached && cached.expiresAt > now) {
+      return cached.data;
+    }
+
+    const price = await this.stripe.prices.retrieve(priceId, {
+      expand: ['product'],
+    });
+
+    const productName =
+      typeof price.product === 'object' && price.product && 'name' in price.product
+        ? price.product.name
+        : null;
+
+    const data: StripePriceResponse = {
+      id: price.id,
+      currency: price.currency,
+      unitAmount: price.unit_amount,
+      interval: price.recurring?.interval ?? null,
+      intervalCount: price.recurring?.interval_count ?? null,
+      productName,
+    };
+
+    this.priceCache.set(priceId, {
+      expiresAt: now + this.priceCacheTtlMs,
+      data,
+    });
+
+    return data;
   }
 
   /**
@@ -258,3 +297,12 @@ export class SubscriptionsService {
     return { message: 'User upgraded to PRO successfully', user: updatedUser };
   }
 }
+
+type StripePriceResponse = {
+  id: string;
+  currency: string;
+  unitAmount: number | null;
+  interval: Stripe.Price.Recurring.Interval | null;
+  intervalCount: number | null;
+  productName: string | null;
+};

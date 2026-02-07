@@ -1,16 +1,49 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { apiClient } from '../../shared/api/client';
 import { getDisplayBaseDomain } from '../../shared/utils/domain';
 import './PricingPage.css';
 
-const STRIPE_PRICE_ID = 'price_1SlG7BQaUmXjtzSFZCut7Kw6';
+const STRIPE_PRICE_ID = 'price_1SlFZEH4t2zAz3Hw1mXxxSDk';
 
 export function PricingPage() {
+  const appVersion = import.meta.env.VITE_APP_VERSION || 'dev';
   const { isAuthenticated, user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [priceAmount, setPriceAmount] = useState<number | null>(null);
+  const [priceInterval, setPriceInterval] = useState<string>('month');
+  const [priceLoading, setPriceLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadPrice = async () => {
+      try {
+        const data = await apiClient.getPriceDetails(STRIPE_PRICE_ID);
+        if (!isMounted) return;
+        if (typeof data?.unitAmount === 'number') {
+          setPriceAmount(data.unitAmount / 100);
+        }
+        if (data?.interval) {
+          setPriceInterval(data.interval);
+        }
+      } catch (err) {
+        console.error('Failed to load Stripe price', err);
+      } finally {
+        if (isMounted) {
+          setPriceLoading(false);
+        }
+      }
+    };
+
+    loadPrice();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleUpgrade = async () => {
     if (!isAuthenticated) {
@@ -136,8 +169,10 @@ export function PricingPage() {
             <div className="card-body">
               <h2 className="card-title text-3xl justify-center">PRO</h2>
               <div className="text-center py-6">
-                <span className="text-5xl font-bold">$9</span>
-                <span className="text-xl opacity-70">/month</span>
+                <span className="text-5xl font-bold">
+                  {priceLoading ? '$9' : `$${(priceAmount ?? 9).toFixed(0)}`}
+                </span>
+                <span className="text-xl opacity-70">/{priceInterval}</span>
               </div>
               <p className="text-center text-sm opacity-70 mb-6">
                 For professionals who want to stand out
@@ -284,6 +319,7 @@ export function PricingPage() {
             <span style={{ color: '#007BFF' }}>Cast.ai</span>
           </p>
           <p>Professional Resume Builder © 2025</p>
+          <p className="text-xs opacity-60">UI v{appVersion}</p>
         </div>
       </footer>
     </div>

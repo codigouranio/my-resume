@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import './LandingPage.css';
 
 export function LandingPage() {
+  const appVersion = import.meta.env.VITE_APP_VERSION || 'dev';
   return (
     <div className="landing-container">
       {/* Header Navigation */}
@@ -127,6 +128,7 @@ export function LandingPage() {
             <span style={{ color: '#007BFF' }}>Cast.ai</span>
           </p>
           <p>Professional Resume Builder © 2025</p>
+          <p className="text-xs opacity-60">UI v{appVersion}</p>
         </div>
       </footer>
     </div>

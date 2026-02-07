@@ -14,6 +14,7 @@ interface ResumeProps {
 }
 
 export default function Resume({ customDomain }: ResumeProps = {}) {
+  const appVersion = import.meta.env.VITE_APP_VERSION || 'dev';
   const { slug } = useParams<{ slug?: string }>();
   const [markdown, setMarkdown] = useState<string>('');
   const [resumeData, setResumeData] = useState<any>(null);
@@ -535,6 +536,7 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
                 ResumeCast.ai
               </a>
             </div>
+            <div className="text-xs opacity-60">UI v{appVersion}</div>
           </div>
         </footer>
       )}

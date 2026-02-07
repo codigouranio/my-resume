@@ -290,6 +290,10 @@ class ApiClient {
     });
   }
 
+  async getPriceDetails(priceId: string) {
+    return this.request(`/subscriptions/prices/${priceId}`);
+  }
+
   async createPortalSession() {
     return this.request('/subscriptions/portal', {
       method: 'POST',

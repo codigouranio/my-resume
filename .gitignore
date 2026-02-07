@@ -4,6 +4,7 @@
 .env.*.local
 **/.env
 AWS_SES_DEPLOYMENT_STATUS.md
+ansible/group_vars/all/vault-sandbox.yml
 
 # OS files
 .DS_Store

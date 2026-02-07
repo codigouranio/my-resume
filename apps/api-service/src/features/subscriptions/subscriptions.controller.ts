@@ -8,11 +8,14 @@ import {
   UseGuards,
   BadRequestException,
   UnauthorizedException,
+  Get,
+  Param,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SubscriptionsService } from './subscriptions.service';
 import Stripe from 'stripe';
+import { Public } from '../auth/decorators/public.decorator';
 
 @Controller('subscriptions')
 export class SubscriptionsController {
@@ -47,6 +50,19 @@ export class SubscriptionsController {
     const cancelUrl = `${baseUrl}/dashboard?payment=canceled`;
 
     return this.subscriptionsService.createCheckoutSession(userId, priceId, successUrl, cancelUrl);
+  }
+
+  /**
+   * Public endpoint to fetch Stripe price details for UI display
+   */
+  @Get('prices/:priceId')
+  @Public()
+  async getPrice(@Param('priceId') priceId: string) {
+    if (!priceId) {
+      throw new BadRequestException('priceId is required');
+    }
+
+    return this.subscriptionsService.getPriceDetails(priceId);
   }
 
   /**
