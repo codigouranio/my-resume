@@ -2,7 +2,8 @@ module.exports = {
   apps: [
     {
       name: "api-service",
-      script: "/opt/my-resume/apps/api-service/dist/main.js",
+      script: "dist/src/main.js",
+      interpreter: "node",
       cwd: "/opt/my-resume/apps/api-service",
       instances: 2,
       exec_mode: "cluster",
