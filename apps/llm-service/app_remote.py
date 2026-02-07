@@ -85,7 +85,12 @@ def extract_topics_from_question(question: str) -> list:
 
 
 def log_chat_interaction(
-    resume_slug: str, question: str, answer: str, response_time: int, request_obj
+    resume_slug: str,
+    question: str,
+    answer: str,
+    response_time: int,
+    request_obj,
+    session_id: str | None,
 ):
     """Log chat interaction to database for analytics."""
     try:
@@ -143,12 +148,13 @@ def log_chat_interaction(
         cursor.execute(
             """
             INSERT INTO "ChatInteraction" 
-            ("id", "resumeId", "question", "answer", "sentiment", "wasAnsweredWell", 
+            ("id", "resumeId", "sessionId", "question", "answer", "sentiment", "wasAnsweredWell", 
              "topics", "ipAddress", "userAgent", "referrer", "responseTime", "createdAt")
-            VALUES (gen_random_uuid()::text, %s, %s, %s, %s::\"ChatSentiment\", %s, %s, %s, %s, %s, %s, NOW())
+            VALUES (gen_random_uuid()::text, %s, %s, %s, %s, %s::\"ChatSentiment\", %s, %s, %s, %s, %s, %s, NOW())
         """,
             (
                 resume_id,
+                session_id,
                 question,
                 answer,
                 sentiment,
@@ -179,7 +185,7 @@ def log_chat_interaction(
 
 
 def load_resume_from_db(slug: str):
-    """Load resume context from database by slug."""
+    """Load resume context and resume ID from database by slug."""
     try:
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -187,7 +193,7 @@ def load_resume_from_db(slug: str):
         # Query for published resume by slug
         cursor.execute(
             """
-            SELECT content, "llmContext" 
+            SELECT id, content, "llmContext" 
             FROM "Resume" 
             WHERE slug = %s AND "isPublic" = true AND "isPublished" = true
         """,
@@ -215,129 +221,74 @@ def load_resume_from_db(slug: str):
                     f"Loaded resume from database for slug '{slug}': {len(context)} chars (content only)"
                 )
 
-            return context
+            return context, result["id"]
         else:
             logger.warning(f"No published resume found for slug '{slug}'")
-            return None
+            return None, None
     except Exception as e:
         logger.error(f"Database error loading resume for slug '{slug}': {e}")
-        return None
+        return None, None
 
 
-# Try to load resume dynamically from file if available
-def load_resume_context():
-    """Load resume context from markdown file or fallback to hardcoded version."""
+def load_conversation_history(session_id: str, resume_id: str, limit: int = 6) -> list:
+    """Load recent conversation history for a given session and resume."""
     try:
-        from load_resume import extract_resume_context
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute(
+            """
+            SELECT question, answer
+            FROM "ChatInteraction"
+            WHERE "resumeId" = %s AND "sessionId" = %s
+            ORDER BY "createdAt" DESC
+            LIMIT %s
+        """,
+            (resume_id, session_id, limit),
+        )
 
-        resume_path = os.getenv("RESUME_PATH", "../../data/resume.md")
-        context = extract_resume_context(resume_path)
-        if context:
-            logger.info(
-                f"Loaded resume context from {resume_path} ({len(context)} chars)"
-            )
-            return context
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        # Reverse to chronological order
+        return list(reversed(rows))
     except Exception as e:
-        logger.warning(f"Could not load dynamic resume context: {e}")
-
-    # Fallback to hardcoded context
-    logger.info("Using hardcoded resume context")
-    return _get_hardcoded_resume_context()
+        logger.error(f"Error loading conversation history: {e}")
+        return []
 
 
-def _get_hardcoded_resume_context():
-    """Hardcoded resume context as fallback - should be replaced with database content."""
-    return """No default resume content available. Please ensure a resume is published in the database."""
+def _get_safety_instructions(user_info: dict) -> str:
+    if not user_info:
+        raise ValueError("User information is required for safety instructions")
 
+    user_full_name = f"{user_info.get('firstName', 'The person')} {user_info.get('lastName', '')}".strip()
+    user_first_name = user_info.get("firstName", "The person").strip()
 
-# Resume context
-RESUME_CONTEXT = """
-Jose Blanco is a Senior Full-Stack Software Engineer with extensive experience in distributed systems, 
-cloud infrastructure, and enterprise applications.
-
-TECHNICAL EXPERTISE:
-Languages: TypeScript, JavaScript (Node.js, React.js), Python, Java, C++, C#, Scala, SQL
-Cloud & Infrastructure: AWS (EC2, S3, Lambda, API Gateway, CloudFront, SQS, DynamoDB), Docker, Kubernetes, Terraform, AWS CDK
-Frameworks: React, Next.js, Node.js, Express, Nest.js, Flask, FastAPI, Spring Boot, GraphQL
-AI/ML: PyTorch, TensorFlow, Hugging Face, LangChain, LLMs, GPU computing
-DevOps: Jenkins, GitHub Actions, CI/CD, Prometheus, Grafana, ELK Stack
-Databases: PostgreSQL, MongoDB, Redis, MySQL, Elasticsearch, DynamoDB
-Specialties: Microservices architecture, REST APIs, OAuth2, LDAP, Performance optimization, Distributed systems
-
-PROFESSIONAL EXPERIENCE:
-
-1. Interactions LLC - Software Engineer (Jul 2017 – Nov 2021)
-   - Built scalable multi-tenant platform for real-time virtual assistant management using TypeScript/React
-   - Integrated secure OAuth2 and LDAP authentication, securing 50K+ user accounts
-   - Optimized React applications, reducing Time-to-Interactive (TTI) and First Contentful Paint (FCP) by 30%
-   - Developed reusable Node.js libraries for logging and metrics adopted across teams
-   - Built AWS infrastructure as code using Python CDK (Lambda, API Gateway, SQS)
-   - Mentored engineers on TypeScript, AWS, and best practices
-   - Conducted rigorous code reviews achieving zero critical vulnerabilities
-
-2. Carbon Black Inc. (VMware) - Software Engineer (Jul 2016 - Jul 2017)
-   - Developed Node.js API Gateway handling millions of events per minute
-   - Implemented rate limiting, sticky sessions, and horizontal scaling
-   - Built Splunk Third-Party Notification Connector in Python (Flask + gevent)
-   - Transformed real-time security alerts into Splunk ES-compatible events
-   - Implemented reliable event delivery with retry logic, batching, and back-pressure handling
-
-3. Confer Technologies Inc. (acquired by Carbon Black) - Founding Team | Software Engineer (Aug 2013 – Jul 2016)
-   - Engineered backend services for antivirus and endpoint detection
-   - Integrated Java Spring microservices with Elasticsearch for scalable log processing
-   - Designed and built flagship Alerts Screen interface for threat detection
-   - Implemented multi-threaded, high-throughput data-processing pipelines in Java
-   - Led early AWS adoption, optimizing infrastructure with HornetQ/SQS/Kafka
-
-4. W2BI Inc. - Software Engineer (Jun 2010 – Aug 2013)
-   - Developed C++-based macro-driven Android QA automation for Verizon
-   - Built reusable test frameworks for telecom clients
-   - Reduced testing cycles and enabled cross-device compatibility
-
-5. Earlier Experience (2000-2010) - P&G, Zasylogic S.A, Madrid, Spain
-   - Pioneered AibeNet: pre-Node.js distributed JavaScript framework with P2P service discovery
-   - Modernized legacy systems into cloud-based SaaS platforms
-   - Developed CRM web application selected for global presentation at P&G Boston HQ
-
-EDUCATION:
-- AS in Electronic Products Development, IES San Fernando, Spain (1997)
-- BS in Mathematics (in progress), UNED, Spain
-- Continuous learning: LeetCode, AlgoMonster, Scala/Spark (Coursera/EPFL), System Design
-
-NOTABLE PROJECTS:
-- AI Resume Assistant: Interactive chatbot using LLMs with CUDA GPU acceleration
-- Cloud Infrastructure: AWS CDK-based deployment automation (CloudFront, S3, Lambda)
-- Real-time Communication: WebSocket-based messaging systems with high concurrency
-- Security Analytics: Big data processing pipelines for threat detection
-- OAuth2/LDAP Integration: Enterprise-grade authentication systems
-
-STRENGTHS:
-- Expertise in building scalable, production-grade distributed systems
-- Strong focus on performance optimization and system reliability
-- Experience mentoring engineers and conducting code reviews
-- Proven track record of security-conscious development
-- Active contributor to team efficiency through reusable libraries and best practices
-- Full-stack capabilities from React frontends to backend microservices to cloud infrastructure
-
-Jose is passionate about AI/ML, cloud architecture, distributed systems, and building scalable solutions.
-He actively works on personal projects involving LLMs, GPU computing, and modern web technologies.
-"""
-
-# Load resume context on startup
-RESUME_CONTEXT = load_resume_context()
-
-# Safety guardrails for the AI responses
-SAFETY_INSTRUCTIONS = """
-IMPORTANT GUIDELINES:
-1. Only provide factual information from the resume context provided
-2. Always be professional, positive, and accurate
-3. If asked about information not in the context, politely say you don't have that information
-4. Never make up or infer information that isn't explicitly stated
-5. Never provide negative, critical, or speculative information
-6. Focus on the candidate's professional achievements, skills, and experience
-7. Maintain a helpful and encouraging tone when discussing their career
-8. If asked inappropriate questions, redirect to professional topics
-"""
+    return f"""
+        IMPORTANT GUIDELINES:
+        1. You are providing information about person's background to recruiters and visitors.
+        2. Always refer to person in third person (he/his, not I/me).
+        3. Only provide factual information from person's resume context.
+        4. Always be professional, positive, and accurate.
+        5. If asked about information not in the context, politely say you don't have that information.
+        6. Never make up or infer information that isn't explicitly stated.
+        7. Focus on person's professional achievements, skills, and experience.
+        8. If asked inappropriate questions, redirect to professional topics about person.
+        9. Don't jump very fast in the conversation to salary or compensation unless asked directly.
+        10. Avoid controversial topics, politics, or personal opinions.
+        11. Keep answers concise and relevant to person's career and qualifications.
+        12. If you don't know the answer, it's better to say "I don't have that information" than to guess or fabricate details.
+        13. Always prioritize accuracy and professionalism in your responses.
+        14. If you don't know the answer, says that you will leave a note the person can review and update their resume with that information for future conversations.
+        15. Try to get information about the recruiter, what industry? what company? to adapt answer properly. 
+        16. Your goal is to give the best impression to recruiter about the person
+        17. Never claim to speak for Jose on personal matters beyond what's in his resume or AI context.
+        18. Never speculate or make up information that isn't provided about {user_full_name}.
+        19. Refer to {user_full_name} in third person (e.g., "{user_full_name} has 20 years of experience..." not "I have...").
+        20. Be professional, positive, and helpful.
+        21. The first name of the person you are representing is {user_first_name}.
+        22. The full name of the person you are representing is {user_full_name}.
+        """
 
 
 def call_llama_cpp_server(prompt: str, max_tokens: int = 256) -> dict:
@@ -455,10 +406,10 @@ def call_openai_compatible(prompt: str, max_tokens: int = 256) -> dict:
     """Call OpenAI-compatible API (LocalAI, vLLM, etc.)."""
     try:
         response = requests.post(
-            f"{LLAMA_SERVER_URL}/v1/completions",
+            f"{LLAMA_SERVER_URL}/v1/chat/completions",
             json={
-                "model": os.getenv("MODEL_NAME", "llama-2-7b-chat"),
-                "prompt": prompt,
+                "model": os.getenv("MODEL_NAME", "Qwen/Qwen2.5-7B-Instruct"),
+                "messages": [{"role": "user", "content": prompt}],
                 "max_tokens": max_tokens,
                 "temperature": 0.7,
                 "top_p": 0.9,
@@ -469,8 +420,9 @@ def call_openai_compatible(prompt: str, max_tokens: int = 256) -> dict:
         response.raise_for_status()
         data = response.json()
         choice = data.get("choices", [{}])[0]
+        message = choice.get("message", {})
         return {
-            "text": choice.get("text", ""),
+            "text": message.get("content", ""),
             "tokens": data.get("usage", {}).get("total_tokens", 0),
         }
     except Exception as e:
@@ -488,6 +440,46 @@ def generate_completion(prompt: str, max_tokens: int = 256) -> dict:
         return call_openai_compatible(prompt, max_tokens)
     else:
         raise ValueError(f"Unsupported LLAMA_API_TYPE: {LLAMA_API_TYPE}")
+
+
+def get_user_info(resume_slug: str = None):
+    """Get user information from database by resume slug or get all users."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        if resume_slug:
+            # Get user info for a specific resume
+            cursor.execute(
+                """
+                SELECT u.id, u.email, u."firstName", u."lastName", u.role, u."subscriptionTier",
+                       r.id as "resumeId", r.slug, r.title
+                FROM "User" u
+                LEFT JOIN "Resume" r ON u.id = r."userId"
+                WHERE r.slug = %s
+            """,
+                (resume_slug,),
+            )
+        else:
+            # Get all users with their resumes
+            cursor.execute(
+                """
+                SELECT u.id, u.email, u."firstName", u."lastName", u.role, u."subscriptionTier",
+                       COUNT(r.id) as "resumeCount"
+                FROM "User" u
+                LEFT JOIN "Resume" r ON u.id = r."userId"
+                GROUP BY u.id
+            """
+            )
+
+        results = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        return results if results else []
+    except Exception as e:
+        logger.error(f"Error fetching user information: {e}")
+        return []
 
 
 @app.route("/health", methods=["GET"])
@@ -528,8 +520,8 @@ def health_check():
 def chat():
     """
     Chat endpoint for resume questions.
-    Expects JSON: {"message": "user question", "slug": "resume-slug"}
-    Returns JSON: {"response": "AI answer"}
+    Expects JSON: {"message": "user question", "slug": "resume-slug", "conversationId": "uuid"}
+    Returns JSON: {"response": "AI answer", "conversationId": "uuid"}
     Loads fresh resume data from database on every request for real-time updates.
     """
     import time
@@ -540,19 +532,33 @@ def chat():
         data = request.get_json()
         user_message = data.get("message", "").strip()
         slug = data.get("slug")
+        conversation_id = data.get("conversationId")
 
         if not user_message:
             return jsonify({"error": "Message is required"}), 400
 
+        user_info = get_user_info(slug)
+
+        if not user_info:
+            logger.warning(f"No user information found for slug: {slug}")
+            return jsonify({"error": "Resume not found"}), 404
+
+        user_first_name = user_info[0].get("firstName", "The person").strip()
+
+        # Safety guardrails for the AI responses
+        safety_instructions = _get_safety_instructions(user_info[0])
+
         # Always load fresh resume context from database
         # This ensures every chat gets the latest resume updates (content + llmContext)
         resume_context = None
+        resume_id = None
 
         if slug:
             # Load from database for specific slug
-            db_context = load_resume_from_db(slug)
+            db_context, db_resume_id = load_resume_from_db(slug)
             if db_context:
                 resume_context = db_context
+                resume_id = db_resume_id
                 logger.info(f"✓ Loaded fresh resume from database for slug: {slug}")
             else:
                 logger.warning(f"✗ Slug '{slug}' not found in database")
@@ -568,7 +574,7 @@ def chat():
                 # Get the most recently updated published resume as default
                 cursor.execute(
                     """
-                    SELECT content, "llmContext" 
+                    SELECT id, content, "llmContext" 
                     FROM "Resume" 
                     WHERE "isPublished" = true AND "isPublic" = true
                     ORDER BY "updatedAt" DESC
@@ -582,6 +588,7 @@ def chat():
 
                 if result:
                     context = result["content"]
+                    resume_id = result["id"]
                     if result["llmContext"] and result["llmContext"].strip():
                         context = f"{context}\n\n{result['llmContext']}"
                         logger.info(
@@ -600,28 +607,34 @@ def chat():
             logger.warning(
                 "⚠ Database queries failed, falling back to cached resume context"
             )
-            resume_context = RESUME_CONTEXT
+
+        # Load conversation history (per recruiter/session)
+        conversation_history = []
+        if conversation_id and resume_id:
+            conversation_history = load_conversation_history(conversation_id, resume_id)
+
+        history_block = ""
+        if conversation_history:
+            formatted_history = []
+            for item in conversation_history:
+                formatted_history.append(f"Recruiter: {item['question']}")
+                formatted_history.append(f"Assistant: {item['answer']}")
+            history_block = "\nCONVERSATION HISTORY:\n" + "\n".join(formatted_history)
+
         # Build prompt with context and safety guardrails
-        prompt = f"""You are a professional AI assistant helping visitors learn about a candidate's career and qualifications.
+        prompt = f"""You are a professional AI assistant representing {user_first_name}'s professional background. 
+            You are speaking to recruiters and interested visitors who want to learn about {user_first_name}'s career, skills, and qualifications.
 
-{SAFETY_INSTRUCTIONS}
+            {safety_instructions}
 
-PROFESSIONAL INFORMATION:
-{resume_context}
+            PROFESSIONAL INFORMATION:
+            {resume_context}
+            {history_block}
 
-Instructions:
-- Answer questions naturally and directly using the information provided above
-- Be professional, positive, and helpful
-- Provide specific details when asked (salary expectations, preferences, skills, etc.)
-- Answer as if you are knowledgeable about the candidate's background - don't mention "the context" or "provided information"
-- Simply state facts naturally, e.g., "The salary expectations are $120-150K" not "According to the context..."
-- Only say "I don't have that information" if it's truly not mentioned
-- Focus on their accomplishments, skills, and professional experience
-- Never speculate or make up information that isn't provided
+            Recruiter/Visitor Question: {user_message}
 
-User Question: {user_message}
-
-Professional Answer:"""
+            Professional Answer:
+        """
 
         # Generate response via external LLAMA server
         logger.info(f"Generating response for: {user_message[:100]}")
@@ -637,7 +650,12 @@ Professional Answer:"""
         if slug:
             try:
                 log_chat_interaction(
-                    slug, user_message, answer, response_time_ms, request
+                    slug,
+                    user_message,
+                    answer,
+                    response_time_ms,
+                    request,
+                    conversation_id,
                 )
             except Exception as log_error:
                 logger.error(f"Failed to log chat analytics: {log_error}")
@@ -648,6 +666,7 @@ Professional Answer:"""
                 "tokens_used": result["tokens"],
                 "server": LLAMA_SERVER_URL,
                 "slug": slug,
+                "conversationId": conversation_id,
             }
         )
 

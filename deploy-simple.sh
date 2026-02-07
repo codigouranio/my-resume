@@ -31,7 +31,8 @@ ENDSSH
 echo "🔄 Restarting services..."
 ssh $SERVER << 'ENDSSH'
 source /opt/miniconda3/etc/profile.d/conda.sh
-pm2 restart all
+cd /opt/my-resume
+$(npm root -g)/pm2/bin/pm2 restart all
 ENDSSH
 
 # Wait for services
@@ -42,6 +43,6 @@ sleep 5
 echo "✅ Deployment complete!"
 ssh $SERVER << 'ENDSSH'
 source /opt/miniconda3/etc/profile.d/conda.sh
-pm2 status
+$(npm root -g)/pm2/bin/pm2 status
 ENDSSH
 

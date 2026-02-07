@@ -7,8 +7,26 @@ const API_URL = import.meta.env.PUBLIC_LLM_API_URL || '/llm';
 
 // Get resume slug from URL
 const getResumeSlug = () => {
+  if (typeof window === 'undefined') return null;
   const match = window.location.pathname.match(/\/resume\/([^/]+)/);
   return match ? match[1] : null;
+};
+
+const generateConversationId = () => {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+};
+
+const getConversationId = (slug: string | null) => {
+  if (typeof window === 'undefined') return null;
+  const key = `chat_conversation_id_${slug ?? 'default'}`;
+  const existing = localStorage.getItem(key);
+  if (existing) return existing;
+  const created = generateConversationId();
+  localStorage.setItem(key, created);
+  return created;
 };
 
 export default function ChatWidget() {
@@ -21,8 +39,10 @@ export default function ChatWidget() {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const slug = getResumeSlug();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -31,6 +51,10 @@ export default function ChatWidget() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    setConversationId(getConversationId(slug));
+  }, [slug]);
 
   // Auto-focus input when chat opens
   useEffect(() => {
@@ -50,7 +74,7 @@ export default function ChatWidget() {
 
     try {
       // Call Flask API
-      const slug = getResumeSlug();
+      const activeConversationId = conversationId ?? getConversationId(slug);
       const response = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers: {
@@ -58,7 +82,8 @@ export default function ChatWidget() {
         },
         body: JSON.stringify({
           message: currentQuestion,
-          slug: slug
+          slug: slug,
+          conversationId: activeConversationId
         }),
       });
 
