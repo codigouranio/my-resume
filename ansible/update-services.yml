@@ -10,6 +10,16 @@
     - group_vars/all.yml
   
   tasks:
+    - name: Check API conda environment
+      stat:
+        path: "{{ api_service_path }}/conda-env"
+      register: api_conda_env
+
+    - name: Check Frontend conda environment
+      stat:
+        path: "{{ frontend_path }}/conda-env"
+      register: frontend_conda_env
+
     - name: Pull latest code from git
       git:
         repo: "{{ repo_url }}"
@@ -75,10 +85,18 @@
       register: frontend_env_result
 
     # API Service
+    - name: Ensure API dist ownership
+      command: "chown -R {{ ansible_user }}:{{ ansible_user }} {{ api_service_path }}/dist"
+      become: yes
+      become_user: root
+      ignore_errors: yes
+
     - name: Install API dependencies
       shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ api_service_path }}/conda-env
+        if [ -d "{{ api_service_path }}/conda-env" ]; then
+          source /opt/miniconda3/etc/profile.d/conda.sh
+          conda activate {{ api_service_path }}/conda-env
+        fi
         npm install
       args:
         chdir: "{{ api_service_path }}"
@@ -87,8 +105,10 @@
 
     - name: Generate Prisma Client
       shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ api_service_path }}/conda-env
+        if [ -d "{{ api_service_path }}/conda-env" ]; then
+          source /opt/miniconda3/etc/profile.d/conda.sh
+          conda activate {{ api_service_path }}/conda-env
+        fi
         npx prisma generate
       args:
         chdir: "{{ api_service_path }}"
@@ -97,8 +117,10 @@
 
     - name: Build API Service
       shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ api_service_path }}/conda-env
+        if [ -d "{{ api_service_path }}/conda-env" ]; then
+          source /opt/miniconda3/etc/profile.d/conda.sh
+          conda activate {{ api_service_path }}/conda-env
+        fi
         npm run build
       args:
         chdir: "{{ api_service_path }}"
@@ -126,8 +148,10 @@
 
     - name: Install frontend dependencies
       shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ frontend_path }}/conda-env
+        if [ -d "{{ frontend_path }}/conda-env" ]; then
+          source /opt/miniconda3/etc/profile.d/conda.sh
+          conda activate {{ frontend_path }}/conda-env
+        fi
         npm install
       args:
         chdir: "{{ frontend_path }}"
@@ -136,8 +160,10 @@
 
     - name: Build frontend
       shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ frontend_path }}/conda-env
+        if [ -d "{{ frontend_path }}/conda-env" ]; then
+          source /opt/miniconda3/etc/profile.d/conda.sh
+          conda activate {{ frontend_path }}/conda-env
+        fi
         npm run build
       args:
         chdir: "{{ frontend_path }}"
