@@ -59,8 +59,12 @@ import { AppThrottlerGuard } from './shared/guards/throttler.guard';
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        ttl: configService.get<number>('THROTTLE_TTL', 60),
-        limit: configService.get<number>('THROTTLE_LIMIT', 120),
+        throttlers: [
+          {
+            ttl: configService.get<number>('THROTTLE_TTL', 60),
+            limit: configService.get<number>('THROTTLE_LIMIT', 120),
+          },
+        ],
       }),
       inject: [ConfigService],
     }),
