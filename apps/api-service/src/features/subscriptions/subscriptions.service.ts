@@ -74,21 +74,11 @@ export class SubscriptionsService {
       throw new Error('User not found');
     }
 
-    // Create or retrieve Stripe customer
-    let customerId = user.stripeCustomerId;
-    if (!customerId) {
-      const customer = await this.stripe.customers.create({
-        email: user.email,
-        metadata: { userId },
-      });
-      customerId = customer.id;
-      
-      // Save customer ID to database
-      await this.prisma.user.update({
-        where: { id: userId },
-        data: { stripeCustomerId: customerId },
-      });
-    }
+    const customerId = await this.ensureStripeCustomer(
+      userId,
+      user.email,
+      user.stripeCustomerId,
+    );
 
     // Create checkout session
     const session = await this.stripe.checkout.sessions.create({
@@ -115,19 +105,63 @@ export class SubscriptionsService {
   async createPortalSession(userId: string, returnUrl: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { stripeCustomerId: true },
+      select: { stripeCustomerId: true, email: true },
     });
 
-    if (!user?.stripeCustomerId) {
-      throw new Error('No Stripe customer found for this user');
+    if (!user) {
+      throw new Error('User not found');
     }
 
+    const customerId = await this.ensureStripeCustomer(
+      userId,
+      user.email,
+      user.stripeCustomerId,
+    );
+
     const session = await this.stripe.billingPortal.sessions.create({
-      customer: user.stripeCustomerId,
+      customer: customerId,
       return_url: returnUrl,
     });
 
     return { url: session.url };
+  }
+
+  private async ensureStripeCustomer(
+    userId: string,
+    email: string,
+    existingCustomerId?: string | null,
+  ): Promise<string> {
+    let customerId = existingCustomerId || null;
+
+    if (customerId) {
+      try {
+        await this.stripe.customers.retrieve(customerId);
+        return customerId;
+      } catch (error: any) {
+        const isMissing =
+          error?.code === 'resource_missing' || error?.statusCode === 404;
+        if (!isMissing) {
+          throw error;
+        }
+        this.logger.warn(
+          `Stripe customer ${customerId} missing for user ${userId}; creating new customer.`,
+        );
+        customerId = null;
+      }
+    }
+
+    const customer = await this.stripe.customers.create({
+      email,
+      metadata: { userId },
+    });
+    customerId = customer.id;
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { stripeCustomerId: customerId },
+    });
+
+    return customerId;
   }
 
   /**

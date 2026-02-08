@@ -35,6 +35,9 @@ all:
     
     # LLM Service
     llm_admin_token: "change-me-in-production"  # Token for /api/reload-resume endpoint
+
+    # Logging
+    enable_debug_logging: true
     
     # Node.js version
     nodejs_version: "20.x"

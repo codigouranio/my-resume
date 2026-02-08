@@ -10,6 +10,7 @@ import {
   UnauthorizedException,
   Get,
   Param,
+  Logger,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -20,6 +21,7 @@ import { Public } from '../auth/decorators/public.decorator';
 @Controller('subscriptions')
 export class SubscriptionsController {
   private stripe: Stripe;
+  private readonly logger = new Logger(SubscriptionsController.name);
 
   constructor(private subscriptionsService: SubscriptionsService) {
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -91,10 +93,14 @@ export class SubscriptionsController {
    * to access raw body for signature verification
    */
   @Post('webhooks/stripe')
+  @Public()
   async handleWebhook(
     @Headers('stripe-signature') signature: string,
     @Req() req: RawBodyRequest<Request>,
   ) {
+
+    this.logger.log('handle webhook called');
+
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
     if (!webhookSecret) {
       throw new Error('STRIPE_WEBHOOK_SECRET is not configured');
@@ -110,8 +116,17 @@ export class SubscriptionsController {
         webhookSecret,
       );
     } catch (err) {
-      throw new BadRequestException(`Webhook signature verification failed: ${err.message}`);
+      this.logger.error(
+        `Stripe webhook signature verification failed: ${err.message}`,
+      );
+      throw new BadRequestException(
+        `Webhook signature verification failed: ${err.message}`,
+      );
     }
+
+    this.logger.log(
+      `Stripe webhook received: ${event.type} (${event.id ?? 'unknown'})`,
+    );
 
     // Process the event
     await this.subscriptionsService.handleWebhook(event);

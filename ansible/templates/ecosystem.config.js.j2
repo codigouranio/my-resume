@@ -10,7 +10,8 @@ module.exports = {
       max_memory_restart: '{{ pm2_max_memory_restart }}',
       env: {
         NODE_ENV: '{{ node_env }}',
-        PORT: {{ api_port }}
+        PORT: {{ api_port }},
+        LOG_LEVEL: '{{ enable_debug_logging | ternary('debug', 'info') }}'
       },
       error_file: '{{ app_root }}/logs/api-error.log',
       out_file: '{{ app_root }}/logs/api-out.log',
