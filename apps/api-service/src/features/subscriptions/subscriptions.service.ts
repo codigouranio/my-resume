@@ -74,29 +74,48 @@ export class SubscriptionsService {
       throw new Error('User not found');
     }
 
-    const customerId = await this.ensureStripeCustomer(
+    const createSession = async (customerId: string) =>
+      this.stripe.checkout.sessions.create({
+        customer: customerId,
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        mode: 'subscription',
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        metadata: { userId },
+      });
+
+    let customerId = await this.ensureStripeCustomer(
       userId,
       user.email,
       user.stripeCustomerId,
     );
 
-    // Create checkout session
-    const session = await this.stripe.checkout.sessions.create({
-      customer: customerId,
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      mode: 'subscription',
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-      metadata: { userId },
-    });
+    try {
+      const session = await createSession(customerId);
+      return { sessionId: session.id, url: session.url };
+    } catch (error: any) {
+      const isMissingCustomer =
+        (error?.code === 'resource_missing' || error?.statusCode === 404) &&
+        (error?.param === 'customer' || String(error?.message || '').includes('customer'));
 
-    return { sessionId: session.id, url: session.url };
+      if (!isMissingCustomer) {
+        throw error;
+      }
+
+      this.logger.warn(
+        `Stripe customer ${customerId} missing during checkout for user ${userId}; recreating customer and retrying.`,
+      );
+
+      customerId = await this.ensureStripeCustomer(userId, user.email, null);
+      const session = await createSession(customerId);
+      return { sessionId: session.id, url: session.url };
+    }
   }
 
   /**
@@ -112,18 +131,38 @@ export class SubscriptionsService {
       throw new Error('User not found');
     }
 
-    const customerId = await this.ensureStripeCustomer(
+    const createPortal = async (customerId: string) =>
+      this.stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: returnUrl,
+      });
+
+    let customerId = await this.ensureStripeCustomer(
       userId,
       user.email,
       user.stripeCustomerId,
     );
 
-    const session = await this.stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: returnUrl,
-    });
+    try {
+      const session = await createPortal(customerId);
+      return { url: session.url };
+    } catch (error: any) {
+      const isMissingCustomer =
+        (error?.code === 'resource_missing' || error?.statusCode === 404) &&
+        (error?.param === 'customer' || String(error?.message || '').includes('customer'));
 
-    return { url: session.url };
+      if (!isMissingCustomer) {
+        throw error;
+      }
+
+      this.logger.warn(
+        `Stripe customer ${customerId} missing during portal creation for user ${userId}; recreating customer and retrying.`,
+      );
+
+      customerId = await this.ensureStripeCustomer(userId, user.email, null);
+      const session = await createPortal(customerId);
+      return { url: session.url };
+    }
   }
 
   private async ensureStripeCustomer(
