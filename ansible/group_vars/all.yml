@@ -87,6 +87,7 @@ fail2ban_enabled: true
 node_env: production
 enable_source_maps: true
 enable_debug_logging: false
+frontend_url: "https://resumecast.ai"
 
 # Analytics Configuration (optional - set in production)
 gtm_id: ""  # e.g., GTM-XXXXXXX
