@@ -14,6 +14,11 @@ export default defineConfig({
   server: {
     port: 3001,
   },
+  source: {
+    define: {
+      'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageJson.version),
+    },
+  },
   html: {
     template: './index.html',
   },
@@ -22,9 +27,6 @@ export default defineConfig({
       js: 'source-map',
       css: true,
     },
-  },
-  define: {
-    'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageJson.version),
   },
   tools: {
     postcss: {
