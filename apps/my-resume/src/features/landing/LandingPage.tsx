@@ -27,8 +27,7 @@ export function LandingPage() {
               Create Your Professional Resume
             </h1>
             <p className="text-xl mb-8 opacity-90">
-              Build, customize, and share stunning resumes with AI-powered assistance.
-              Stand out from the crowd with our intelligent resume platform.
+              Build, customize, and share stunning resumes with intelligent AI assistance. Make your resume interactive with our specialized AI agent storyteller, transforming your experience into compelling narratives that captivate recruiters and accelerate job offers.
             </p>
             <div className="flex gap-4 justify-center">
               <Link to="/register" className="btn btn-lg bg-black text-white px-8 py-4 rounded-lg font-semibold text-lg shadow-lg hover:bg-gray-800 hover:shadow-xl transition-all duration-200" data-discover="true">
