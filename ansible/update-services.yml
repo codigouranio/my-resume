@@ -6,6 +6,8 @@
   hosts: all
   become: yes
   become_user: "{{ ansible_user }}"
+  vars_files:
+    - group_vars/all.yml
   
   tasks:
     - name: Pull latest code from git
