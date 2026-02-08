@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { UpgradePrompt } from '../subscriptions';
 import { useAuth } from '../../shared/contexts/AuthContext';
 
@@ -23,6 +24,7 @@ interface AnalyticsDashboardProps {
 
 export function AnalyticsDashboard({ resumeId }: AnalyticsDashboardProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
@@ -233,7 +235,7 @@ export function AnalyticsDashboard({ resumeId }: AnalyticsDashboardProps) {
             <h3 className="font-bold">Upgrade to PRO for Advanced Analytics</h3>
             <p className="text-sm">Get detailed insights: visitor tracking, referral sources, geographic data, and more!</p>
           </div>
-          <button onClick={() => setShowUpgradePrompt(true)} className="btn btn-primary btn-sm">
+          <button onClick={() => navigate('/pricing')} className="btn btn-primary btn-sm">
             View Plans
           </button>
         </div>

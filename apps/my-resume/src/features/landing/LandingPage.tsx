@@ -120,13 +120,15 @@ export function LandingPage() {
       </div>
 
       {/* Footer */}
-      <footer className="footer footer-center p-10 bg-base-200 text-base-content">
-        <div>
-          <p className="font-bold text-lg">
-            <span style={{ color: '#00C2CB' }}>Resume</span>
-            <span style={{ color: '#007BFF' }}>Cast.ai</span>
-          </p>
-          <p>Professional Resume Builder © 2025</p>
+      <footer className="footer p-10 bg-base-200 text-base-content">
+        <div className="w-full flex flex-col gap-2 items-start md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="font-bold text-lg">
+              <span style={{ color: '#00C2CB' }}>Resume</span>
+              <span style={{ color: '#007BFF' }}>Cast.ai</span>
+            </p>
+            <p>Professional Resume Builder © 2025</p>
+          </div>
           <p className="text-xs opacity-60">UI v{appVersion}</p>
         </div>
       </footer>
