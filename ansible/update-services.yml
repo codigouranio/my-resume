@@ -20,6 +20,58 @@
       debug:
         msg: "Git updated: {{ git_result.changed }}"
 
+    - name: Configure API Service environment
+      copy:
+        dest: "{{ api_service_path }}/.env"
+        content: |
+          DATABASE_URL="postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}?schema=public"
+          JWT_SECRET="{{ jwt_secret }}"
+          PORT={{ api_port }}
+          NODE_ENV={{ node_env }}
+          LLM_SERVICE_URL="http://localhost:{{ llm_port }}"
+          CORS_ORIGINS="{{ cors_origins | join(',') }}"
+          STRIPE_SECRET_KEY={{ stripe_secret_key | default('sk_test_placeholder_not_configured') }}
+          STRIPE_WEBHOOK_SECRET={{ stripe_webhook_secret | default('whsec_placeholder_not_configured') }}
+          STRIPE_PRICE_ID={{ stripe_price_id | default('price_placeholder_not_configured') }}
+          AWS_REGION={{ aws_region | default('us-east-1') }}
+          AWS_ACCESS_KEY_ID={{ aws_access_key_id | default('') }}
+          AWS_SECRET_ACCESS_KEY={{ aws_secret_access_key | default('') }}
+          SES_FROM_EMAIL={{ ses_from_email | default('noreply@resumecast.ai') }}
+          FRONTEND_URL=https://{{ domain }}
+        owner: "{{ ansible_user }}"
+        mode: '0600'
+      register: api_env_result
+
+    - name: Configure LLM Service environment
+      copy:
+        dest: "{{ llm_service_path }}/.env"
+        content: |
+          PORT={{ llm_port }}
+          LLAMA_SERVER_URL={{ llama_server_url }}
+          LLAMA_API_TYPE=ollama
+          OLLAMA_MODEL={{ ollama_model }}
+          RESUME_PATH=../../data/resume.md
+          DATABASE_URL=postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}
+          ADMIN_TOKEN={{ llm_admin_token }}
+          API_BASE_URL=http://localhost:{{ api_port }}/api
+          RESUME_SLUG=jose-blanco-swe
+        owner: "{{ ansible_user }}"
+        mode: '0600'
+      register: llm_env_result
+
+    - name: Configure Frontend environment
+      copy:
+        dest: "{{ frontend_path }}/.env"
+        content: |
+          PUBLIC_API_URL=https://api.{{ domain }}
+          PUBLIC_LLM_API_URL=https://llm.{{ domain }}
+          PUBLIC_BASE_DOMAIN={{ domain }}
+          PUBLIC_GTM_ID={{ gtm_id }}
+          PUBLIC_GA_ID={{ ga_id }}
+        owner: "{{ ansible_user }}"
+        mode: '0644'
+      register: frontend_env_result
+
     # API Service
     - name: Install API dependencies
       shell: |
@@ -53,12 +105,12 @@
 
     - name: Restart API Service
       command: "/home/{{ ansible_user }}/.npm-global/bin/pm2 restart api-service"
-      when: git_result.changed
+      when: git_result.changed or api_env_result.changed
 
     # LLM Service (no build needed, Python)
     - name: Restart LLM Service
       command: "/home/{{ ansible_user }}/.npm-global/bin/pm2 restart llm-service"
-      when: git_result.changed
+      when: git_result.changed or llm_env_result.changed
 
     # Frontend
     - name: Clean frontend node_modules and lock file
@@ -88,7 +140,7 @@
       args:
         chdir: "{{ frontend_path }}"
         executable: /bin/bash
-      when: git_result.changed
+      when: git_result.changed or frontend_env_result.changed
 
     - name: Display completion message
       debug:
