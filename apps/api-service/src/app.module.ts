@@ -4,6 +4,8 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { BullModule } from '@nestjs/bull';
 import { LoggerModule } from 'nestjs-pino';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { join } from 'path';
 import { PrismaModule } from './shared/database/prisma.module';
 import { AuthModule } from './features/auth/auth.module';
@@ -14,6 +16,7 @@ import { BadgesModule } from './features/badges/badges.module';
 import { SubscriptionsModule } from './features/subscriptions/subscriptions.module';
 import { EmbeddingsModule } from './features/embeddings/embeddings.module';
 import { ChatAnalyticsModule } from './features/analytics/chat-analytics.module';
+import { AppThrottlerGuard } from './shared/guards/throttler.guard';
 
 @Module({
   imports: [
@@ -53,6 +56,14 @@ import { ChatAnalyticsModule } from './features/analytics/chat-analytics.module'
       }),
       inject: [ConfigService],
     }),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        ttl: configService.get<number>('THROTTLE_TTL', 60),
+        limit: configService.get<number>('THROTTLE_LIMIT', 120),
+      }),
+      inject: [ConfigService],
+    }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
@@ -69,6 +80,12 @@ import { ChatAnalyticsModule } from './features/analytics/chat-analytics.module'
     SubscriptionsModule,
     EmbeddingsModule,
     ChatAnalyticsModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: AppThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}
