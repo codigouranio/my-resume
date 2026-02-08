@@ -8,7 +8,7 @@ const VersionBadge = () => {
 
   return (
     <div
-      className="fixed bottom-2 right-2 text-xs text-gray-500 bg-gray-100 rounded px-2 py-1 opacity-60 hover:opacity-100 transition-opacity cursor-default"
+      className="fixed bottom-2 left-2 text-xs text-gray-500 bg-gray-100 rounded px-2 py-1 opacity-60 hover:opacity-100 transition-opacity cursor-default"
       title={`Version ${version}`}
     >
       v{version}
