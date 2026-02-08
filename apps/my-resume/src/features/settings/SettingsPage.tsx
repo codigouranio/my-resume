@@ -2,14 +2,19 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { apiClient } from '../../shared/api/client';
-import { getDisplayBaseDomain, formatCustomDomainUrl } from '../../shared/utils/domain';
+import {
+  getDisplayBaseDomain,
+  formatCustomDomainUrl,
+} from '../../shared/utils/domain';
 import { ChangePasswordForm } from './ChangePasswordForm';
 import './SettingsPage.css';
 
 export function SettingsPage() {
   const { user, logout, refreshUser } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'profile' | 'subscription'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'subscription'>(
+    'profile',
+  );
   const [customDomain, setCustomDomain] = useState('');
   const [isEditingDomain, setIsEditingDomain] = useState(false);
   const [isSavingDomain, setIsSavingDomain] = useState(false);
@@ -20,6 +25,15 @@ export function SettingsPage() {
   const [userResumes, setUserResumes] = useState<any[]>([]);
   const [defaultResumeId, setDefaultResumeId] = useState<string>('');
   const [isSavingDefaultResume, setIsSavingDefaultResume] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isPortalLoading, setIsPortalLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [priceAmount, setPriceAmount] = useState<number | null>(null);
+  const [priceInterval, setPriceInterval] = useState<string>('month');
+  const [priceLoading, setPriceLoading] = useState(true);
+  const [priceId, setPriceId] = useState<string | null>(null);
+
+  let stripePriceId: string | null = null;
 
   const loadUserResumes = async () => {
     try {
@@ -32,6 +46,36 @@ export function SettingsPage() {
       console.error('Failed to load resumes:', error);
     }
   };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadPrice = async () => {
+      try {
+        const data = await apiClient.getPriceDetails('SUBSCRIPTION_PRO');
+        if (!isMounted) return;
+        if (typeof data?.unitAmount === 'number') {
+          setPriceAmount(data.unitAmount / 100);
+        }
+        if (data?.interval) {
+          setPriceInterval(data.interval);
+        }
+        setPriceId(data?.id);
+      } catch (err) {
+        console.error('Failed to load Stripe price', err);
+      } finally {
+        if (isMounted) {
+          setPriceLoading(false);
+        }
+      }
+    };
+
+    loadPrice();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     // Check if returning from Stripe customer portal
@@ -93,7 +137,9 @@ export function SettingsPage() {
   const handleSaveDefaultResume = async () => {
     setIsSavingDefaultResume(true);
     try {
-      await apiClient.updateCurrentUser({ defaultResumeId: defaultResumeId || null });
+      await apiClient.updateCurrentUser({
+        defaultResumeId: defaultResumeId || null,
+      });
       await refreshUser();
       // Show success message
       setDomainSuccess('Default resume updated successfully!');
@@ -128,6 +174,22 @@ export function SettingsPage() {
     }
   };
 
+  const handleOpenPortal = async () => {
+    setIsPortalLoading(true);
+    setError(null);
+    try {
+      const response = await apiClient.createPortalSession();
+      if (response.url) {
+        window.location.href = response.url;
+      }
+    } catch (err: any) {
+      console.error('Portal error:', err);
+      setError(err.message || 'Failed to open billing portal');
+    } finally {
+      setIsPortalLoading(false);
+    }
+  };
+
   const isPro = user?.subscriptionTier === 'PRO';
 
   return (
@@ -135,7 +197,10 @@ export function SettingsPage() {
       {/* Header */}
       <div className="navbar bg-base-300 shadow-lg">
         <div className="flex-1">
-          <Link to="/dashboard" className="btn btn-ghost normal-case text-xl flex items-center gap-2">
+          <Link
+            to="/dashboard"
+            className="btn btn-ghost normal-case text-xl flex items-center gap-2"
+          >
             <img src="/logo.png" alt="RC" className="w-8 h-8" />
             <span style={{ color: '#00C2CB', fontWeight: 700 }}>Resume</span>
             <span style={{ color: '#007BFF', fontWeight: 700 }}>Cast.ai</span>
@@ -190,7 +255,9 @@ export function SettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="form-control">
                     <label className="label">
-                      <span className="label-text font-semibold">First Name</span>
+                      <span className="label-text font-semibold">
+                        First Name
+                      </span>
                     </label>
                     <input
                       type="text"
@@ -202,7 +269,9 @@ export function SettingsPage() {
 
                   <div className="form-control">
                     <label className="label">
-                      <span className="label-text font-semibold">Last Name</span>
+                      <span className="label-text font-semibold">
+                        Last Name
+                      </span>
                     </label>
                     <input
                       type="text"
@@ -215,10 +284,14 @@ export function SettingsPage() {
 
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text font-semibold">Account Type</span>
+                    <span className="label-text font-semibold">
+                      Account Type
+                    </span>
                   </label>
                   <div className="flex items-center gap-2">
-                    <span className={`badge ${isPro ? 'badge-primary' : 'badge-ghost'} badge-lg`}>
+                    <span
+                      className={`badge ${isPro ? 'badge-primary' : 'badge-ghost'} badge-lg`}
+                    >
                       {user?.subscriptionTier || 'FREE'}
                     </span>
                     {!isPro && (
@@ -236,10 +309,15 @@ export function SettingsPage() {
 
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text font-semibold">Account Actions</span>
+                    <span className="label-text font-semibold">
+                      Account Actions
+                    </span>
                   </label>
                   <div className="flex gap-2">
-                    <button className="btn btn-error btn-outline" onClick={handleLogout}>
+                    <button
+                      className="btn btn-error btn-outline"
+                      onClick={handleLogout}
+                    >
                       🚪 Logout
                     </button>
                   </div>
@@ -257,35 +335,72 @@ export function SettingsPage() {
                     <div className="divider"></div>
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text font-semibold">Custom Subdomain (PRO)</span>
-                        <span className="label-text-alt badge badge-primary">PRO Feature</span>
+                        <span className="label-text font-semibold">
+                          Custom Subdomain (PRO)
+                        </span>
+                        <span className="label-text-alt badge badge-primary">
+                          PRO Feature
+                        </span>
                       </label>
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <input
                             type="text"
                             value={customDomain}
-                            onChange={(e) => setCustomDomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                            onChange={(e) =>
+                              setCustomDomain(
+                                e.target.value
+                                  .toLowerCase()
+                                  .replace(/[^a-z0-9-]/g, ''),
+                              )
+                            }
                             disabled={!isEditingDomain || isSavingDomain}
                             placeholder="yourname"
-                            className={`input input-bordered flex-1 ${isEditingDomain && customDomain.length >= 3 && isAvailable === true ? 'input-success' :
-                              isEditingDomain && customDomain.length >= 3 && isAvailable === false ? 'input-error' : ''
+                            className={`input input-bordered flex-1 ${isEditingDomain &&
+                              customDomain.length >= 3 &&
+                              isAvailable === true
+                              ? 'input-success'
+                              : isEditingDomain &&
+                                customDomain.length >= 3 &&
+                                isAvailable === false
+                                ? 'input-error'
+                                : ''
                               }`}
                             minLength={3}
                             maxLength={63}
                           />
-                          <span className="text-sm text-base-content/60">.{getDisplayBaseDomain()}</span>
+                          <span className="text-sm text-base-content/60">
+                            .{getDisplayBaseDomain()}
+                          </span>
                           {isEditingDomain && customDomain.length >= 3 && (
                             <div className="flex items-center">
                               {isCheckingAvailability ? (
                                 <span className="loading loading-spinner loading-sm"></span>
                               ) : isAvailable === true ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-success" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-6 w-6 text-success"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                    clipRule="evenodd"
+                                  />
                                 </svg>
                               ) : isAvailable === false ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-error" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-6 w-6 text-error"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                    clipRule="evenodd"
+                                  />
                                 </svg>
                               ) : null}
                             </div>
@@ -293,16 +408,26 @@ export function SettingsPage() {
                         </div>
                         <div className="space-y-1">
                           <p className="text-xs text-base-content/60">
-                            • 3-63 characters • Lowercase letters, numbers, hyphens only • No hyphens at start/end
+                            • 3-63 characters • Lowercase letters, numbers,
+                            hyphens only • No hyphens at start/end
                           </p>
-                          {isEditingDomain && customDomain.length >= 3 && !isCheckingAvailability && (
-                            <p className={`text-sm font-medium ${isAvailable === true ? 'text-success' :
-                              isAvailable === false ? 'text-error' : ''
-                              }`}>
-                              {isAvailable === true && '✓ This subdomain is available!'}
-                              {isAvailable === false && '✗ This subdomain is already taken'}
-                            </p>
-                          )}
+                          {isEditingDomain &&
+                            customDomain.length >= 3 &&
+                            !isCheckingAvailability && (
+                              <p
+                                className={`text-sm font-medium ${isAvailable === true
+                                  ? 'text-success'
+                                  : isAvailable === false
+                                    ? 'text-error'
+                                    : ''
+                                  }`}
+                              >
+                                {isAvailable === true &&
+                                  '✓ This subdomain is available!'}
+                                {isAvailable === false &&
+                                  '✗ This subdomain is already taken'}
+                              </p>
+                            )}
                         </div>
 
                         {domainError && (
@@ -319,10 +444,30 @@ export function SettingsPage() {
 
                         {user?.customDomain && !isEditingDomain && (
                           <div className="alert alert-info">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="stroke-current shrink-0 h-6 w-6"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
                             </svg>
-                            <span>Your resume is accessible at: <a href={`https://${formatCustomDomainUrl(user.customDomain)}`} target="_blank" rel="noopener noreferrer" className="link">{formatCustomDomainUrl(user.customDomain)}</a></span>
+                            <span>
+                              Your resume is accessible at:{' '}
+                              <a
+                                href={`https://${formatCustomDomainUrl(user.customDomain)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="link"
+                              >
+                                {formatCustomDomainUrl(user.customDomain)}
+                              </a>
+                            </span>
                           </div>
                         )}
 
@@ -332,14 +477,22 @@ export function SettingsPage() {
                               className="btn btn-primary btn-sm"
                               onClick={() => setIsEditingDomain(true)}
                             >
-                              {user?.customDomain ? 'Change Subdomain' : 'Set Custom Subdomain'}
+                              {user?.customDomain
+                                ? 'Change Subdomain'
+                                : 'Set Custom Subdomain'}
                             </button>
                           ) : (
                             <>
                               <button
                                 className="btn btn-success btn-sm"
                                 onClick={handleSaveCustomDomain}
-                                disabled={isSavingDomain || !customDomain || customDomain.length < 3 || isAvailable === false || isCheckingAvailability}
+                                disabled={
+                                  isSavingDomain ||
+                                  !customDomain ||
+                                  customDomain.length < 3 ||
+                                  isAvailable === false ||
+                                  isCheckingAvailability
+                                }
                               >
                                 {isSavingDomain ? (
                                   <>
@@ -371,30 +524,55 @@ export function SettingsPage() {
                     {user?.customDomain && (
                       <div className="card bg-base-100 shadow-xl">
                         <div className="card-body">
-                          <h2 className="card-title text-lg">Default Resume for Subdomain</h2>
+                          <h2 className="card-title text-lg">
+                            Default Resume for Subdomain
+                          </h2>
                           <p className="text-sm text-base-content/70">
-                            Choose which resume displays when visitors go to <strong>{formatCustomDomainUrl(user.customDomain)}</strong> without a specific path.
+                            Choose which resume displays when visitors go to{' '}
+                            <strong>
+                              {formatCustomDomainUrl(user.customDomain)}
+                            </strong>{' '}
+                            without a specific path.
                           </p>
 
                           {userResumes.length === 0 ? (
                             <div className="alert alert-info">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="stroke-current shrink-0 h-6 w-6"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
                               </svg>
-                              <span>You don't have any resumes yet. Create a resume first to set it as default.</span>
+                              <span>
+                                You don't have any resumes yet. Create a resume
+                                first to set it as default.
+                              </span>
                             </div>
                           ) : (
                             <>
                               <div className="form-control">
                                 <label className="label">
-                                  <span className="label-text font-semibold">Default Resume</span>
+                                  <span className="label-text font-semibold">
+                                    Default Resume
+                                  </span>
                                 </label>
                                 <select
                                   className="select select-bordered w-full"
                                   value={defaultResumeId}
-                                  onChange={(e) => setDefaultResumeId(e.target.value)}
+                                  onChange={(e) =>
+                                    setDefaultResumeId(e.target.value)
+                                  }
                                 >
-                                  <option value="">No default (show most recent)</option>
+                                  <option value="">
+                                    No default (show most recent)
+                                  </option>
                                   {userResumes.map((resume) => (
                                     <option key={resume.id} value={resume.id}>
                                       {resume.title} ({resume.slug})
@@ -441,6 +619,11 @@ export function SettingsPage() {
         {/* Subscription Tab */}
         {activeTab === 'subscription' && (
           <div className="space-y-6">
+            {error && (
+              <div className="alert alert-error">
+                <span>{error}</span>
+              </div>
+            )}
             {/* Current Plan */}
             <div className="card bg-base-200 shadow-xl">
               <div className="card-body">
@@ -456,14 +639,22 @@ export function SettingsPage() {
                       )}
                     </div>
                     <p className="text-base-content/60">
-                      {isPro ? 'You have access to all premium features' : 'Upgrade to unlock premium features'}
+                      {isPro
+                        ? 'You have access to all premium features'
+                        : 'Upgrade to unlock premium features'}
                     </p>
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-bold">
-                      {isPro ? '$9' : '$0'}
+                      {isPro
+                        ? priceLoading
+                          ? '$9'
+                          : `$${(priceAmount ?? 9).toFixed(0)}`
+                        : '$0'}
                     </div>
-                    <div className="text-sm text-base-content/60">per month</div>
+                    <div className="text-sm text-base-content/60">
+                      {isPro ? `per ${priceInterval}` : 'per month'}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -472,10 +663,14 @@ export function SettingsPage() {
             {/* Plan Comparison */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* FREE */}
-              <div className={`card bg-base-200 shadow-xl ${!isPro ? 'border-2 border-primary' : ''}`}>
+              <div
+                className={`card bg-base-200 shadow-xl ${!isPro ? 'border-2 border-primary' : ''}`}
+              >
                 <div className="card-body">
                   <h3 className="card-title">FREE</h3>
-                  <div className="text-3xl font-bold mb-4">$0<span className="text-sm font-normal">/month</span></div>
+                  <div className="text-3xl font-bold mb-4">
+                    $0<span className="text-sm font-normal">/month</span>
+                  </div>
 
                   <ul className="space-y-2 mb-4">
                     <li className="flex items-center gap-2">
@@ -503,15 +698,24 @@ export function SettingsPage() {
               </div>
 
               {/* PRO */}
-              <div className={`card bg-base-200 shadow-xl ${isPro ? 'border-2 border-primary' : ''}`}>
+              <div
+                className={`card bg-base-200 shadow-xl ${isPro ? 'border-2 border-primary' : ''}`}
+              >
                 <div className="card-body">
                   <h3 className="card-title text-primary">PRO ⭐</h3>
-                  <div className="text-3xl font-bold mb-4">$9<span className="text-sm font-normal">/month</span></div>
+                  <div className="text-3xl font-bold mb-4">
+                    {priceLoading ? '$9' : `$${(priceAmount ?? 9).toFixed(0)}`}
+                    <span className="text-sm font-normal">
+                      /{priceInterval}
+                    </span>
+                  </div>
 
                   <ul className="space-y-2 mb-4">
                     <li className="flex items-center gap-2">
                       <span className="text-success">✓</span>
-                      <span className="font-semibold">Everything in FREE, plus:</span>
+                      <span className="font-semibold">
+                        Everything in FREE, plus:
+                      </span>
                     </li>
                     <li className="flex items-center gap-2">
                       <span className="text-success">✓</span>
@@ -534,9 +738,35 @@ export function SettingsPage() {
                   {isPro ? (
                     <div className="badge badge-primary">Current Plan</div>
                   ) : (
-                    <Link to="/pricing" className="btn btn-primary">
-                      Upgrade Now
-                    </Link>
+                    <button
+                      className="btn btn-primary"
+                      onClick={async () => {
+                        setIsLoading(true);
+                        setError(null);
+                        try {
+                          const response =
+                            await apiClient.createCheckoutSession(priceId);
+                          if (response.url) {
+                            window.location.href = response.url;
+                          }
+                        } catch (err: any) {
+                          console.error('Checkout error:', err);
+                          setError(err.message || 'Failed to start checkout');
+                        } finally {
+                          setIsLoading(false);
+                        }
+                      }}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <span className="loading loading-spinner"></span>
+                          Processing...
+                        </>
+                      ) : (
+                        'Upgrade Now'
+                      )}
+                    </button>
                   )}
                 </div>
               </div>
@@ -548,12 +778,33 @@ export function SettingsPage() {
                 <div className="card-body">
                   <h3 className="card-title">Manage Subscription</h3>
                   <p className="text-base-content/60 mb-4">
-                    Update payment method, view invoices, or cancel your subscription
+                    Update payment method, view invoices, or cancel your
+                    subscription
                   </p>
                   <div>
-                    <a href="/api/subscriptions/portal" className="btn btn-outline">
-                      Manage Billing
-                    </a>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        className="btn btn-outline"
+                        onClick={handleOpenPortal}
+                        disabled={isPortalLoading}
+                      >
+                        {isPortalLoading ? (
+                          <>
+                            <span className="loading loading-spinner"></span>
+                            Opening...
+                          </>
+                        ) : (
+                          'Manage Billing'
+                        )}
+                      </button>
+                      <button
+                        className="btn btn-outline btn-error"
+                        onClick={handleOpenPortal}
+                        disabled={isPortalLoading}
+                      >
+                        Cancel Subscription
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

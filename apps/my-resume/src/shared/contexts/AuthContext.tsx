@@ -1,4 +1,10 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  type ReactNode,
+} from 'react';
 import { apiClient } from '../api/client';
 
 interface User {
@@ -8,6 +14,8 @@ interface User {
   lastName?: string;
   role: string;
   subscriptionTier: string;
+  customDomain?: string | null;
+  defaultResumeId?: string | null;
 }
 
 interface AuthContextType {
@@ -15,7 +23,12 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (data: { email: string; password: string; firstName?: string; lastName?: string }) => Promise<void>;
+  register: (data: {
+    email: string;
+    password: string;
+    firstName?: string;
+    lastName?: string;
+  }) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -57,7 +70,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await refreshUser();
   };
 
-  const register = async (data: { email: string; password: string; firstName?: string; lastName?: string }) => {
+  const register = async (data: {
+    email: string;
+    password: string;
+    firstName?: string;
+    lastName?: string;
+  }) => {
     const response = await apiClient.register(data);
     apiClient.setToken(response.access_token);
     apiClient.setRefreshToken(response.refresh_token);
@@ -87,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within AuthProvider');

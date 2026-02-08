@@ -283,14 +283,14 @@ class ApiClient {
   }
 
   // Subscriptions (Stripe)
-  async createCheckoutSession(priceId: string) {
+  async createCheckoutSession(priceId: string | null) {
     return this.request('/subscriptions/checkout', {
       method: 'POST',
       body: JSON.stringify({ priceId }),
     });
   }
 
-  async getPriceDetails(priceId: string) {
+  async getPriceDetails(priceId: string | null) {
     return this.request(`/subscriptions/prices/${priceId}`);
   }
 
