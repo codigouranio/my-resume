@@ -648,13 +648,18 @@ export function SettingsPage() {
                     <div className="text-2xl font-bold">
                       {isPro
                         ? priceLoading
-                          ? '$9'
+                          ? '$—'
                           : `$${(priceAmount ?? 9).toFixed(0)}`
                         : '$0'}
                     </div>
                     <div className="text-sm text-base-content/60">
                       {isPro ? `per ${priceInterval}` : 'per month'}
                     </div>
+                    {isPro && priceLoading && (
+                      <div className="mt-1">
+                        <span className="loading loading-spinner loading-xs"></span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

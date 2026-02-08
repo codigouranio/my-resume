@@ -187,9 +187,12 @@ export function PricingPage() {
               <h2 className="card-title text-3xl justify-center">PRO</h2>
               <div className="text-center py-6">
                 <span className="text-5xl font-bold">
-                  {priceLoading ? '$9' : `$${(priceAmount ?? 9).toFixed(0)}`}
+                  {priceLoading ? '$—' : `$${(priceAmount ?? 9).toFixed(0)}`}
                 </span>
                 <span className="text-xl opacity-70">/{priceInterval}</span>
+                {priceLoading && (
+                  <span className="loading loading-spinner loading-sm ml-2 align-middle"></span>
+                )}
               </div>
               <p className="text-center text-sm opacity-70 mb-6">
                 For professionals who want to stand out
