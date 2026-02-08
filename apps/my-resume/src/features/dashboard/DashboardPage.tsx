@@ -426,7 +426,7 @@ export function DashboardPage() {
 
                       <div className="card-actions justify-end mt-3">
                         <a
-                          href={`mailto:${interest.email}?subject=Re: Your interest in my resume&body=Hi ${interest.name},%0D%0A%0D%0AThank you for your interest!%0D%0A%0D%0A`}
+                          href={`mailto:${interest.email}?subject=${encodeURIComponent('Re: Your interest in my resume')}&body=${encodeURIComponent(`Hi ${interest.name},\n\nThank you for your interest!\n\nYou can reach me directly at:\nEmail: ${user?.email || 'not provided'}\nPhone: ${user?.phone || 'not provided'}\n\nBest regards,`)}`}
                           className="btn btn-sm btn-primary gap-1"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">

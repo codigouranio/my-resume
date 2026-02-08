@@ -36,6 +36,7 @@ model User {
   password  String
   firstName String?
   lastName  String?
+  phone     String?
   role      Role     @default(USER)
   
   // Subscription

@@ -12,6 +12,12 @@ export class UpdateUserDto {
   @IsString()
   lastName?: string;
 
+  @ApiProperty({ required: false, description: 'Phone number' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(32, { message: 'Phone number must be 32 characters or less' })
+  phone?: string;
+
   @ApiProperty({ required: false, description: 'Custom subdomain (PRO feature only)' })
   @IsOptional()
   @IsString()

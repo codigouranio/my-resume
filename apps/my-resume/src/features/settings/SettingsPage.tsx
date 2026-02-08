@@ -28,10 +28,14 @@ export function SettingsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isPortalLoading, setIsPortalLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [profileError, setProfileError] = useState('');
+  const [profileSuccess, setProfileSuccess] = useState('');
   const [priceAmount, setPriceAmount] = useState<number | null>(null);
   const [priceInterval, setPriceInterval] = useState<string>('month');
   const [priceLoading, setPriceLoading] = useState(true);
   const [priceId, setPriceId] = useState<string | null>(null);
+  const [phone, setPhone] = useState('');
+  const [isSavingPhone, setIsSavingPhone] = useState(false);
 
   let stripePriceId: string | null = null;
 
@@ -92,6 +96,12 @@ export function SettingsPage() {
 
     if (user?.customDomain) {
       setCustomDomain(user.customDomain);
+    }
+
+    if (user?.phone) {
+      setPhone(user.phone);
+    } else {
+      setPhone('');
     }
 
     // Load user's resumes if PRO and has custom subdomain
@@ -171,6 +181,24 @@ export function SettingsPage() {
       setDomainError(err.message || 'Failed to update subdomain');
     } finally {
       setIsSavingDomain(false);
+    }
+  };
+
+  const handleSavePhone = async () => {
+    setIsSavingPhone(true);
+    setProfileError('');
+    setProfileSuccess('');
+
+    try {
+      await apiClient.updateCurrentUser({ phone: phone || null });
+      await refreshUser();
+      setProfileSuccess('Phone number updated successfully!');
+      setTimeout(() => setProfileSuccess(''), 3000);
+    } catch (err: any) {
+      setProfileError(err.message || 'Failed to update phone number');
+      setTimeout(() => setProfileError(''), 3000);
+    } finally {
+      setIsSavingPhone(false);
     }
   };
 
@@ -280,6 +308,45 @@ export function SettingsPage() {
                       className="input input-bordered bg-base-300"
                     />
                   </div>
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-semibold">Phone</span>
+                  </label>
+                  <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="e.g. +1 555 123 4567"
+                      className="input input-bordered bg-base-300 flex-1"
+                    />
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={handleSavePhone}
+                      disabled={isSavingPhone}
+                    >
+                      {isSavingPhone ? (
+                        <>
+                          <span className="loading loading-spinner loading-xs"></span>
+                          Saving...
+                        </>
+                      ) : (
+                        'Save Phone'
+                      )}
+                    </button>
+                  </div>
+                  {profileError && (
+                    <div className="alert alert-error mt-2">
+                      <span>{profileError}</span>
+                    </div>
+                  )}
+                  {profileSuccess && (
+                    <div className="alert alert-success mt-2">
+                      <span>{profileSuccess}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-control">

@@ -12,6 +12,7 @@ interface User {
   email: string;
   firstName?: string;
   lastName?: string;
+  phone?: string | null;
   role: string;
   subscriptionTier: string;
   customDomain?: string | null;
