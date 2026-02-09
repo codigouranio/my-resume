@@ -20,11 +20,18 @@
 
     # Prepare Node Services Environment
 
-    - name: Create conda environment for node services
-      shell: |
-        /opt/miniconda3/bin/conda create -p {{ app_root }}/conda-env nodejs={{ nodejs_version }} -y
+    - name: Create shared Node.js conda environment at project root
+      command: /opt/miniconda3/bin/conda create -p {{ app_root }}/conda-env nodejs={{ nodejs_version }} -y --quiet
       args:
-        creates: "{{ app_root }}/conda-env"
+        creates: "{{ app_root }}/conda-env/conda-meta/history"
+      become_user: "{{ ansible_user }}"
+      register: conda_create_result
+      changed_when: conda_create_result.rc == 0
+
+    - name: Install PM2 in shared project conda env
+      command: /opt/miniconda3/bin/conda run -p {{ app_root }}/conda-env npm install -g pm2
+      args:
+        creates: "{{ app_root }}/conda-env/bin/pm2"
       become_user: "{{ ansible_user }}"
 
     - name: Configure API Service environment
@@ -60,7 +67,7 @@
 
     # - name: Stop deployment if a variable is set
     #   meta: end_play
-    #   when: stop_deploy | default(false)      
+    #   when: stop_deploy | default(false)
 
     - name: Generate Prisma Client
       shell: |
@@ -140,8 +147,8 @@
         state: directory
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user | default(ansible_user) }}"
-        mode: '0755'
-      become: yes   # Needed if /opt/my-resume requires root to create/write
+        mode: "0755"
+      become: yes # Needed if /opt/my-resume requires root to create/write
 
     - name: Create conda environment for LLM service (Python)
       command: /opt/miniconda3/bin/conda create -p {{ llm_service_path }}/conda-env python=3.10 pip -y --quiet
@@ -216,8 +223,8 @@
         state: directory
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
-        mode: '0755'
-      become: yes      
+        mode: "0755"
+      become: yes
 
     - name: Verify frontend conda env was created
       stat:
@@ -267,20 +274,14 @@
       assert:
         that: frontend_build.stat.exists
         fail_msg: "Frontend build failed - dist/index.html not found"
-        success_msg: "✅ Frontend built successfully"      
+        success_msg: "✅ Frontend built successfully"
 
-    # Finalize PM2 Setup and Start Services
-
-    - name: Install PM2
-      shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ app_root }}/conda-env
-        npm config set prefix {{ app_root }}/conda-env
-        npm install -g pm2
+    - name: Stop existing PM2 services
+      command: "{{ app_root }}/conda-env/bin/pm2 delete all"
       args:
-        creates: "{{ app_root }}/conda-env/bin/pm2"
-        executable: /bin/bash
-      become_user: "{{ ansible_user }}"    
+        chdir: "{{ app_root }}"
+      become_user: "{{ ansible_user }}"
+      ignore_errors: yes
 
     - name: Create PM2 ecosystem file
       template:
@@ -289,54 +290,32 @@
         owner: "{{ ansible_user }}"
         mode: "0644"
 
-    - name: Check PM2 installation
-      command: "{{ app_root }}/conda-env/bin/pm2 --version"
-      register: pm2_version
-      become_user: "{{ ansible_user }}"
-      changed_when: false
-
-    - name: Stop existing PM2 services
-      shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ app_root }}/conda-env
-        $(npm root -g)/pm2/bin/pm2 delete all || true
-      args:
-        executable: /bin/bash
-      become_user: "{{ ansible_user }}"
-      ignore_errors: yes
-
     - name: Start services with PM2
-      shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ app_root }}/conda-env
-        $(npm root -g)/pm2/bin/pm2 start ecosystem.config.js
+      command: "{{ app_root }}/conda-env/bin/pm2 start ecosystem.config.js"
       args:
         chdir: "{{ app_root }}"
-        executable: /bin/bash
       become_user: "{{ ansible_user }}"
 
     - name: Save PM2 configuration
-      shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ app_root }}/conda-env
-        $(npm root -g)/pm2/bin/pm2 save --force
+      command: "{{ app_root }}/conda-env/bin/pm2 save --force"
       args:
-        executable: /bin/bash
+        chdir: "{{ app_root }}"
       become_user: "{{ ansible_user }}"
 
-    - name: Setup PM2 startup script
-      shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ app_root }}/conda-env
-        # $(npm root -g)/pm2/bin/pm2 startup systemd -u {{ ansible_user }} --hp /home/{{ ansible_user }}
-      args:
-        executable: /bin/bash
+    - name: Generate PM2 systemd startup instructions
+      command: "{{ app_root }}/conda-env/bin/pm2 startup systemd -u {{ ansible_user }} --hp /home/{{ ansible_user }}"
       register: pm2_startup
       become_user: "{{ ansible_user }}"
+      changed_when: false
+      ignore_errors: true
 
-    - name: Execute PM2 startup command
-      shell: "{{ pm2_startup.stdout_lines | select('match', '^sudo.*') | first }}"
-      when: pm2_startup.stdout_lines | select('match', '^sudo.*') | list | length > 0
+    - name: Install PM2 systemd service using full pm2 path
+      command: >-
+        sudo env PATH=$PATH:/opt/my-resume/conda-env/bin
+        {{ app_root }}/conda-env/bin/pm2 startup systemd -u {{ ansible_user }} --hp /home/{{ ansible_user }}
+      become: true
+      when: pm2_startup.rc == 1 # only run if the first command "failed" as expected
+      changed_when: true
 
     - name: Wait for services to start
       wait_for:
@@ -348,12 +327,9 @@
         - "{{ llm_port }}"
 
     - name: Check PM2 services status
-      shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ app_root }}/conda-env
-        $(npm root -g)/pm2/bin/pm2 list
+      command: "{{ app_root }}/conda-env/bin/pm2 list"
       args:
-        executable: /bin/bash
+        chdir: "{{ app_root }}"
       become_user: "{{ ansible_user }}"
       register: pm2_status
 
