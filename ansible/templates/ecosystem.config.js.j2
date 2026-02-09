@@ -3,7 +3,7 @@ module.exports = {
     {
       name: 'api-service',
       cwd: '{{ api_service_path }}',
-      interpreter: '{{ api_service_path }}/conda-env/bin/node',
+      interpreter: '{{ app_root }}/conda-env/bin/node',
       script: 'dist/src/main.js',
       instances: {{ pm2_instances_api }},
       exec_mode: 'cluster',

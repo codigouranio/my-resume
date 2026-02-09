@@ -18,28 +18,13 @@
         force: yes
       become_user: "{{ ansible_user }}"
 
-    - name: Create conda environment for PM2
+    # Prepare Node Services Environment
+
+    - name: Create conda environment for node services
       shell: |
         /opt/miniconda3/bin/conda create -p {{ app_root }}/conda-env nodejs={{ nodejs_version }} -y
       args:
         creates: "{{ app_root }}/conda-env"
-      become_user: "{{ ansible_user }}"
-
-    - name: Install PM2
-      shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ app_root }}/conda-env
-        npm install -g pm2
-      args:
-        creates: "{{ app_root }}/conda-env/bin/pm2"
-        executable: /bin/bash
-      become_user: "{{ ansible_user }}"
-
-    - name: Create conda environment for API service
-      shell: |
-        /opt/miniconda3/bin/conda create -p {{ api_service_path }}/conda-env nodejs={{ nodejs_version }} -y
-      args:
-        creates: "{{ api_service_path }}/conda-env"
       become_user: "{{ ansible_user }}"
 
     - name: Configure API Service environment
@@ -66,28 +51,21 @@
     - name: Install API Service dependencies
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ api_service_path }}/conda-env
-        npm install -g pm2
+        conda activate {{ app_root }}/conda-env
         npm install
       args:
         chdir: "{{ api_service_path }}"
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
 
-    - name: Install required NestJS packages
-      shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ api_service_path }}/conda-env
-        npm install @nestjs/graphql @nestjs/apollo @nestjs/cqrs @apollo/server graphql
-      args:
-        chdir: "{{ api_service_path }}"
-        executable: /bin/bash
-      become_user: "{{ ansible_user }}"
+    # - name: Stop deployment if a variable is set
+    #   meta: end_play
+    #   when: stop_deploy | default(false)      
 
     - name: Generate Prisma Client
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ api_service_path }}/conda-env
+        conda activate {{ app_root }}/conda-env
         export DATABASE_URL="postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}?schema=public"
         npx prisma generate
       args:
@@ -103,7 +81,7 @@
     - name: Apply Prisma migrations (production safe)
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ api_service_path }}/conda-env
+        conda activate {{ app_root }}/conda-env
         export DATABASE_URL="postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}?schema=public"
         npx prisma migrate deploy
       args:
@@ -117,7 +95,7 @@
     - name: Fallback to db push if no migrations
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ api_service_path }}/conda-env
+        conda activate {{ app_root }}/conda-env
         export DATABASE_URL="postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}?schema=public"
         npx prisma db push --accept-data-loss
       args:
@@ -147,12 +125,14 @@
     - name: Build API Service
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ api_service_path }}/conda-env
+        conda activate {{ app_root }}/conda-env
         npm run build
       args:
         chdir: "{{ api_service_path }}"
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
+
+    # Prepare LLM Service Environment
 
     - name: Ensure LLM service directory exists
       file:
@@ -228,6 +208,8 @@
         msg: "{{ ollama_models.stdout_lines }}"
       when: ollama_check.rc == 0
 
+    # Prepare Frontend Environment
+
     - name: Ensure frontend directory exists
       file:
         path: "{{ frontend_path }}"
@@ -237,21 +219,15 @@
         mode: '0755'
       become: yes      
 
-    - name: Create conda environment for Frontend
-      command: /opt/miniconda3/bin/conda create -p {{ frontend_path }}/conda-env nodejs={{ nodejs_version }} -y --quiet
-      args:
-        creates: "{{ frontend_path }}/conda-env/conda-meta/history"
-      become_user: "{{ ansible_user }}"
-
     - name: Verify frontend conda env was created
       stat:
-        path: "{{ frontend_path }}/conda-env/bin/node"
+        path: "{{ app_root }}/conda-env/bin/node"
       register: frontend_node_check
       become_user: "{{ ansible_user }}"
 
     - name: Fail if frontend conda env missing node binary
       fail:
-        msg: "Frontend conda env at {{ frontend_path }}/conda-env does not contain node binary - creation likely failed"
+        msg: "Frontend conda env at {{ app_root }}/conda-env does not contain node binary - creation likely failed"
       when: not frontend_node_check.stat.exists
 
     - name: Install Frontend dependencies (clean reinstall to fix Rspack bindings)
@@ -266,14 +242,14 @@
           become_user: "{{ ansible_user }}"
 
         - name: Install frontend dependencies fresh
-          command: /opt/miniconda3/bin/conda run -p {{ frontend_path }}/conda-env npm install
+          command: /opt/miniconda3/bin/conda run -p {{ app_root }}/conda-env npm install
           args:
             chdir: "{{ frontend_path }}"
           become_user: "{{ ansible_user }}"
       become_user: "{{ ansible_user }}"
 
     - name: Build Frontend (using conda run - no activation needed)
-      command: /opt/miniconda3/bin/conda run -p {{ frontend_path }}/conda-env npm run build
+      command: /opt/miniconda3/bin/conda run -p {{ app_root }}/conda-env npm run build
       args:
         chdir: "{{ frontend_path }}"
       become_user: "{{ ansible_user }}"
@@ -293,6 +269,19 @@
         fail_msg: "Frontend build failed - dist/index.html not found"
         success_msg: "✅ Frontend built successfully"      
 
+    # Finalize PM2 Setup and Start Services
+
+    - name: Install PM2
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ app_root }}/conda-env
+        npm config set prefix {{ app_root }}/conda-env
+        npm install -g pm2
+      args:
+        creates: "{{ app_root }}/conda-env/bin/pm2"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"    
+
     - name: Create PM2 ecosystem file
       template:
         src: ../templates/ecosystem.config.js.j2
@@ -300,10 +289,16 @@
         owner: "{{ ansible_user }}"
         mode: "0644"
 
+    - name: Check PM2 installation
+      command: "{{ app_root }}/conda-env/bin/pm2 --version"
+      register: pm2_version
+      become_user: "{{ ansible_user }}"
+      changed_when: false
+
     - name: Stop existing PM2 services
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ api_service_path }}/conda-env
+        conda activate {{ app_root }}/conda-env
         $(npm root -g)/pm2/bin/pm2 delete all || true
       args:
         executable: /bin/bash
