@@ -7,8 +7,8 @@
   become: yes
   vars_files:
     - ../group_vars/all.yml
-    - ../group_vars/all/vault.yml
-  
+    - ../group_vars/all/vault-sandbox.yml
+
   tasks:
     - name: Clone/Update repository
       git:
@@ -17,31 +17,31 @@
         version: "{{ repo_branch }}"
         force: yes
       become_user: "{{ ansible_user }}"
-    
+
+    - name: Create conda environment for PM2
+      shell: |
+        /opt/miniconda3/bin/conda create -p {{ app_root }}/conda-env nodejs={{ nodejs_version }} -y
+      args:
+        creates: "{{ app_root }}/conda-env"
+      become_user: "{{ ansible_user }}"
+
+    - name: Install PM2
+      shell: |
+        source /opt/miniconda3/etc/profile.d/conda.sh
+        conda activate {{ app_root }}/conda-env
+        npm install -g pm2
+      args:
+        creates: "{{ app_root }}/conda-env/bin/pm2"
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+
     - name: Create conda environment for API service
       shell: |
         /opt/miniconda3/bin/conda create -p {{ api_service_path }}/conda-env nodejs={{ nodejs_version }} -y
       args:
         creates: "{{ api_service_path }}/conda-env"
       become_user: "{{ ansible_user }}"
-    
-    - name: Create conda environment for Frontend
-      shell: |
-        /opt/miniconda3/bin/conda create -p {{ frontend_path }}/conda-env nodejs={{ nodejs_version }} -y
-      args:
-        creates: "{{ frontend_path }}/conda-env"
-      become_user: "{{ ansible_user }}"
-    
-    - name: Install PM2 in API conda environment
-      shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ api_service_path }}/conda-env
-        npm install -g pm2
-      args:
-        creates: "{{ api_service_path }}/conda-env/bin/pm2"
-        executable: /bin/bash
-      become_user: "{{ ansible_user }}"
-    
+
     - name: Configure API Service environment
       copy:
         dest: "{{ api_service_path }}/.env"
@@ -61,18 +61,19 @@
           SES_FROM_EMAIL={{ ses_from_email | default('noreply@resumecast.ai') }}
           FRONTEND_URL={{ frontend_url | default('https://resumecast.ai') }}
         owner: "{{ ansible_user }}"
-        mode: '0600'
-    
+        mode: "0600"
+
     - name: Install API Service dependencies
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
         conda activate {{ api_service_path }}/conda-env
+        npm install -g pm2
         npm install
       args:
         chdir: "{{ api_service_path }}"
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
-    
+
     - name: Install required NestJS packages
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
@@ -82,7 +83,7 @@
         chdir: "{{ api_service_path }}"
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
-    
+
     - name: Generate Prisma Client
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
@@ -93,12 +94,12 @@
         chdir: "{{ api_service_path }}"
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
-    
+
     - name: Check if migrations exist
       stat:
         path: "{{ api_service_path }}/prisma/migrations"
       register: migrations_dir
-    
+
     - name: Apply Prisma migrations (production safe)
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
@@ -112,7 +113,7 @@
       register: migration_result
       failed_when: false
       when: migrations_dir.stat.exists
-    
+
     - name: Fallback to db push if no migrations
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
@@ -124,7 +125,7 @@
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
       when: not migrations_dir.stat.exists or migration_result.rc != 0
-    
+
     - name: Verify database tables
       postgresql_query:
         db: "{{ db_name }}"
@@ -138,11 +139,11 @@
           ORDER BY table_name;
       register: db_tables
       become_user: postgres
-    
+
     - name: Display created tables
       debug:
         msg: "Database tables: {{ db_tables.query_result | map(attribute='table_name') | list }}"
-    
+
     - name: Build API Service
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
@@ -152,16 +153,33 @@
         chdir: "{{ api_service_path }}"
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
-    
+
+    - name: Ensure LLM service directory exists
+      file:
+        path: "{{ llm_service_path }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user | default(ansible_user) }}"
+        mode: '0755'
+      become: yes   # Needed if /opt/my-resume requires root to create/write
+
+    - name: Create conda environment for LLM service (Python)
+      command: /opt/miniconda3/bin/conda create -p {{ llm_service_path }}/conda-env python=3.10 pip -y --quiet
+      args:
+        creates: "{{ llm_service_path }}/conda-env/conda-meta/history"
+      become_user: "{{ ansible_user }}"
+      register: conda_create_llm
+      changed_when: conda_create_llm.rc == 0
+
     - name: Install LLM service Python dependencies
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ api_service_path }}/conda-env
+        conda activate {{ llm_service_path }}/conda-env
         conda install -y -c conda-forge flask flask-cors requests python-dotenv psycopg2-binary
       args:
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
-    
+
     - name: Configure LLM Service environment
       copy:
         dest: "{{ llm_service_path }}/.env"
@@ -176,90 +194,112 @@
           API_BASE_URL=http://localhost:{{ api_port }}/api
           RESUME_SLUG=jose-blanco-swe
         owner: "{{ ansible_user }}"
-        mode: '0600'
-    
+        mode: "0600"
+
     - name: Check if Ollama is installed
       command: which ollama
       register: ollama_check
       ignore_errors: yes
       changed_when: false
-    
+
     - name: Pull main Ollama model for chat
       command: ollama pull {{ ollama_model }}
       become_user: "{{ ansible_user }}"
       when: ollama_check.rc == 0
       async: 300
       poll: 10
-    
+
     - name: Pull nomic-embed-text model for embeddings
       command: ollama pull nomic-embed-text
       become_user: "{{ ansible_user }}"
       when: ollama_check.rc == 0
       async: 300
       poll: 10
-    
+
     - name: Display Ollama models
       shell: ollama list
       register: ollama_models
       become_user: "{{ ansible_user }}"
       when: ollama_check.rc == 0
       changed_when: false
-    
+
     - name: Show installed models
       debug:
         msg: "{{ ollama_models.stdout_lines }}"
       when: ollama_check.rc == 0
-    
-    - name: Configure Frontend environment
-      copy:
-        dest: "{{ frontend_path }}/.env"
-        content: |
-          PUBLIC_API_URL=https://api.{{ domain }}
-          PUBLIC_LLM_API_URL=https://llm.{{ domain }}
-          PUBLIC_BASE_DOMAIN={{ domain }}
-          PUBLIC_GTM_ID={{ gtm_id }}
-          PUBLIC_GA_ID={{ ga_id }}
+
+    - name: Ensure frontend directory exists
+      file:
+        path: "{{ frontend_path }}"
+        state: directory
         owner: "{{ ansible_user }}"
-        mode: '0644'
-    
-    - name: Install Frontend dependencies
-      shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ frontend_path }}/conda-env
-        npm install
+        group: "{{ ansible_user }}"
+        mode: '0755'
+      become: yes      
+
+    - name: Create conda environment for Frontend
+      command: /opt/miniconda3/bin/conda create -p {{ frontend_path }}/conda-env nodejs={{ nodejs_version }} -y --quiet
+      args:
+        creates: "{{ frontend_path }}/conda-env/conda-meta/history"
+      become_user: "{{ ansible_user }}"
+
+    - name: Verify frontend conda env was created
+      stat:
+        path: "{{ frontend_path }}/conda-env/bin/node"
+      register: frontend_node_check
+      become_user: "{{ ansible_user }}"
+
+    - name: Fail if frontend conda env missing node binary
+      fail:
+        msg: "Frontend conda env at {{ frontend_path }}/conda-env does not contain node binary - creation likely failed"
+      when: not frontend_node_check.stat.exists
+
+    - name: Install Frontend dependencies (clean reinstall to fix Rspack bindings)
+      block:
+        - name: Clean node_modules and lockfile (to force platform-specific bindings install)
+          file:
+            path: "{{ frontend_path }}/{{ item }}"
+            state: absent
+          loop:
+            - node_modules
+            - package-lock.json
+          become_user: "{{ ansible_user }}"
+
+        - name: Install frontend dependencies fresh
+          command: /opt/miniconda3/bin/conda run -p {{ frontend_path }}/conda-env npm install
+          args:
+            chdir: "{{ frontend_path }}"
+          become_user: "{{ ansible_user }}"
+      become_user: "{{ ansible_user }}"
+
+    - name: Build Frontend (using conda run - no activation needed)
+      command: /opt/miniconda3/bin/conda run -p {{ frontend_path }}/conda-env npm run build
       args:
         chdir: "{{ frontend_path }}"
-        executable: /bin/bash
       become_user: "{{ ansible_user }}"
-    
-    - name: Build Frontend
-      shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ frontend_path }}/conda-env
-        npm run build
-      args:
-        chdir: "{{ frontend_path }}"
-        executable: /bin/bash
-      become_user: "{{ ansible_user }}"
-    
+      register: frontend_build_result
+      changed_when: frontend_build_result.rc == 0
+
+    # Keep your existing verify/assert tasks - they are good
     - name: Verify Frontend build
       stat:
         path: "{{ frontend_path }}/dist/index.html"
       register: frontend_build
-    
+      become_user: "{{ ansible_user }}"
+
     - name: Assert Frontend build succeeded
       assert:
         that: frontend_build.stat.exists
         fail_msg: "Frontend build failed - dist/index.html not found"
-        success_msg: "✅ Frontend built successfully"
-    
+        success_msg: "✅ Frontend built successfully"      
+
     - name: Create PM2 ecosystem file
       template:
         src: ../templates/ecosystem.config.js.j2
         dest: "{{ app_root }}/ecosystem.config.js"
         owner: "{{ ansible_user }}"
-        mode: '0644'
-    
+        mode: "0644"
+
     - name: Stop existing PM2 services
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
@@ -269,40 +309,40 @@
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
       ignore_errors: yes
-    
+
     - name: Start services with PM2
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ api_service_path }}/conda-env
+        conda activate {{ app_root }}/conda-env
         $(npm root -g)/pm2/bin/pm2 start ecosystem.config.js
       args:
         chdir: "{{ app_root }}"
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
-    
+
     - name: Save PM2 configuration
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ api_service_path }}/conda-env
+        conda activate {{ app_root }}/conda-env
         $(npm root -g)/pm2/bin/pm2 save --force
       args:
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
-    
+
     - name: Setup PM2 startup script
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ api_service_path }}/conda-env
-        $(npm root -g)/pm2/bin/pm2 startup systemd -u {{ ansible_user }} --hp /home/{{ ansible_user }}
+        conda activate {{ app_root }}/conda-env
+        # $(npm root -g)/pm2/bin/pm2 startup systemd -u {{ ansible_user }} --hp /home/{{ ansible_user }}
       args:
         executable: /bin/bash
       register: pm2_startup
       become_user: "{{ ansible_user }}"
-    
+
     - name: Execute PM2 startup command
       shell: "{{ pm2_startup.stdout_lines | select('match', '^sudo.*') | first }}"
       when: pm2_startup.stdout_lines | select('match', '^sudo.*') | list | length > 0
-    
+
     - name: Wait for services to start
       wait_for:
         port: "{{ item }}"
@@ -311,21 +351,21 @@
       loop:
         - "{{ api_port }}"
         - "{{ llm_port }}"
-    
+
     - name: Check PM2 services status
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ api_service_path }}/conda-env
+        conda activate {{ app_root }}/conda-env
         $(npm root -g)/pm2/bin/pm2 list
       args:
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
       register: pm2_status
-    
+
     - name: Display PM2 status
       debug:
         msg: "{{ pm2_status.stdout_lines }}"
-    
+
     - name: Test API health endpoint
       uri:
         url: "http://localhost:{{ api_port }}/api/health"
@@ -333,11 +373,11 @@
         status_code: [200, 404]
       register: api_health
       ignore_errors: yes
-    
+
     - name: Display API health status
       debug:
         msg: "API Service: {{ 'HEALTHY' if api_health.status == 200 else 'STARTED (health endpoint may not exist)' }}"
-    
+
     - name: Display completion message
       debug:
         msg:

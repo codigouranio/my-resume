@@ -184,3 +184,5 @@ if start-up company, equity
 I am US citizen.
 
 
+One of the toughest challenges was at Confer: designing and implementing multi-threaded, high-throughput data pipelines in Java for real-time behavioral detection at enterprise scale, integrating Spring microservices and Elasticsearch while handling massive log volumes without dropping events.
+I always dive deep into new tools to boost efficiency and possibilities, adopting what improves productivity while keeping high accountability standard
