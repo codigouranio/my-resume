@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UpgradePrompt } from '../subscriptions';
 import { useAuth } from '../../shared/contexts/AuthContext';
 
 interface AnalyticsData {
@@ -27,7 +26,6 @@ export function AnalyticsDashboard({ resumeId }: AnalyticsDashboardProps) {
   const navigate = useNavigate();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   const isPro = user?.subscriptionTier === 'PRO';
 
@@ -114,11 +112,6 @@ export function AnalyticsDashboard({ resumeId }: AnalyticsDashboardProps) {
     <div className="analytics-dashboard space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Analytics</h2>
-        {!isPro && (
-          <button onClick={() => setShowUpgradePrompt(true)} className="btn btn-primary btn-sm">
-            Upgrade to PRO for Detailed Analytics
-          </button>
-        )}
       </div>
 
       {/* Stats Grid */}
@@ -239,24 +232,6 @@ export function AnalyticsDashboard({ resumeId }: AnalyticsDashboardProps) {
             View Plans
           </button>
         </div>
-      )}
-
-      {/* Upgrade Modal */}
-      {showUpgradePrompt && (
-        <dialog open className="modal modal-open">
-          <div className="modal-box max-w-2xl">
-            <button
-              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-              onClick={() => setShowUpgradePrompt(false)}
-            >
-              ✕
-            </button>
-            <UpgradePrompt onClose={() => setShowUpgradePrompt(false)} />
-          </div>
-          <form method="dialog" className="modal-backdrop">
-            <button onClick={() => setShowUpgradePrompt(false)}>close</button>
-          </form>
-        </dialog>
       )}
     </div>
   );
