@@ -432,6 +432,11 @@ def call_openai_compatible(prompt: str, max_tokens: int = 256) -> dict:
 
 def generate_completion(prompt: str, max_tokens: int = 256) -> dict:
     """Route to appropriate LLAMA server based on API type."""
+
+    logger.info(
+        f"Generating completion with API type '{LLAMA_API_TYPE}' for prompt: {prompt[:100]}..."
+    )
+
     if LLAMA_API_TYPE == "llama-cpp":
         return call_llama_cpp_server(prompt, max_tokens)
     elif LLAMA_API_TYPE == "ollama":
@@ -629,7 +634,7 @@ def chat():
 
             PROFESSIONAL INFORMATION:
             {resume_context}
-            {history_block}
+            {history_block[-300:]}
 
             Recruiter/Visitor Question: {user_message}
 
