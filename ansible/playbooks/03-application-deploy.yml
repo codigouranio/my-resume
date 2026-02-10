@@ -173,7 +173,7 @@
         content: |
           PORT={{ llm_port }}
           LLAMA_SERVER_URL={{ llama_server_url }}
-          LLAMA_API_TYPE=ollama
+          LLAMA_API_TYPE={{ llama_api_type }}
           OLLAMA_MODEL={{ ollama_model }}
           RESUME_PATH=../../data/resume.md
           DATABASE_URL=postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}

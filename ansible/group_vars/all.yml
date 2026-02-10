@@ -54,8 +54,9 @@ postgres_user: "{{ db_user }}"
 postgres_password: "{{ db_password }}"
 
 # LLM Service Configuration
-ollama_model: "llama3.1:latest"
-llama_server_url: "http://localhost:11434"
+ollama_model: "qwen2.5:7b-instruct"
+llama_server_url: "http://localhost:9000"
+llama_api_type: "openai"
 
 # PM2 Configuration
 pm2_instances_api: 2
