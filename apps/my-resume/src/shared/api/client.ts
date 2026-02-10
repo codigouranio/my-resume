@@ -336,6 +336,14 @@ class ApiClient {
     if (sentiment) url += `&sentiment=${sentiment}`;
     return this.request(url);
   }
+
+  async getBasicAnalytics(resumeId: string) {
+    return this.request(`/api/resumes/${resumeId}`);
+  }
+
+  async getDetailedAnalytics(resumeId: string) {
+    return this.request(`/api/resumes/${resumeId}/analytics/detailed`);
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);

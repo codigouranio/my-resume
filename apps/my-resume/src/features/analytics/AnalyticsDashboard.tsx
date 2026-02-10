@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../shared/contexts/AuthContext';
+import { apiClient } from '../../shared/api/client';
 
 interface AnalyticsData {
   totalViews: number;
@@ -37,25 +38,13 @@ export function AnalyticsDashboard({ resumeId }: AnalyticsDashboardProps) {
     try {
       if (isPro) {
         // PRO users: load detailed analytics
-        const response = await fetch(`/api/resumes/${resumeId}/analytics/detailed`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
+        try {
+          const data = await apiClient.getDetailedAnalytics(resumeId);
           setAnalytics(data);
-        } else {
-          // If detailed analytics fails, still show basic stats
-          const basicResponse = await fetch(`/api/resumes/${resumeId}`, {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            },
-          });
-          const resumeData = await basicResponse.json();
+        } catch (error) {
+          const data = await apiClient.getBasicAnalytics(resumeId);
           setAnalytics({
-            totalViews: resumeData.viewCount || 0,
+            totalViews: data.viewCount || 0,
             uniqueVisitors: 0,
             avgDuration: 0,
             topReferrers: [],
@@ -65,14 +54,9 @@ export function AnalyticsDashboard({ resumeId }: AnalyticsDashboardProps) {
         }
       } else {
         // Free tier: only show basic view count
-        const basicResponse = await fetch(`/api/resumes/${resumeId}`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-        const resumeData = await basicResponse.json();
+        const data = await apiClient.getBasicAnalytics(resumeId);
         setAnalytics({
-          totalViews: resumeData.viewCount || 0,
+          totalViews: data.viewCount || 0,
           uniqueVisitors: 0,
           avgDuration: 0,
           topReferrers: [],
@@ -118,9 +102,24 @@ export function AnalyticsDashboard({ resumeId }: AnalyticsDashboardProps) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="stat bg-base-200 rounded-box">
           <div className="stat-figure text-primary">
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            <svg
+              className="w-8 h-8"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+              />
             </svg>
           </div>
           <div className="stat-title">Total Views</div>
@@ -131,22 +130,46 @@ export function AnalyticsDashboard({ resumeId }: AnalyticsDashboardProps) {
           <>
             <div className="stat bg-base-200 rounded-box">
               <div className="stat-figure text-secondary">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                <svg
+                  className="w-8 h-8"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                  />
                 </svg>
               </div>
               <div className="stat-title">Unique Visitors</div>
-              <div className="stat-value text-secondary">{analytics.uniqueVisitors}</div>
+              <div className="stat-value text-secondary">
+                {analytics.uniqueVisitors}
+              </div>
             </div>
 
             <div className="stat bg-base-200 rounded-box">
               <div className="stat-figure text-accent">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="w-8 h-8"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
               </div>
               <div className="stat-title">Avg. Time Spent</div>
-              <div className="stat-value text-accent">{analytics.avgDuration}s</div>
+              <div className="stat-value text-accent">
+                {analytics.avgDuration}s
+              </div>
             </div>
           </>
         )}
@@ -161,9 +184,16 @@ export function AnalyticsDashboard({ resumeId }: AnalyticsDashboardProps) {
                 <h3 className="card-title text-lg">Top Referral Sources</h3>
                 <div className="space-y-2">
                   {analytics.topReferrers.map((referrer, index) => (
-                    <div key={index} className="flex justify-between items-center">
-                      <span className="text-sm">{referrer.source || 'Direct'}</span>
-                      <span className="badge badge-primary">{referrer.count}</span>
+                    <div
+                      key={index}
+                      className="flex justify-between items-center"
+                    >
+                      <span className="text-sm">
+                        {referrer.source || 'Direct'}
+                      </span>
+                      <span className="badge badge-primary">
+                        {referrer.count}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -178,9 +208,14 @@ export function AnalyticsDashboard({ resumeId }: AnalyticsDashboardProps) {
                 <h3 className="card-title text-lg">Visitor Locations</h3>
                 <div className="space-y-2">
                   {analytics.topCountries.map((location, index) => (
-                    <div key={index} className="flex justify-between items-center">
+                    <div
+                      key={index}
+                      className="flex justify-between items-center"
+                    >
                       <span className="text-sm">{location.country}</span>
-                      <span className="badge badge-secondary">{location.count}</span>
+                      <span className="badge badge-secondary">
+                        {location.count}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -206,8 +241,14 @@ export function AnalyticsDashboard({ resumeId }: AnalyticsDashboardProps) {
                       {analytics.recentViews.map((view) => (
                         <tr key={view.id}>
                           <td>{new Date(view.viewedAt).toLocaleString()}</td>
-                          <td>{view.city ? `${view.city}, ${view.country}` : view.country || 'Unknown'}</td>
-                          <td className="text-xs truncate max-w-xs">{view.referrer || 'Direct'}</td>
+                          <td>
+                            {view.city
+                              ? `${view.city}, ${view.country}`
+                              : view.country || 'Unknown'}
+                          </td>
+                          <td className="text-xs truncate max-w-xs">
+                            {view.referrer || 'Direct'}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -221,14 +262,30 @@ export function AnalyticsDashboard({ resumeId }: AnalyticsDashboardProps) {
 
       {!isPro && (
         <div className="alert alert-info">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
           <div>
             <h3 className="font-bold">Upgrade to PRO for Advanced Analytics</h3>
-            <p className="text-sm">Get detailed insights: visitor tracking, referral sources, geographic data, and more!</p>
+            <p className="text-sm">
+              Get detailed insights: visitor tracking, referral sources,
+              geographic data, and more!
+            </p>
           </div>
-          <button onClick={() => navigate('/pricing')} className="btn btn-primary btn-sm">
+          <button
+            onClick={() => navigate('/pricing')}
+            className="btn btn-primary btn-sm"
+          >
             View Plans
           </button>
         </div>
