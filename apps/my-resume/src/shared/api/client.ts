@@ -338,11 +338,11 @@ class ApiClient {
   }
 
   async getBasicAnalytics(resumeId: string) {
-    return this.request(`/api/resumes/${resumeId}`);
+    return this.request(`/resumes/${resumeId}`);
   }
 
   async getDetailedAnalytics(resumeId: string) {
-    return this.request(`/api/resumes/${resumeId}/analytics/detailed`);
+    return this.request(`/resumes/${resumeId}/analytics/detailed`);
   }
 }
 
