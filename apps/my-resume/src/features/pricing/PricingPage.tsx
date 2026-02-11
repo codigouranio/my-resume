@@ -82,8 +82,10 @@ export function PricingPage() {
             to={isAuthenticated ? '/dashboard' : '/'}
             className="btn btn-ghost normal-case text-xl"
           >
-            <span style={{ color: '#00C2CB', fontWeight: 700 }}>Resume</span>
-            <span style={{ color: '#007BFF', fontWeight: 700 }}>Cast.ai</span>
+            <div>
+              <span style={{ color: '#00C2CB', fontWeight: 700 }}>Resume</span>
+              <span style={{ color: '#007BFF', fontWeight: 700 }}>Cast.ai</span>
+            </div>
           </Link>
         </div>
         <div className="flex-none gap-2">
