@@ -817,7 +817,7 @@ export class ResumesService {
 
   async identifySlug(url?: string): Promise<any> {
 
-    const match = url.match(/^https?:\/\/([^.]+)\./);
+    const match = url.match(/^https?:\/\/([^.]+)\.([^.]+\.[^./]+)(?:\/.*)?$/);
     const customDomain = match ? match[1] : null; // null for root domain
 
     if (customDomain && customDomain !== "www") {
