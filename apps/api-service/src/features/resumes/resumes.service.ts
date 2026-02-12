@@ -823,7 +823,7 @@ export class ResumesService {
     if (customDomain && customDomain !== "www") {
       const result = await this.prisma.$queryRaw`
         SELECT "Resume"."slug"
-        FROM "User" INNER JOIN "Resume" ON "User".id = "Resume"."userId"
+        FROM "User" INNER JOIN "Resume" ON "User".defaultResumeId = "Resume"."id"
         WHERE "User"."customDomain" = ${customDomain}
         LIMIT 1
       `;
