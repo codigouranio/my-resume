@@ -179,6 +179,7 @@
           DATABASE_URL=postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}
           ADMIN_TOKEN={{ llm_admin_token }}
           API_BASE_URL=http://localhost:{{ api_port }}/api
+          CORS_ORIGINS="{{ cors_origins | join(',') }}"
         owner: "{{ ansible_user }}"
         mode: "0600"
 
