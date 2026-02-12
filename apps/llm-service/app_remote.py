@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app, origins=os.getenv('CORS_ORIGINS', 'http://localhost:5000').split(','))
+CORS(app, origins=os.getenv("CORS_ORIGINS", "http://localhost:5000").split(","))
 
 # Configuration for external LLAMA server
 LLAMA_SERVER_URL = os.getenv("LLAMA_SERVER_URL", "http://localhost:8080")
@@ -568,44 +568,7 @@ def chat():
             else:
                 logger.warning(f"✗ Slug '{slug}' not found in database")
         else:
-            # If no slug provided, try to load the default/first resume from database
-            logger.info(
-                "No slug provided, attempting to load default resume from database..."
-            )
-            try:
-                conn = get_db_connection()
-                cursor = conn.cursor(cursor_factory=RealDictCursor)
-
-                # Get the most recently updated published resume as default
-                cursor.execute(
-                    """
-                    SELECT id, content, "llmContext" 
-                    FROM "Resume" 
-                    WHERE "isPublished" = true AND "isPublic" = true
-                    ORDER BY "updatedAt" DESC
-                    LIMIT 1
-                """
-                )
-
-                result = cursor.fetchone()
-                cursor.close()
-                conn.close()
-
-                if result:
-                    context = result["content"]
-                    resume_id = result["id"]
-                    if result["llmContext"] and result["llmContext"].strip():
-                        context = f"{context}\n\n{result['llmContext']}"
-                        logger.info(
-                            f"✓ Loaded default resume from database: {len(result['content'])} chars content + {len(result['llmContext'])} chars context"
-                        )
-                    else:
-                        logger.info(
-                            f"✓ Loaded default resume from database: {len(context)} chars (content only)"
-                        )
-                    resume_context = context
-            except Exception as e:
-                logger.error(f"Failed to load default resume from database: {e}")
+            raise ValueError("Resume slug is required")
 
         # Only fall back to RESUME_CONTEXT if database queries completely failed
         if not resume_context:
