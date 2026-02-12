@@ -17,7 +17,14 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app, origins=os.getenv("CORS_ORIGINS", "http://localhost:5000").split(","))
+CORS(
+    app,
+    resources={
+        r"/api/*": {
+            "origins": os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+        }
+    },
+)
 
 # Configuration for external LLAMA server
 LLAMA_SERVER_URL = os.getenv("LLAMA_SERVER_URL", "http://localhost:8080")

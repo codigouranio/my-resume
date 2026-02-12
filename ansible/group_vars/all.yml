@@ -104,4 +104,5 @@ cors_origins:
   - "https://api.resumecast.ai"
   - "https://llm.resumecast.ai"
   - "https://resumecast.ai"
+  - "https://www.resumecast.ai"
 
