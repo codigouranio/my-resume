@@ -1,18 +1,18 @@
 import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
   ConflictException,
+  ForbiddenException,
+  Injectable,
   Logger,
-} from '@nestjs/common';
-import { PrismaService } from '../../shared/database/prisma.service';
-import { EmailService } from '../../shared/email/email.service';
-import { CreateResumeDto } from './dto/create-resume.dto';
-import { UpdateResumeDto } from './dto/update-resume.dto';
-import { CreateRecruiterInterestDto } from './dto/create-recruiter-interest.dto';
-import { EmbeddingQueueService } from '../embeddings/embedding-queue.service';
-import { EmbeddingJobType } from '../embeddings/dto/generate-embedding.dto';
-import * as crypto from 'crypto';
+  NotFoundException,
+} from "@nestjs/common";
+import * as crypto from "crypto";
+import { PrismaService } from "../../shared/database/prisma.service";
+import { EmailService } from "../../shared/email/email.service";
+import { EmbeddingJobType } from "../embeddings/dto/generate-embedding.dto";
+import { EmbeddingQueueService } from "../embeddings/embedding-queue.service";
+import { CreateRecruiterInterestDto } from "./dto/create-recruiter-interest.dto";
+import { CreateResumeDto } from "./dto/create-resume.dto";
+import { UpdateResumeDto } from "./dto/update-resume.dto";
 
 @Injectable()
 export class ResumesService {
@@ -31,7 +31,7 @@ export class ResumesService {
         where: { slug: createResumeDto.slug },
       });
       if (existing) {
-        throw new ConflictException('Slug already exists');
+        throw new ConflictException("Slug already exists");
       }
     }
 
@@ -65,7 +65,7 @@ export class ResumesService {
         template: true,
       },
       orderBy: {
-        updatedAt: 'desc',
+        updatedAt: "desc",
       },
     });
   }
@@ -86,12 +86,12 @@ export class ResumesService {
     });
 
     if (!resume) {
-      throw new NotFoundException('Resume not found');
+      throw new NotFoundException("Resume not found");
     }
 
     // If resume is not public and user is not the owner
     if (!resume.isPublic && resume.userId !== userId) {
-      throw new ForbiddenException('Access denied');
+      throw new ForbiddenException("Access denied");
     }
 
     return resume;
@@ -123,11 +123,11 @@ export class ResumesService {
     });
 
     if (!resume) {
-      throw new NotFoundException('Resume not found');
+      throw new NotFoundException("Resume not found");
     }
 
     if (!resume.isPublic || !resume.isPublished) {
-      throw new NotFoundException('Resume not found');
+      throw new NotFoundException("Resume not found");
     }
 
     // Track detailed view
@@ -182,7 +182,7 @@ export class ResumesService {
     });
 
     if (!user) {
-      throw new NotFoundException('Custom domain not found');
+      throw new NotFoundException("Custom domain not found");
     }
 
     let resume;
@@ -228,13 +228,13 @@ export class ResumesService {
           },
         },
         orderBy: {
-          createdAt: 'desc', // Get most recent resume
+          createdAt: "desc", // Get most recent resume
         },
       });
     }
 
     if (!resume) {
-      throw new NotFoundException('No public resume found for this domain');
+      throw new NotFoundException("No public resume found for this domain");
     }
 
     // Track view
@@ -279,7 +279,7 @@ export class ResumesService {
     });
 
     if (!resume) {
-      throw new NotFoundException('Resume not found');
+      throw new NotFoundException("Resume not found");
     }
 
     return {
@@ -307,13 +307,13 @@ export class ResumesService {
     });
 
     if (!resume || !resume) {
-      throw new NotFoundException('Resume not found');
+      throw new NotFoundException("Resume not found");
     }
 
     // Combine public content with hidden context for LLAMA
     return {
       ...resume,
-      fullContext: `${resume.content}\n\n<!-- ADDITIONAL CONTEXT FOR AI -->\n${resume.llmContext || ''}`,
+      fullContext: `${resume.content}\n\n<!-- ADDITIONAL CONTEXT FOR AI -->\n${resume.llmContext || ""}`,
     };
   }
 
@@ -336,11 +336,11 @@ export class ResumesService {
     });
 
     if (!resume) {
-      throw new NotFoundException('Resume not found');
+      throw new NotFoundException("Resume not found");
     }
 
     if (resume.userId !== userId) {
-      throw new ForbiddenException('Access denied');
+      throw new ForbiddenException("Access denied");
     }
 
     // Check slug uniqueness if updating
@@ -349,7 +349,7 @@ export class ResumesService {
         where: { slug: updateResumeDto.slug },
       });
       if (existing) {
-        throw new ConflictException('Slug already exists');
+        throw new ConflictException("Slug already exists");
       }
     }
 
@@ -367,8 +367,8 @@ export class ResumesService {
             ? this.calculateHash(updateResumeDto.llmContext)
             : null
           : resume.llmContext
-          ? this.calculateHash(resume.llmContext)
-          : null;
+            ? this.calculateHash(resume.llmContext)
+            : null;
 
       // Compare hashes with existing embeddings
       if (resume.embeddings) {
@@ -409,7 +409,7 @@ export class ResumesService {
    * Calculate MD5 hash of text for change detection
    */
   private calculateHash(text: string): string {
-    return crypto.createHash('md5').update(text).digest('hex');
+    return crypto.createHash("md5").update(text).digest("hex");
   }
 
   async remove(id: string, userId: string) {
@@ -418,11 +418,11 @@ export class ResumesService {
     });
 
     if (!resume) {
-      throw new NotFoundException('Resume not found');
+      throw new NotFoundException("Resume not found");
     }
 
     if (resume.userId !== userId) {
-      throw new ForbiddenException('Access denied');
+      throw new ForbiddenException("Access denied");
     }
 
     return this.prisma.resume.delete({
@@ -446,11 +446,11 @@ export class ResumesService {
     });
 
     if (!resume) {
-      throw new NotFoundException('Resume not found');
+      throw new NotFoundException("Resume not found");
     }
 
     if (!resume.isPublic || !resume.isPublished) {
-      throw new NotFoundException('Resume not available');
+      throw new NotFoundException("Resume not available");
     }
 
     // Create recruiter interest
@@ -491,7 +491,7 @@ export class ResumesService {
       select: { id: true },
     });
 
-    const resumeIds = resumes.map(r => r.id);
+    const resumeIds = resumes.map((r) => r.id);
 
     // Get all recruiter interests for these resumes (excluding soft-deleted)
     return this.prisma.recruiterInterest.findMany({
@@ -509,7 +509,7 @@ export class ResumesService {
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
   }
@@ -523,11 +523,11 @@ export class ResumesService {
     });
 
     if (!interest) {
-      throw new NotFoundException('Interest not found');
+      throw new NotFoundException("Interest not found");
     }
 
     if (interest.resume.userId !== userId) {
-      throw new ForbiddenException('Access denied');
+      throw new ForbiddenException("Access denied");
     }
 
     return this.prisma.recruiterInterest.update({
@@ -545,11 +545,11 @@ export class ResumesService {
     });
 
     if (!interest) {
-      throw new NotFoundException('Interest not found');
+      throw new NotFoundException("Interest not found");
     }
 
     if (interest.resume.userId !== userId) {
-      throw new ForbiddenException('Access denied');
+      throw new ForbiddenException("Access denied");
     }
 
     // Soft delete: set deletedAt timestamp
@@ -568,11 +568,11 @@ export class ResumesService {
     });
 
     if (!interest) {
-      throw new NotFoundException('Interest not found');
+      throw new NotFoundException("Interest not found");
     }
 
     if (interest.resume.userId !== userId) {
-      throw new ForbiddenException('Access denied');
+      throw new ForbiddenException("Access denied");
     }
 
     return this.prisma.recruiterInterest.update({
@@ -588,41 +588,46 @@ export class ResumesService {
     });
 
     if (!resume) {
-      throw new NotFoundException('Resume not found');
+      throw new NotFoundException("Resume not found");
     }
 
     if (resume.userId !== userId) {
-      throw new ForbiddenException('Access denied');
+      throw new ForbiddenException("Access denied");
     }
 
     // Get views data
-    const [totalViews, recentViews, viewsByDay, viewsByCountry, viewsByReferrer] =
-      await Promise.all([
-        // Total views
-        this.prisma.resumeView.count({
-          where: { resumeId },
-        }),
-        // Recent views (last 30 days)
-        this.prisma.resumeView.findMany({
-          where: {
-            resumeId,
-            viewedAt: {
-              gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-            },
+    const [
+      totalViews,
+      recentViews,
+      viewsByDay,
+      viewsByCountry,
+      viewsByReferrer,
+    ] = await Promise.all([
+      // Total views
+      this.prisma.resumeView.count({
+        where: { resumeId },
+      }),
+      // Recent views (last 30 days)
+      this.prisma.resumeView.findMany({
+        where: {
+          resumeId,
+          viewedAt: {
+            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
           },
-          orderBy: { viewedAt: 'desc' },
-          take: 100,
-          select: {
-            id: true,
-            viewedAt: true,
-            country: true,
-            city: true,
-            referrer: true,
-            userAgent: true,
-          },
-        }),
-        // Views by day (last 30 days)
-        this.prisma.$queryRaw`
+        },
+        orderBy: { viewedAt: "desc" },
+        take: 100,
+        select: {
+          id: true,
+          viewedAt: true,
+          country: true,
+          city: true,
+          referrer: true,
+          userAgent: true,
+        },
+      }),
+      // Views by day (last 30 days)
+      this.prisma.$queryRaw`
           SELECT 
             DATE("viewedAt") as date,
             COUNT(*)::int as views
@@ -632,8 +637,8 @@ export class ResumesService {
           GROUP BY DATE("viewedAt")
           ORDER BY date DESC
         `,
-        // Views by country
-        this.prisma.$queryRaw`
+      // Views by country
+      this.prisma.$queryRaw`
           SELECT 
             COALESCE(country, 'Unknown') as country,
             COUNT(*)::int as views
@@ -643,8 +648,8 @@ export class ResumesService {
           ORDER BY views DESC
           LIMIT 10
         `,
-        // Views by referrer
-        this.prisma.$queryRaw`
+      // Views by referrer
+      this.prisma.$queryRaw`
           SELECT 
             CASE 
               WHEN referrer IS NULL THEN 'Direct'
@@ -660,7 +665,7 @@ export class ResumesService {
           GROUP BY source
           ORDER BY views DESC
         `,
-      ]);
+    ]);
 
     return {
       totalViews: resume.viewCount,
@@ -680,16 +685,21 @@ export class ResumesService {
     });
 
     if (!resume) {
-      throw new NotFoundException('Resume not found');
+      throw new NotFoundException("Resume not found");
     }
 
     if (resume.userId !== userId) {
-      throw new ForbiddenException('Access denied');
+      throw new ForbiddenException("Access denied");
     }
 
     // Check if user has PRO tier
-    if (resume.user.subscriptionTier !== 'PRO' && resume.user.subscriptionTier !== 'ENTERPRISE') {
-      throw new ForbiddenException('Detailed analytics requires PRO subscription');
+    if (
+      resume.user.subscriptionTier !== "PRO" &&
+      resume.user.subscriptionTier !== "ENTERPRISE"
+    ) {
+      throw new ForbiddenException(
+        "Detailed analytics requires PRO subscription",
+      );
     }
 
     // Get comprehensive analytics
@@ -699,28 +709,32 @@ export class ResumesService {
       avgDuration,
       topReferrers,
       topCountries,
-      recentViews
+      recentViews,
     ] = await Promise.all([
       // Total views
       this.prisma.resumeView.count({
         where: { resumeId },
       }),
       // Unique visitors (by session ID)
-      this.prisma.resumeView.groupBy({
-        by: ['sessionId'],
-        where: { 
-          resumeId,
-          sessionId: { not: null }
-        },
-      }).then(sessions => sessions.length),
+      this.prisma.resumeView
+        .groupBy({
+          by: ["sessionId"],
+          where: {
+            resumeId,
+            sessionId: { not: null },
+          },
+        })
+        .then((sessions) => sessions.length),
       // Average duration
-      this.prisma.resumeView.aggregate({
-        where: {
-          resumeId,
-          duration: { not: null }
-        },
-        _avg: { duration: true },
-      }).then(result => Math.round(result._avg.duration || 0)),
+      this.prisma.resumeView
+        .aggregate({
+          where: {
+            resumeId,
+            duration: { not: null },
+          },
+          _avg: { duration: true },
+        })
+        .then((result) => Math.round(result._avg.duration || 0)),
       // Top referrers
       this.prisma.$queryRaw`
         SELECT 
@@ -755,7 +769,7 @@ export class ResumesService {
       // Recent views (last 50)
       this.prisma.resumeView.findMany({
         where: { resumeId },
-        orderBy: { viewedAt: 'desc' },
+        orderBy: { viewedAt: "desc" },
         take: 50,
         select: {
           id: true,
@@ -777,26 +791,45 @@ export class ResumesService {
     };
   }
 
-  async improveText(text: string, context: string = 'resume') {
-    const LLM_SERVICE_URL = process.env.LLM_SERVICE_URL || 'http://localhost:5000';
-    
+  async improveText(text: string, context: string = "resume") {
+    const LLM_SERVICE_URL =
+      process.env.LLM_SERVICE_URL || "http://localhost:5000";
+
     try {
       const response = await fetch(`${LLM_SERVICE_URL}/api/improve-text`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ text, context }),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to improve text');
+        throw new Error(error.error || "Failed to improve text");
       }
 
       return response.json();
     } catch (error) {
       throw new Error(`LLM service error: ${error.message}`);
     }
+  }
+
+  async identifySlug(url?: string): Promise<any> {
+    const customDomain = url?.match(/^([^.]+)\./)?.[1];
+    if (customDomain) {
+      const result = await this.prisma.$queryRaw`
+        SELECT "Resume"."slug"
+        FROM "User" INNER JOIN "Resume" ON "User".id = "Resume"."userId"
+        WHERE "User"."customDomain" = ${customDomain}
+        LIMIT 1
+      `;
+      return {
+        slug: result?.[0]?.slug || "default-slug",
+      };
+    }
+    return {
+      slug: url?.match(/([^/]+)$/)?.[1] || "default-slug",
+    };
   }
 }

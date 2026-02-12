@@ -1,11 +1,7 @@
-import { useEffect, useState, isValidElement } from 'react';
-import { useParams } from 'react-router-dom';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
+import { isValidElement, useEffect, useState } from 'react';
 import { apiClient } from '../../shared/api/client';
+import { CourseraCertificate, GitHubStats } from '../badges';
 import { ChatWidget } from '../chat';
-import { GitHubStats, CourseraCertificate } from '../badges';
 import { TEMPLATES, TemplateType } from '../templates';
 import './Resume.css';
 
@@ -15,7 +11,7 @@ interface ResumeProps {
 
 export default function Resume({ customDomain }: ResumeProps = {}) {
   const appVersion = import.meta.env.VITE_APP_VERSION || 'dev';
-  const { slug } = useParams<{ slug?: string }>();
+
   const [markdown, setMarkdown] = useState<string>('');
   const [resumeData, setResumeData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -25,39 +21,31 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
     name: '',
     email: '',
     company: '',
-    message: ''
+    message: '',
   });
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitSuccess, setSubmitSuccess] = useState<boolean>(false);
   const [expandedVideo, setExpandedVideo] = useState<string | null>(null);
   const [viewCount, setViewCount] = useState<number | null>(null);
+  const [slug, setSlug] = useState<string | null>(null);
+
+  if (customDomain) {
+    console.log(`Accessing resume via custom domain: ${customDomain}`);
+  }
 
   useEffect(() => {
-    if (customDomain) {
-      // Load resume by custom domain
-      fetchByCustomDomain(customDomain);
-    } else if (slug) {
-      // Load public resume by slug from API
-      fetchPublicResume(slug);
-    } else {
-      // Fallback to local resume.md (for backward compatibility)
-      fetchLocalResume();
-    }
-  }, [slug, customDomain]);
+    const fetchSlug = async () => {
+      const result = await apiClient.identifySlug();
+      setSlug(result?.slug || null);
+    };
+    fetchSlug();
+  }, []);
 
-  const fetchByCustomDomain = async (domain: string) => {
-    try {
-      const data = await apiClient.getResumeByDomain(domain);
-      setResumeData(data);
-      setMarkdown(data.content);
-      setViewCount(data.viewCount);
-    } catch (err: any) {
-      setError(err.message || 'Resume not found for this domain');
-      setMarkdown('');
-    } finally {
-      setIsLoading(false);
+  useEffect(() => {
+    if (slug) {
+      fetchPublicResume(slug);
     }
-  };
+  }, [slug]);
 
   const fetchPublicResume = async (slug: string) => {
     try {
@@ -78,20 +66,6 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const fetchLocalResume = () => {
-    fetch('/resume.md')
-      .then((response) => response.text())
-      .then((text) => {
-        setMarkdown(text);
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        console.error('Error loading resume:', error);
-        setError('Error loading resume. Please try again later.');
-        setIsLoading(false);
-      });
   };
 
   const handleInterestClick = () => {
@@ -132,7 +106,9 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
       }, 2000);
     } catch (error: any) {
       console.error('Error submitting interest:', error);
-      alert(error.message || 'Failed to submit your interest. Please try again.');
+      alert(
+        error.message || 'Failed to submit your interest. Please try again.',
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -191,8 +167,18 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
     return (
       <div className="min-h-screen flex items-center justify-center p-8">
         <div className="alert alert-error max-w-md">
-          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="stroke-current shrink-0 h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
           <span>{error}</span>
         </div>
@@ -210,8 +196,19 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
               onClick={handleDownloadPDF}
               className="btn btn-circle btn-ghost hover:btn-secondary transition-all"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
               </svg>
             </button>
           </div>
@@ -219,8 +216,19 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
             onClick={handleInterestClick}
             className="btn btn-primary btn-lg shadow-lg hover:shadow-xl transition-all gap-2"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              />
             </svg>
             I'm Interested - Let's Talk!
           </button>
@@ -230,7 +238,8 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
       {/* Template-based Resume Rendering */}
       {(() => {
         const templateType = (resumeData?.theme || 'default') as TemplateType;
-        const TemplateComponent = TEMPLATES[templateType]?.component || TEMPLATES.default.component;
+        const TemplateComponent =
+          TEMPLATES[templateType]?.component || TEMPLATES.default.component;
 
         const customComponents = {
           pre: ({ node, children, ...props }: any) => {
@@ -251,12 +260,14 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
 
             if (!inline && language === 'video') {
               const content = String(children).trim();
-              const urls = content.split('\n').filter(url => url.trim());
+              const urls = content.split('\n').filter((url) => url.trim());
 
               return (
                 <>
                   {urls.map((url, index) => {
-                    const videoId = url.match(/(?:embed\/|v=|youtu\.be\/)([a-zA-Z0-9_-]+)/)?.[1];
+                    const videoId = url.match(
+                      /(?:embed\/|v=|youtu\.be\/)([a-zA-Z0-9_-]+)/,
+                    )?.[1];
 
                     if (videoId) {
                       const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
@@ -274,7 +285,11 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
                             className="video-thumbnail-image"
                           />
                           <div className="video-play-button">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                            >
                               <path d="M8 5v14l11-7z" />
                             </svg>
                           </div>
@@ -294,7 +309,7 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
               const certData: Record<string, string> = {};
 
               // Parse key-value pairs
-              lines.forEach(line => {
+              lines.forEach((line) => {
                 const colonIndex = line.indexOf(':');
                 if (colonIndex > -1) {
                   const key = line.substring(0, colonIndex).trim();
@@ -317,9 +332,13 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
             }
 
             return inline ? (
-              <code className={className} {...props}>{children}</code>
+              <code className={className} {...props}>
+                {children}
+              </code>
             ) : (
-              <code className={className} {...props}>{children}</code>
+              <code className={className} {...props}>
+                {children}
+              </code>
             );
           },
           iframe: ({ node, ...props }: any) => (
@@ -331,12 +350,19 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
             // Handle GitHub Stats component
             if (src?.startsWith('github?') || src?.includes('username=')) {
               try {
-                const urlParams = new URLSearchParams(src.replace('github?', ''));
+                const urlParams = new URLSearchParams(
+                  src.replace('github?', ''),
+                );
                 const username = urlParams.get('username');
                 const theme = urlParams.get('theme') || 'dark';
 
                 if (username) {
-                  return <GitHubStats username={username} theme={theme as 'light' | 'dark'} />;
+                  return (
+                    <GitHubStats
+                      username={username}
+                      theme={theme as 'light' | 'dark'}
+                    />
+                  );
                 }
               } catch (error) {
                 console.error('Error parsing GitHub stats URL:', error);
@@ -344,15 +370,26 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
             }
 
             // Handle Coursera Certificate component
-            if (src?.startsWith('coursera?') || src?.includes('accomplishments=')) {
+            if (
+              src?.startsWith('coursera?') ||
+              src?.includes('accomplishments=')
+            ) {
               try {
-                const urlParams = new URLSearchParams(src.replace('coursera?', ''));
+                const urlParams = new URLSearchParams(
+                  src.replace('coursera?', ''),
+                );
                 const certId = urlParams.get('accomplishments');
                 const title = urlParams.get('title') || 'Certificate';
                 const date = urlParams.get('date');
 
                 if (certId) {
-                  return <CourseraCertificate certId={certId} title={title} date={date || undefined} />;
+                  return (
+                    <CourseraCertificate
+                      certId={certId}
+                      title={title}
+                      date={date || undefined}
+                    />
+                  );
                 }
               } catch (error) {
                 console.error('Error parsing Coursera certificate URL:', error);
@@ -379,22 +416,58 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
         // Dynamically render the appropriate template
         if (templateType === 'modern') {
           const { ModernTemplate } = require('../templates');
-          return <ModernTemplate content={markdown} viewCount={viewCount} components={customComponents} />;
+          return (
+            <ModernTemplate
+              content={markdown}
+              viewCount={viewCount}
+              components={customComponents}
+            />
+          );
         } else if (templateType === 'minimal') {
           const { MinimalTemplate } = require('../templates');
-          return <MinimalTemplate content={markdown} viewCount={viewCount} components={customComponents} />;
+          return (
+            <MinimalTemplate
+              content={markdown}
+              viewCount={viewCount}
+              components={customComponents}
+            />
+          );
         } else if (templateType === 'professional') {
           const { ProfessionalTemplate } = require('../templates');
-          return <ProfessionalTemplate content={markdown} viewCount={viewCount} components={customComponents} />;
+          return (
+            <ProfessionalTemplate
+              content={markdown}
+              viewCount={viewCount}
+              components={customComponents}
+            />
+          );
         } else if (templateType === 'corporate') {
           const { CorporateTemplate } = require('../templates');
-          return <CorporateTemplate content={markdown} viewCount={viewCount} components={customComponents} />;
+          return (
+            <CorporateTemplate
+              content={markdown}
+              viewCount={viewCount}
+              components={customComponents}
+            />
+          );
         } else if (templateType === 'tech') {
           const { TechTemplate } = require('../templates');
-          return <TechTemplate content={markdown} viewCount={viewCount} components={customComponents} />;
+          return (
+            <TechTemplate
+              content={markdown}
+              viewCount={viewCount}
+              components={customComponents}
+            />
+          );
         } else {
           const { DefaultTemplate } = require('../templates');
-          return <DefaultTemplate content={markdown} viewCount={viewCount} components={customComponents} />;
+          return (
+            <DefaultTemplate
+              content={markdown}
+              viewCount={viewCount}
+              components={customComponents}
+            />
+          );
         }
       })()}
 
@@ -404,22 +477,55 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-base-content/60">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
-                <span>Last updated: {new Date(resumeData.updatedAt).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}</span>
+                <span>
+                  Last updated:{' '}
+                  {new Date(resumeData.updatedAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </span>
               </div>
               {viewCount !== null && (
                 <div className="flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    />
                   </svg>
-                  <span>{viewCount.toLocaleString()} {viewCount === 1 ? 'view' : 'views'}</span>
+                  <span>
+                    {viewCount.toLocaleString()}{' '}
+                    {viewCount === 1 ? 'view' : 'views'}
+                  </span>
                 </div>
               )}
             </div>
@@ -431,17 +537,35 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
               {showContactModal && (
                 <div className="modal modal-open">
                   <div className="modal-box max-w-2xl">
-                    <h3 className="font-bold text-2xl mb-4">Express Your Interest</h3>
+                    <h3 className="font-bold text-2xl mb-4">
+                      Express Your Interest
+                    </h3>
 
                     {submitSuccess ? (
                       <div className="alert alert-success">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="stroke-current shrink-0 h-6 w-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
                         </svg>
-                        <span>Thank you! Your interest has been submitted successfully.</span>
+                        <span>
+                          Thank you! Your interest has been submitted
+                          successfully.
+                        </span>
                       </div>
                     ) : (
-                      <form onSubmit={handleContactSubmit} className="space-y-4">
+                      <form
+                        onSubmit={handleContactSubmit}
+                        className="space-y-4"
+                      >
                         <div className="form-control">
                           <label className="label">
                             <span className="label-text">Your Name *</span>
@@ -451,7 +575,12 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
                             placeholder="John Doe"
                             className="input input-bordered"
                             value={contactForm.name}
-                            onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                            onChange={(e) =>
+                              setContactForm({
+                                ...contactForm,
+                                name: e.target.value,
+                              })
+                            }
                             required
                           />
                         </div>
@@ -465,7 +594,12 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
                             placeholder="john@company.com"
                             className="input input-bordered"
                             value={contactForm.email}
-                            onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                            onChange={(e) =>
+                              setContactForm({
+                                ...contactForm,
+                                email: e.target.value,
+                              })
+                            }
                             required
                           />
                         </div>
@@ -479,7 +613,12 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
                             placeholder="Your Company"
                             className="input input-bordered"
                             value={contactForm.company}
-                            onChange={(e) => setContactForm({ ...contactForm, company: e.target.value })}
+                            onChange={(e) =>
+                              setContactForm({
+                                ...contactForm,
+                                company: e.target.value,
+                              })
+                            }
                           />
                         </div>
 
@@ -491,7 +630,12 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
                             className="textarea textarea-bordered h-32"
                             placeholder="I'd like to discuss an opportunity with you..."
                             value={contactForm.message}
-                            onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                            onChange={(e) =>
+                              setContactForm({
+                                ...contactForm,
+                                message: e.target.value,
+                              })
+                            }
                             required
                           ></textarea>
                         </div>
@@ -523,15 +667,29 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
                       </form>
                     )}
                   </div>
-                  <div className="modal-backdrop" onClick={() => !isSubmitting && setShowContactModal(false)}></div>
+                  <div
+                    className="modal-backdrop"
+                    onClick={() => !isSubmitting && setShowContactModal(false)}
+                  ></div>
                 </div>
               )}
               <a
                 href="/"
                 className="font-semibold text-primary hover:underline flex items-center gap-1"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
                 </svg>
                 ResumeCast.ai
               </a>
@@ -553,7 +711,10 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
             >
               ✕
             </button>
-            <div className="video-container expanded" style={{ maxWidth: '100%', paddingBottom: '56.25%' }}>
+            <div
+              className="video-container expanded"
+              style={{ maxWidth: '100%', paddingBottom: '56.25%' }}
+            >
               <iframe
                 src={expandedVideo}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -561,7 +722,10 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
               />
             </div>
           </div>
-          <div className="modal-backdrop" onClick={() => setExpandedVideo(null)} />
+          <div
+            className="modal-backdrop"
+            onClick={() => setExpandedVideo(null)}
+          />
         </div>
       )}
     </div>

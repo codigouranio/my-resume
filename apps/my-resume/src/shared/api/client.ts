@@ -41,12 +41,14 @@ class ApiClient {
   private async request(endpoint: string, options: RequestInit = {}) {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     };
 
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
+
+    headers['X-Referer-URL'] = window.location.href;
 
     let response = await fetch(`${this.baseURL}${endpoint}`, {
       ...options,
@@ -54,7 +56,11 @@ class ApiClient {
     });
 
     // If 401 and we have a refresh token, try to refresh
-    if (response.status === 401 && this.refreshToken && !endpoint.includes('/auth/')) {
+    if (
+      response.status === 401 &&
+      this.refreshToken &&
+      !endpoint.includes('/auth/')
+    ) {
       const refreshed = await this.tryRefreshToken();
       if (refreshed) {
         // Retry original request with new token
@@ -67,7 +73,9 @@ class ApiClient {
     }
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: response.statusText }));
+      const error = await response
+        .json()
+        .catch(() => ({ message: response.statusText }));
       throw new Error(error.message || 'Request failed');
     }
 
@@ -107,7 +115,12 @@ class ApiClient {
   }
 
   // Auth
-  async register(data: { email: string; password: string; firstName?: string; lastName?: string }) {
+  async register(data: {
+    email: string;
+    password: string;
+    firstName?: string;
+    lastName?: string;
+  }) {
     return this.request('/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -152,7 +165,13 @@ class ApiClient {
     return this.request('/users/me');
   }
 
-  async updateCurrentUser(data: { firstName?: string; lastName?: string; phone?: string | null; customDomain?: string | null; defaultResumeId?: string | null }) {
+  async updateCurrentUser(data: {
+    firstName?: string;
+    lastName?: string;
+    phone?: string | null;
+    customDomain?: string | null;
+    defaultResumeId?: string | null;
+  }) {
     return this.request('/users/me', {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -160,7 +179,9 @@ class ApiClient {
   }
 
   async checkSubdomainAvailability(subdomain: string) {
-    return this.request(`/users/check-subdomain?subdomain=${encodeURIComponent(subdomain)}`);
+    return this.request(
+      `/users/check-subdomain?subdomain=${encodeURIComponent(subdomain)}`,
+    );
   }
 
   async deleteAccount() {
@@ -213,15 +234,18 @@ class ApiClient {
     });
   }
 
-  async updateResume(id: string, data: Partial<{
-    slug: string;
-    title: string;
-    content: string;
-    llmContext?: string;
-    isPublic?: boolean;
-    isPublished?: boolean;
-    theme?: string;
-  }>) {
+  async updateResume(
+    id: string,
+    data: Partial<{
+      slug: string;
+      title: string;
+      content: string;
+      llmContext?: string;
+      isPublic?: boolean;
+      isPublished?: boolean;
+      theme?: string;
+    }>,
+  ) {
     return this.request(`/resumes/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -322,14 +346,24 @@ class ApiClient {
     return this.request(`/analytics/chat/${resumeId}/learning-gaps`);
   }
 
-  async getChatTrends(resumeId: string, period: 'daily' | 'weekly' | 'monthly' = 'daily', startDate?: string, endDate?: string) {
+  async getChatTrends(
+    resumeId: string,
+    period: 'daily' | 'weekly' | 'monthly' = 'daily',
+    startDate?: string,
+    endDate?: string,
+  ) {
     let url = `/analytics/chat/${resumeId}/trends?period=${period}`;
     if (startDate) url += `&startDate=${startDate}`;
     if (endDate) url += `&endDate=${endDate}`;
     return this.request(url);
   }
 
-  async getChatInteractions(resumeId: string, startDate?: string, endDate?: string, sentiment?: string) {
+  async getChatInteractions(
+    resumeId: string,
+    startDate?: string,
+    endDate?: string,
+    sentiment?: string,
+  ) {
     let url = `/analytics/chat/${resumeId}/interactions?`;
     if (startDate) url += `&startDate=${startDate}`;
     if (endDate) url += `&endDate=${endDate}`;
@@ -343,6 +377,10 @@ class ApiClient {
 
   async getDetailedAnalytics(resumeId: string) {
     return this.request(`/resumes/${resumeId}/analytics/detailed`);
+  }
+
+  async identifySlug(): Promise<{ slug: string | null }> {
+    return this.request('/resumes/identify-slug');
   }
 }
 
