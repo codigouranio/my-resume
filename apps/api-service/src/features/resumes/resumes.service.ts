@@ -816,8 +816,11 @@ export class ResumesService {
   }
 
   async identifySlug(url?: string): Promise<any> {
-    const customDomain = url?.match(/^([^.]+)\./)?.[1];
-    if (customDomain) {
+
+    const match = url.match(/^https?:\/\/([^.]+)\./);
+    const customDomain = match ? match[1] : null; // null for root domain
+
+    if (customDomain && customDomain !== "www") {
       const result = await this.prisma.$queryRaw`
         SELECT "Resume"."slug"
         FROM "User" INNER JOIN "Resume" ON "User".id = "Resume"."userId"
