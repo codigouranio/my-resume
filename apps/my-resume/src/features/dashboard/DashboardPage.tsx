@@ -318,7 +318,7 @@ export function DashboardPage() {
                       <div className="card-actions justify-end mt-4">
                         {resume.isPublic && resume.isPublished && (
                           <a
-                            href={formatResumeUrl(resume.slug, user?.customDomain)}
+                            href={formatResumeUrl(resume.slug)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="btn btn-sm btn-ghost gap-1"
