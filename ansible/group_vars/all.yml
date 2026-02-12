@@ -100,7 +100,8 @@ cors_origins:
   - "https://{{ domain }}"
   - "https://api.{{ domain }}"
   - "https://llm.{{ domain }}"
-  - "https://my-resume.paskot.com"
-  - "https://api.paskot.com"
-  - "https://llm.paskot.com"
+  - "https://my-resume.resumecast.ai"
+  - "https://api.resumecast.ai"
+  - "https://llm.resumecast.ai"
+  - "https://resumecast.ai"
 
