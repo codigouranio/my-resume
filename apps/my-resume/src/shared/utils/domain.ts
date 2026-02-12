@@ -23,7 +23,10 @@ export function getDisplayBaseDomain(): string {
 export function formatCustomDomainUrl(customDomain: string, path?: string): string {
   const baseDomain = getBaseDomain();
   const pathPart = path ? `/${path}` : '';
-  return `${customDomain}.${baseDomain}${pathPart}`;
+  if (customDomain) {
+    return `${customDomain}.${baseDomain}`;
+  }
+  return `${baseDomain}${pathPart}`;
 }
 
 /**
