@@ -87,7 +87,7 @@ fail2ban_enabled: true
 # Application Environment
 node_env: production
 enable_source_maps: true
-enable_debug_logging: false
+enable_debug_logging: true
 frontend_url: "https://resumecast.ai"
 
 # Analytics Configuration (optional - set in production)
