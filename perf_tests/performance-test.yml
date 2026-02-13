@@ -1,0 +1,34 @@
+config:
+  target: "https://resumecast.ai"
+  phases:
+    - duration: 60
+      arrivalRate: 5 # 5 requests per second
+      name: Warm up
+    - duration: 120
+      arrivalRate: 10 # 10 requests per second
+      name: Load test
+  defaults:
+    headers:
+      Content-Type: "application/json"
+
+scenarios:
+  - name: 'Health check'
+    weight: 70
+    flow:
+      - get:
+          url: '/api/health'
+          
+  - name: 'Resume page'
+    weight: 20
+    flow:
+      - get:
+          url: '/resume/jose-blanco-swe'
+          
+  - name: 'Chat API'
+    weight: 10
+    flow:
+      - post:
+          url: '/api/chat'
+          json:
+            message: 'What are your skills?'
+            slug: 'jose-blanco-swe'

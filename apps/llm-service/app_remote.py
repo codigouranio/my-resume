@@ -609,9 +609,9 @@ def chat():
             {resume_context}
             {history_block[-300:]}
 
-            Recruiter/Visitor Question: {user_message}
+            Recruiter/Visitor Question to answer: {user_message}
 
-            Professional Answer:
+            Now I want you to provide a Professional Answer:
         """
 
         # Generate response via external LLAMA server
