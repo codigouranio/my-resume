@@ -459,7 +459,7 @@ def generate_completion(
     elif LLAMA_API_TYPE == "ollama":
         return call_ollama_server(user_message, max_tokens)
     elif LLAMA_API_TYPE == "openai":
-        return call_openai_compatible(system_prompt, max_tokens)
+        return call_openai_compatible(system_prompt, user_message, max_tokens)
     else:
         raise ValueError(f"Unsupported LLAMA_API_TYPE: {LLAMA_API_TYPE}")
 
