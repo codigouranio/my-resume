@@ -412,14 +412,19 @@ def call_ollama_chat_for_rewrite(original_text: str, max_tokens: int = 256) -> d
         raise
 
 
-def call_openai_compatible(prompt: str, max_tokens: int = 256) -> dict:
+def call_openai_compatible(
+    system_prompt: str, user_message: str, max_tokens: int = 256
+) -> dict:
     """Call OpenAI-compatible API (LocalAI, vLLM, etc.)."""
     try:
         response = requests.post(
             f"{LLAMA_SERVER_URL}/v1/chat/completions",
             json={
                 "model": os.getenv("MODEL_NAME", "Qwen/Qwen2.5-7B-Instruct"),
-                "messages": [{"role": "user", "content": prompt}],
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_message},
+                ],
                 "max_tokens": max_tokens,
                 "temperature": 0.7,
                 "top_p": 0.9,
@@ -440,19 +445,21 @@ def call_openai_compatible(prompt: str, max_tokens: int = 256) -> dict:
         raise
 
 
-def generate_completion(prompt: str, max_tokens: int = 256) -> dict:
+def generate_completion(
+    system_prompt: str, user_message: str, max_tokens: int = 256
+) -> dict:
     """Route to appropriate LLAMA server based on API type."""
 
     logger.info(
-        f"Generating completion with API type '{LLAMA_API_TYPE}' for prompt: {prompt[:100]}..."
+        f"Generating completion with API type '{LLAMA_API_TYPE}' for prompt: {user_message[:100]}..."
     )
 
     if LLAMA_API_TYPE == "llama-cpp":
-        return call_llama_cpp_server(prompt, max_tokens)
+        return call_llama_cpp_server(user_message, max_tokens)
     elif LLAMA_API_TYPE == "ollama":
-        return call_ollama_server(prompt, max_tokens)
+        return call_ollama_server(user_message, max_tokens)
     elif LLAMA_API_TYPE == "openai":
-        return call_openai_compatible(prompt, max_tokens)
+        return call_openai_compatible(system_prompt, max_tokens)
     else:
         raise ValueError(f"Unsupported LLAMA_API_TYPE: {LLAMA_API_TYPE}")
 
@@ -600,23 +607,24 @@ def chat():
             history_block = "\nCONVERSATION HISTORY:\n" + "\n".join(formatted_history)
 
         # Build prompt with context and safety guardrails
-        prompt = f"""You are a professional AI assistant representing {user_first_name}'s professional background. 
-            You are speaking to recruiters and interested visitors who want to learn about {user_first_name}'s career, skills, and qualifications.
+        system_prompt = f"""
+            You are a professional AI assistant representing {user_first_name}. 
+            You are speaking to recruiters and interested visitors who want to 
+            learn about {user_first_name}'s career. Be concise, engaging, and 
+            focus only on relevant details from the resume. Do not share sensitive 
+            or unrelated information unless directly asked. Respond in a single 
+            continuous paragraph without extra line breaks to keep answers complete and focused.
 
+            SAFETY_INSTRUCTIONS:
             {safety_instructions}
 
-            PROFESSIONAL INFORMATION:
+            RESUME_SUMMARY:
             {resume_context}
-            {history_block[-300:]}
-
-            Recruiter/Visitor Question to answer: {user_message}
-
-            Now I want you to provide a Professional Answer:
         """
 
         # Generate response via external LLAMA server
         logger.info(f"Generating response for: {user_message[:100]}")
-        result = generate_completion(prompt, max_tokens=256)
+        result = generate_completion(system_prompt, user_message, max_tokens=256)
         answer = result["text"].strip()
 
         logger.info(f"Generated response: {answer[:100]}")
