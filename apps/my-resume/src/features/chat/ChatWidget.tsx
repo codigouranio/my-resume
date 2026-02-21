@@ -29,7 +29,11 @@ const getConversationId = (slug: string | null) => {
   return created;
 };
 
-export default function ChatWidget() {
+interface ChatWidgetProps {
+  resumeSlug?: string;
+}
+
+export default function ChatWidget({ resumeSlug }: ChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
@@ -42,7 +46,7 @@ export default function ChatWidget() {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const slug = getResumeSlug();
+  const slug = resumeSlug || getResumeSlug();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -193,7 +197,9 @@ export default function ChatWidget() {
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`chat ${message.type === 'user' ? 'chat-end' : 'chat-start'}`} onClick={() => inputRef.current?.focus()}              >
+                className={`chat ${message.type === 'user' ? 'chat-end' : 'chat-start'}`}
+                onClick={() => inputRef.current?.focus()}
+              >
                 <div className="chat-bubble">
                   {message.text}
                 </div>

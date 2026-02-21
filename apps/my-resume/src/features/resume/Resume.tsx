@@ -699,7 +699,7 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
         </footer>
       )}
 
-      <ChatWidget />
+      <ChatWidget resumeSlug={slug ?? undefined} />
 
       {/* Video Modal */}
       {expandedVideo && (

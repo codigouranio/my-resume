@@ -100,12 +100,5 @@ cors_origins:
   - "https://{{ domain }}"
   - "https://api.{{ domain }}"
   - "https://llm.{{ domain }}"
-  - "https://my-resume.resumecast.ai"
-  - "https://api.resumecast.ai"
-  - "https://llm.resumecast.ai"
-  - "https://resumecast.ai"
-  - "https://www.resumecast.ai"
-  - "https://jose-blanco.resumecast.ai"
-  - "https://*.resumecast.ai"
-  - "^https?://([a-zA-Z0-9-]+\\.)*resumecast\\.ai(:\\d+)?$"
+  - "https://*.{{ domain }}"
 
