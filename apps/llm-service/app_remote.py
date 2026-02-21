@@ -4,6 +4,8 @@ Flask API service that connects to an existing LLAMA server.
 Use this if you already have LLAMA running (llama.cpp server, Ollama, etc.)
 """
 
+import re
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
@@ -24,7 +26,12 @@ CORS(
     app,
     resources={
         r"/api/*": {
-            "origins": os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+            "origins": [
+                re.compile(r"^" + re.escape(origin.strip()) + r"$")
+                for origin in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(
+                    ","
+                )
+            ]
         }
     },
 )
