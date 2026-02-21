@@ -106,5 +106,6 @@ cors_origins:
   - "https://resumecast.ai"
   - "https://www.resumecast.ai"
   - "https://jose-blanco.resumecast.ai"
+  - "https://*.resumecast.ai"
   - "^https?://([a-zA-Z0-9-]+\\.)*resumecast\\.ai(:\\d+)?$"
 

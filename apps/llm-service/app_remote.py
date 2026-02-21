@@ -25,9 +25,12 @@ app = Flask(__name__)
 CORS(
     app,
     resources={
-        r"/api/*": {
+        r"/api/.*": {
             "origins": [
-                re.compile(r"^" + re.escape(origin.strip()) + r"$")
+                re.compile(r"^https?://([a-zA-Z0-9-]+\.)*resumecast\.ai(:\d+)?$")
+            ]
+            + [
+                re.compile(origin)
                 for origin in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(
                     ","
                 )
