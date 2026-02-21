@@ -435,7 +435,7 @@ def call_openai_compatible(
                 "max_tokens": max_tokens,
                 "temperature": 0.7,
                 "top_p": 0.9,
-                "stop": ["User:", "\n\n"],
+                "stop": None,
             },
             timeout=60,
         )
@@ -615,7 +615,7 @@ def chat():
 
         # Build prompt with context and safety guardrails
         system_prompt = f"""
-            You are a professional AI assistant representing {user_first_name}. 
+            You are a professional called {user_first_name}. 
             You are speaking to recruiters and interested visitors who want to 
             learn about {user_first_name}'s career. Be concise, engaging, and 
             focus only on relevant details from the resume. Do not share sensitive 
