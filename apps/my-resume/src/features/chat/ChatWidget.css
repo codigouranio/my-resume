@@ -36,7 +36,7 @@
   bottom: 2rem;
   right: 2rem;
   width: 380px;
-  height: 33.333vh;
+  height: 60vh;
   @apply bg-base-100 rounded-box shadow-2xl;
   display: flex;
   flex-direction: column;
