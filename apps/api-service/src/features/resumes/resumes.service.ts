@@ -17,6 +17,7 @@ import { EmbeddingQueueService } from "../embeddings/embedding-queue.service";
 import { CreateRecruiterInterestDto } from "./dto/create-recruiter-interest.dto";
 import { CreateResumeDto } from "./dto/create-resume.dto";
 import { UpdateResumeDto } from "./dto/update-resume.dto";
+import { first } from "rxjs";
 
 @Injectable()
 export class ResumesService {
@@ -869,11 +870,10 @@ export class ResumesService {
       const ast = processor.parse(mdContent);
 
       // Rendering state
-      let y = 50;
-      const pageWidth = doc.page.width - 100;
-      const lineHeight = 14;
+      const pageMargin = 25;
+      let y = pageMargin;
+      const pageWidth = doc.page.width - 3 * pageMargin;
       const fontSize = 12;
-      let inList = false;
       let listIndent = 0;
       let listItemCount = 1;
 
@@ -897,7 +897,7 @@ export class ResumesService {
 
         const words = text.split(/\s+/);
         let line = "";
-        const x = 50 + indent;
+        const x = pageMargin + indent;
         let currentX = x;
         let currentWidth = pageWidth - indent;
         let firstLine = true;
@@ -923,22 +923,25 @@ export class ResumesService {
           if (testWidth > currentWidth) {
             // Print current line
             let lineX = currentX;
+
             if (firstLine && bullet) {
               doc.text(bullet, x, y);
               lineX = x + bulletWidth;
             }
 
             doc.text(line, lineX, y);
+            checkPageOverflow();
 
             y += lineHeight;
-            checkPageOverflow();
+            firstLine = false;
             line = word;
 
             if (firstLine && bullet) {
               firstLine = false;
-              currentX = x + bulletWidth;
-              currentWidth = pageWidth - indent - bulletWidth;
             }
+
+            currentX = x + bulletWidth;
+            currentWidth = pageWidth - indent - bulletWidth;
           } else {
             line = testLine;
           }
@@ -953,14 +956,14 @@ export class ResumesService {
           }
           doc.text(line, lineX, y);
           y += lineHeight;
-        }
 
-        checkPageOverflow();
+          checkPageOverflow();
+        }
       }
 
       // Check if we need a new page
       function checkPageOverflow() {
-        if (y > doc.page.height - 50) {
+        if (y > doc.page.height - pageMargin - 50) {
           doc.addPage();
           y = 50;
         }
@@ -978,22 +981,36 @@ export class ResumesService {
             if (headingText === resume.title) {
               break; // Skip title since it's already rendered
             }
-            addText(headingText, { bold: true, fontSize: 20 - level * 2 });
+            addText(headingText, {
+              bold: true,
+              fontSize: 20 - level * 2,
+              indent: 1,
+            });
+
             y += 10;
-            break;
+            return SKIP;
           }
           case "paragraph": {
-            let paraText = "";
-            visit(node, "text", (textNode) => {
-              paraText += textNode.value;
+            visit(node, (textNode: any) => {
+              if (textNode.type === "text") {
+                addText(textNode.value, { indent: 1 });
+              } else if (textNode.type === "strong") {
+                let strongText = "";
+                visit(textNode, "text", (st) => {
+                  strongText += st.value;
+                });
+                addText(strongText, { bold: true, indent: 1 });
+                return SKIP;
+              } else if (textNode.type === "break") {
+                addText("", { indent: 1 });
+              }
             });
-            addText(paraText, { indent: inList ? listIndent : 0 });
-            y += 15;
-            break;
+
+            y += 10;
+            return SKIP;
           }
           case "list": {
-            inList = true;
-            listIndent = 20;
+            listIndent = 10;
             listItemCount = 1;
 
             visit(node, "listItem", (listItem) => {
@@ -1008,8 +1025,9 @@ export class ResumesService {
               listItemCount++;
             });
 
-            y += 10;
+            addText("", { indent: 1 }); // Add spacing after list
 
+            y += 10;
             return SKIP;
           }
           case "blockquote": {
@@ -1019,19 +1037,22 @@ export class ResumesService {
             visit(node, "text", (textNode) => {
               quoteText += textNode.value;
             });
-            addText(quoteText, { indent: 20 });
+            addText(quoteText, { indent: 10 });
             doc.restore();
-            break;
+
+            y += 10;
+            return SKIP;
           }
           case "code": {
             doc.font("Courier").fontSize(10);
             const codeLines = node.value.split("\n");
             codeLines.forEach((line) => {
-              addText(line, { indent: 20 });
+              addText(line, { indent: 10 });
             });
             doc.font("Helvetica").fontSize(fontSize);
+
             y += 10;
-            break;
+            return SKIP;
           }
         }
       });
