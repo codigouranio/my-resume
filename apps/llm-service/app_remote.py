@@ -282,7 +282,6 @@ def _get_safety_instructions(user_info: dict) -> str:
         raise ValueError("User information is required for safety instructions")
 
     user_full_name = f"{user_info.get('firstName', 'The person')} {user_info.get('lastName', '')}".strip()
-    user_first_name = user_info.get("firstName", "The person").strip()
 
     return f"""
         IMPORTANT GUIDELINES:
@@ -573,7 +572,8 @@ def chat():
             logger.warning(f"No user information found for slug: {slug}")
             return jsonify({"error": "Resume not found"}), 404
 
-        user_first_name = user_info[0].get("firstName", "The person").strip()
+        user_full_name = f"{user_info.get('firstName', 'The person')} {user_info.get('lastName', '')}".strip()
+        user_first_name = user_info.get("firstName", "The person").strip()
 
         # Safety guardrails for the AI responses
         safety_instructions = _get_safety_instructions(user_info[0])
