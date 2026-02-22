@@ -9,11 +9,12 @@ import {
   Post,
   Query,
   Req,
+  Res,
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { EmailService } from "@shared/email/email.service";
-import { Request } from "express";
+import { Request, Response } from "express";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { Public } from "../auth/decorators/public.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
@@ -76,6 +77,13 @@ export class ResumesController {
         : undefined;
 
     return this.resumesService.findBySlug(slug, view === "true", viewData);
+  }
+
+  @Get("public/:slug/pdf")
+  @Public()
+  @ApiOperation({ summary: "Generate PDF for public resume" })
+  async generatePdf(@Param("slug") slug: string, @Res() res: Response) {
+    return this.resumesService.generatePdf(slug, res);
   }
 
   @Get("public/:slug/stats")

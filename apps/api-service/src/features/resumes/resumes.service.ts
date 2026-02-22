@@ -6,6 +6,10 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import * as crypto from "crypto";
+import { Response } from "express";
+import remarkParse from "remark-parse";
+import { unified } from "unified";
+import { CONTINUE, EXIT, SKIP, visit } from "unist-util-visit";
 import { PrismaService } from "../../shared/database/prisma.service";
 import { EmailService } from "../../shared/email/email.service";
 import { EmbeddingJobType } from "../embeddings/dto/generate-embedding.dto";
@@ -816,7 +820,6 @@ export class ResumesService {
   }
 
   async identifySlug(url?: string): Promise<any> {
-
     const match = url.match(/^https?:\/\/([^.]+)\.([^.]+\.[^./]+)(?:\/.*)?$/);
     const customDomain = match ? match[1] : null; // null for root domain
 
@@ -834,5 +837,163 @@ export class ResumesService {
     return {
       slug: url?.match(/([^/]+)$/)?.[1] || "default-slug",
     };
+  }
+
+  async generatePdf(slug: string, res: Response) {
+    try {
+      const resume = await this.findBySlug(slug, false);
+
+      if (!resume) {
+        throw new NotFoundException("Resume not found");
+      }
+
+      const filename = `${resume.slug}.pdf`;
+
+      const PDFDocument = require("pdfkit");
+      const doc = new PDFDocument({
+        size: "LEGAL",
+        margins: { top: 50, bottom: 50, left: 50, right: 50 },
+      });
+
+      res.set({
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${filename}"`,
+      });
+
+      doc.pipe(res);
+
+      const mdContent = `# ${resume.title}\n\n${resume.content}`;
+
+      // Parse Markdown to AST
+      const processor = unified().use(remarkParse);
+      const ast = processor.parse(mdContent);
+
+      // Rendering state
+      let y = 50;
+      const pageWidth = doc.page.width - 100;
+      const lineHeight = 14;
+      const fontSize = 12;
+      let inList = false;
+      let listIndent = 0;
+      let listItemCount = 1;
+
+      function addText(
+        text: string,
+        options: { bold?: boolean; italic?: boolean; indent?: number } = {},
+      ) {
+        const { bold = false, italic = false, indent = 0 } = options;
+        doc
+          .font(
+            bold
+              ? "Helvetica-Bold"
+              : italic
+                ? "Helvetica-Oblique"
+                : "Helvetica",
+          )
+          .fontSize(fontSize);
+
+        const words = text.split(" ");
+        let line = "";
+        let x = 50 + indent;
+
+        words.forEach((word) => {
+          const testLine = line + (line ? " " : "") + word;
+          const width = doc.widthOfString(testLine);
+          if (width > pageWidth - indent) {
+            doc.text(line, x, y);
+            y += lineHeight;
+            checkPageOverflow();
+            line = word;
+          } else {
+            line = testLine;
+          }
+        });
+
+        if (line) {
+          doc.text(line, x, y);
+          y += lineHeight;
+        }
+
+        checkPageOverflow();
+      }
+
+      function checkPageOverflow() {
+        if (y > doc.page.height - 50) {
+          doc.addPage();
+          y = 50;
+        }
+      }
+
+      // Traverse AST
+      visit(ast, (node: any) => {
+        switch (node.type) {
+          case "heading": {
+            const level = node.depth;
+            doc.fontSize(32 - (level * 2)).font('Helvetica-Bold');
+            let headingText = "";
+            visit(node, "text", (textNode) => {
+              headingText += textNode.value;
+            });
+            addText(headingText, { bold: true });
+            y += 10;
+            break;
+          }
+          case "paragraph": {
+            let paraText = "";
+            visit(node, "text", (textNode) => {
+              paraText += textNode.value;
+            });
+            addText(paraText, { indent: inList ? listIndent : 0 });
+            y += 5;
+            break;
+          }
+          case "list": {
+            inList = true;
+            listIndent = 20;
+            listItemCount = 1;
+
+            visit(node, "listItem", (listItem) => {
+              let itemText = "";
+              visit(listItem, "text", (textNode) => {
+                itemText += textNode.value;
+              });
+              const bullet = listItem.parent?.ordered
+                ? `${listItemCount}. `
+                : "• ";
+              addText(bullet + itemText, { indent: listIndent });
+              listItemCount++;
+            });
+
+            return SKIP;
+          }
+          case "blockquote": {
+            doc.save();
+            doc.fillColor("gray");
+            let quoteText = "";
+            visit(node, "text", (textNode) => {
+              quoteText += textNode.value;
+            });
+            addText(quoteText, { indent: 20 });
+            doc.restore();
+            break;
+          }
+          case "code": {
+            doc.font("Courier").fontSize(10);
+            const codeLines = node.value.split("\n");
+            codeLines.forEach((line) => {
+              addText(line, { indent: 20 });
+            });
+            doc.font("Helvetica").fontSize(fontSize);
+            y += 10;
+            break;
+          }
+        }
+      });
+
+      doc.end();
+    } catch (error) {
+      this.logger.error(`Failed to generate PDF for slug ${slug}:`, error);
+      throw new Error("Failed to generate PDF");
+    }
   }
 }

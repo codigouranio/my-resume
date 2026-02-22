@@ -1,9 +1,11 @@
 import { isValidElement, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../shared/api/client';
 import { CourseraCertificate, GitHubStats } from '../badges';
 import { ChatWidget } from '../chat';
 import { TEMPLATES, TemplateType } from '../templates';
 import './Resume.css';
+const API_BASE_URL = import.meta.env.PUBLIC_API_URL || '/api';
 
 interface ResumeProps {
   customDomain?: string;
@@ -28,6 +30,7 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
   const [expandedVideo, setExpandedVideo] = useState<string | null>(null);
   const [viewCount, setViewCount] = useState<number | null>(null);
   const [slug, setSlug] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   if (customDomain) {
     console.log(`Accessing resume via custom domain: ${customDomain}`);
@@ -73,7 +76,7 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
   };
 
   const handleDownloadPDF = () => {
-    window.print();
+    navigate(`${API_BASE_URL}/resumes/public/${slug}/pdf`);
   };
 
   const handleContactSubmit = async (e: React.FormEvent) => {
