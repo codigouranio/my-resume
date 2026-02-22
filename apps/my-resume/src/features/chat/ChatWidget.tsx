@@ -38,8 +38,8 @@ export default function ChatWidget({ resumeSlug }: ChatWidgetProps) {
   const [messages, setMessages] = useState([
     {
       type: 'bot',
-      text: "Hi! I'm an AI assistant. Feel free to ask me about this person's career, skills, or experience!"
-    }
+      text: "Hi! Feel free to ask me about my career, skills, or experience!",
+    },
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -93,7 +93,7 @@ export default function ChatWidget({ resumeSlug }: ChatWidgetProps) {
         body: JSON.stringify({
           message: currentQuestion,
           slug: slug,
-          conversationId: activeConversationId
+          conversationId: activeConversationId,
         }),
       });
 
@@ -104,18 +104,19 @@ export default function ChatWidget({ resumeSlug }: ChatWidgetProps) {
       const data = await response.json();
       const botResponse = {
         type: 'bot',
-        text: data.response
+        text: data.response,
       };
-      setMessages(prev => [...prev, botResponse]);
+      setMessages((prev) => [...prev, botResponse]);
     } catch (error) {
       console.error('Error calling LLM API:', error);
       // Fallback to local response if API fails
       const botResponse = {
         type: 'bot',
-        text: "I'm having trouble connecting to the AI service right now. " +
-          getBotResponseFallback(currentQuestion.toLowerCase())
+        text:
+          "I'm having trouble connecting to the AI service right now. " +
+          getBotResponseFallback(currentQuestion.toLowerCase()),
       };
-      setMessages(prev => [...prev, botResponse]);
+      setMessages((prev) => [...prev, botResponse]);
     } finally {
       setIsLoading(false);
       focusInput();
@@ -124,16 +125,20 @@ export default function ChatWidget({ resumeSlug }: ChatWidgetProps) {
 
   const getBotResponseFallback = (question: string): string => {
     if (question.includes('experience') || question.includes('work')) {
-      return "This person has extensive experience in full-stack development, working with leading technology companies. They specialize in TypeScript, React, Node.js, and AWS infrastructure.";
+      return 'This person has extensive experience in full-stack development, working with leading technology companies. They specialize in TypeScript, React, Node.js, and AWS infrastructure.';
     } else if (question.includes('skill') || question.includes('technology')) {
       // Fallback for skills question - should be answered by LLM with actual resume data
       return "I can help you learn about this person's skills and experience. Please ask me a specific question about their background!";
-    } else if (question.includes('contact') || question.includes('email') || question.includes('reach')) {
-      return "You can reach out through LinkedIn or check the contact section. Would you like to know more about any specific project or experience?";
+    } else if (
+      question.includes('contact') ||
+      question.includes('email') ||
+      question.includes('reach')
+    ) {
+      return 'You can reach out through LinkedIn or check the contact section. Would you like to know more about any specific project or experience?';
     } else if (question.includes('education')) {
-      return "Check the education section for academic background and certifications. Would you like to know more about their work experience instead?";
+      return 'Check the education section for academic background and certifications. Would you like to know more about their work experience instead?';
     } else if (question.includes('project')) {
-      return "They have worked on notable projects including building multi-tenant platforms, developing API gateways handling millions of events, and creating threat detection interfaces. Check out the details in the resume!";
+      return 'They have worked on notable projects including building multi-tenant platforms, developing API gateways handling millions of events, and creating threat detection interfaces. Check out the details in the resume!';
     } else {
       return "That's a great question! Feel free to ask me about their experience, skills, projects, or education. I'm here to help you learn more about their career!";
     }
@@ -201,7 +206,7 @@ export default function ChatWidget({ resumeSlug }: ChatWidgetProps) {
                 onClick={() => inputRef.current?.focus()}
               >
                 <div className="chat-bubble">
-                  {message.text}
+                  <div dangerouslySetInnerHTML={{ __html: message.text }} />
                 </div>
               </div>
             ))}
