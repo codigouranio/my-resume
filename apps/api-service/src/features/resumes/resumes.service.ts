@@ -9,7 +9,7 @@ import * as crypto from "crypto";
 import { Response } from "express";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
-import { CONTINUE, EXIT, SKIP, visit } from "unist-util-visit";
+import { SKIP, visit } from "unist-util-visit";
 import { PrismaService } from "../../shared/database/prisma.service";
 import { EmailService } from "../../shared/email/email.service";
 import { EmbeddingJobType } from "../embeddings/dto/generate-embedding.dto";
@@ -877,46 +877,88 @@ export class ResumesService {
       let listIndent = 0;
       let listItemCount = 1;
 
+      // Function to add text with wrapping and optional bullet for first line
+      // Assumes font, size, and color are set before calling
       function addText(
         text: string,
-        options: { bold?: boolean; italic?: boolean; indent?: number } = {},
+        options: {
+          indent?: number;
+          bullet?: string;
+          bold?: boolean;
+          fontSize?: number;
+        } = {},
       ) {
-        const { bold = false, italic = false, indent = 0 } = options;
-        doc
-          .font(
-            bold
-              ? "Helvetica-Bold"
-              : italic
-                ? "Helvetica-Oblique"
-                : "Helvetica",
-          )
-          .fontSize(fontSize);
+        const {
+          indent = 0,
+          bullet = "",
+          bold = false,
+          fontSize = 12,
+        } = options;
 
-        const words = text.split(" ");
+        const words = text.split(/\s+/);
         let line = "";
-        let x = 50 + indent;
+        const x = 50 + indent;
+        let currentX = x;
+        let currentWidth = pageWidth - indent;
+        let firstLine = true;
+        const bulletWidth = bullet ? doc.widthOfString(bullet) : 0;
+
+        if (bold) {
+          doc.font("Times-Bold").fontSize(fontSize);
+        } else {
+          doc.font("Times-Roman").fontSize(fontSize);
+        }
+
+        // Compute dynamic line height based on current font settings
+        const lineHeight = doc.currentLineHeight() + 2;
 
         words.forEach((word) => {
-          const testLine = line + (line ? " " : "") + word;
-          const width = doc.widthOfString(testLine);
-          if (width > pageWidth - indent) {
-            doc.text(line, x, y);
+          let testLine = line + (line ? " " : "") + word;
+          let testWidth = doc.widthOfString(testLine);
+
+          if (firstLine && bullet) {
+            testWidth += bulletWidth;
+          }
+
+          if (testWidth > currentWidth) {
+            // Print current line
+            let lineX = currentX;
+            if (firstLine && bullet) {
+              doc.text(bullet, x, y);
+              lineX = x + bulletWidth;
+            }
+
+            doc.text(line, lineX, y);
+
             y += lineHeight;
             checkPageOverflow();
             line = word;
+
+            if (firstLine && bullet) {
+              firstLine = false;
+              currentX = x + bulletWidth;
+              currentWidth = pageWidth - indent - bulletWidth;
+            }
           } else {
             line = testLine;
           }
         });
 
+        // Print remaining line
         if (line) {
-          doc.text(line, x, y);
+          let lineX = currentX;
+          if (firstLine && bullet) {
+            doc.text(bullet, x, y);
+            lineX = x + bulletWidth;
+          }
+          doc.text(line, lineX, y);
           y += lineHeight;
         }
 
         checkPageOverflow();
       }
 
+      // Check if we need a new page
       function checkPageOverflow() {
         if (y > doc.page.height - 50) {
           doc.addPage();
@@ -929,12 +971,14 @@ export class ResumesService {
         switch (node.type) {
           case "heading": {
             const level = node.depth;
-            doc.fontSize(32 - (level * 2)).font('Helvetica-Bold');
             let headingText = "";
             visit(node, "text", (textNode) => {
               headingText += textNode.value;
             });
-            addText(headingText, { bold: true });
+            if (headingText === resume.title) {
+              break; // Skip title since it's already rendered
+            }
+            addText(headingText, { bold: true, fontSize: 20 - level * 2 });
             y += 10;
             break;
           }
@@ -944,7 +988,7 @@ export class ResumesService {
               paraText += textNode.value;
             });
             addText(paraText, { indent: inList ? listIndent : 0 });
-            y += 5;
+            y += 15;
             break;
           }
           case "list": {
@@ -963,6 +1007,8 @@ export class ResumesService {
               addText(bullet + itemText, { indent: listIndent });
               listItemCount++;
             });
+
+            y += 10;
 
             return SKIP;
           }
