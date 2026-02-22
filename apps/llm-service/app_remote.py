@@ -572,8 +572,8 @@ def chat():
             logger.warning(f"No user information found for slug: {slug}")
             return jsonify({"error": "Resume not found"}), 404
 
-        user_full_name = f"{user_info.get('firstName', 'The person')} {user_info.get('lastName', '')}".strip()
-        user_first_name = user_info.get("firstName", "The person").strip()
+        user_first_name = user_info[0].get("firstName", "The person").strip()
+        user_full_name = f"{user_info[0].get('firstName', 'The person')} {user_info[0].get('lastName', '')}".strip()
 
         # Safety guardrails for the AI responses
         safety_instructions = _get_safety_instructions(user_info[0])
