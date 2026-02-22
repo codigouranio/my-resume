@@ -423,7 +423,7 @@ def call_ollama_chat_for_rewrite(original_text: str, max_tokens: int = 256) -> d
 
 
 def call_openai_compatible(
-    system_prompt: str, user_message: str, max_tokens: int = 256
+    system_prompt: str, user_message: str, max_tokens: int = 128
 ) -> dict:
     """Call OpenAI-compatible API (LocalAI, vLLM, etc.)."""
     try:
@@ -456,7 +456,7 @@ def call_openai_compatible(
 
 
 def generate_completion(
-    system_prompt: str, user_message: str, max_tokens: int = 256
+    system_prompt: str, user_message: str, max_tokens: int = 128
 ) -> dict:
     """Route to appropriate LLAMA server based on API type."""
 
@@ -634,7 +634,7 @@ def chat():
 
         # Generate response via external LLAMA server
         logger.info(f"Generating response for: {user_message[:100]}")
-        result = generate_completion(system_prompt, user_message, max_tokens=256)
+        result = generate_completion(system_prompt, user_message, max_tokens=200)
         answer = result["text"].strip()
 
         logger.info(f"Generated response: {answer[:100]}")
