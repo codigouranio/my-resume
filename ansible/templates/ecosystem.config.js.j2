@@ -31,9 +31,12 @@ module.exports = {
       max_memory_restart: '1G',
       env: {
         PORT: {{ llm_port }},
-        LLAMA_SERVER_URL: '{{ llama_server_url }}',
         LLAMA_API_TYPE: '{{ llama_api_type }}',
+        LLAMA_SERVER_URL: '{{ llama_server_url }}',
+        LLAMA_MODEL: '{{ llama_model }}',
         OLLAMA_MODEL: '{{ ollama_model }}',
+        VLLM_SERVER_URL: '{{ vllm_server_url }}',
+        VLLM_MODEL: '{{ vllm_model }}',
         DATABASE_URL: 'postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}',
         RESUME_PATH: '../../data/resume.md',
         ADMIN_TOKEN: '{{ llm_admin_token }}'
