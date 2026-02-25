@@ -54,7 +54,7 @@ postgres_user: "{{ db_user }}"
 postgres_password: "{{ db_password }}"
 
 # LLM Service Configuration
-ollama_model: "qwen2.5:7b-instruct"
+llama_model: "llama3.1"
 llama_server_url: "http://localhost:9000"
 vllm_model: "Qwen/Qwen2.5-7B-Instruct"
 vllm_server_url: "http://localhost:11434"

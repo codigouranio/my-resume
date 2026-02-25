@@ -422,7 +422,7 @@ def call_ollama_chat_for_rewrite(original_text: str, max_tokens: int = 256) -> d
         response = requests.post(
             f"{LLAMA_SERVER_URL}/api/chat",
             json={
-                "model": os.getenv("OLLAMA_MODEL", LLAMA_MODEL),
+                "model": LLAMA_MODEL,
                 "messages": [
                     {
                         "role": "system",
