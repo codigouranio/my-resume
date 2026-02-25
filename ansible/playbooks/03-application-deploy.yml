@@ -190,7 +190,7 @@
       changed_when: false
 
     - name: Pull main Ollama model for chat
-      command: ollama pull {{ ollama_model }}
+      command: ollama pull {{ llama_model }}
       become_user: "{{ ansible_user }}"
       when: ollama_check.rc == 0
       async: 300
@@ -205,14 +205,14 @@
 
     - name: Display Ollama models
       shell: ollama list
-      register: ollama_models
+      register: llama_models
       become_user: "{{ ansible_user }}"
       when: ollama_check.rc == 0
       changed_when: false
 
     - name: Show installed models
       debug:
-        msg: "{{ ollama_models.stdout_lines }}"
+        msg: "{{ llama_models.stdout_lines }}"
       when: ollama_check.rc == 0
 
     # Prepare Frontend Environment
