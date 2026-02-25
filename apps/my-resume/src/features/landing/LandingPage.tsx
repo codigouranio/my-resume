@@ -24,10 +24,10 @@ export function LandingPage() {
         <div className="hero-content text-center text-primary-content">
           <div className="max-w-4xl">
             <h1 className="text-6xl font-bold mb-6">
-              Create Your Professional Resume
+              Build Your Resume Once, Evolve Forever
             </h1>
             <p className="text-xl mb-8 opacity-90">
-              Build, customize, and share stunning resumes with intelligent AI assistance. Make your resume interactive with our specialized AI agent storyteller, transforming your experience into compelling narratives that captivate recruiters and accelerate job offers.
+              Your Career on Autopilot: AI Resumes That Interview for You, Log Achievements Forever, and Unlock Recruiter Insights.
             </p>
             <div className="flex gap-4 justify-center">
               <Link to="/register" className="btn btn-lg bg-black text-white px-8 py-4 rounded-lg font-semibold text-lg shadow-lg hover:bg-gray-800 hover:shadow-xl transition-all duration-200" data-discover="true">
@@ -49,57 +49,49 @@ export function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="card bg-base-100 shadow-xl">
               <div className="card-body items-center text-center">
-                <div className="text-5xl mb-4">🔍</div>
-                <h3 className="card-title">AI-Powered Search</h3>
-                <p>Find the perfect candidate with semantic search that understands skills and experience</p>
+                <div className="text-5xl mb-4">🤖</div>
+                <h3 className="card-title">Recruiter-Facing AI Avatar</h3>
+                <p>Let your personal AI representative answer questions 24/7 using public resume + private hidden context—professional responses without ever exposing your notes. Recruiters chat instantly; you sleep.</p>
               </div>
             </div>
 
             <div className="card bg-base-100 shadow-xl">
               <div className="card-body items-center text-center">
-                <div className="text-5xl mb-4">✨</div>
-                <h3 className="card-title">AI-Powered Chat</h3>
-                <p>Get instant help and suggestions from our AI assistant trained on your career details</p>
+                <div className="text-5xl mb-4">📖</div>
+                <h3 className="card-title">Lifelong Private Career Log</h3>
+                <p>Keep a detailed record of your career achievements and milestones, accessible anytime for personal growth and reflection.</p>
               </div>
             </div>
 
             <div className="card bg-base-100 shadow-xl">
               <div className="card-body items-center text-center">
-                <div className="text-5xl mb-4">🎨</div>
-                <h3 className="card-title">Beautiful Templates</h3>
-                <p>Choose from professionally designed templates that make your resume stand out</p>
-              </div>
-            </div>
-
-            <div className="card bg-base-100 shadow-xl">
-              <div className="card-body items-center text-center">
-                <div className="text-5xl mb-4">🔗</div>
-                <h3 className="card-title">Shareable Links</h3>
-                <p>Get a custom URL for your resume and share it anywhere with ease</p>
-              </div>
-            </div>
-
-            <div className="card bg-base-100 shadow-xl">
-              <div className="card-body items-center text-center">
-                <div className="text-5xl mb-4">📝</div>
-                <h3 className="card-title">Markdown Editor</h3>
-                <p>Write your resume in Markdown with live preview for instant feedback</p>
-              </div>
-            </div>
-
-            <div className="card bg-base-100 shadow-xl">
-              <div className="card-body items-center text-center">
-                <div className="text-5xl mb-4">🔒</div>
-                <h3 className="card-title">Privacy Control</h3>
-                <p>Choose who can see your resume - public, private, or unlisted</p>
+                <div className="text-5xl mb-4">🔐</div>
+                <h3 className="card-title">Full Privacy & Rule-Based Control</h3>
+                <p>Private data stays encrypted and never shown—GDPR-compliant and secure.</p>
               </div>
             </div>
 
             <div className="card bg-base-100 shadow-xl">
               <div className="card-body items-center text-center">
                 <div className="text-5xl mb-4">📊</div>
-                <h3 className="card-title">Analytics</h3>
-                <p>Track views and engagement on your resume to understand your reach</p>
+                <h3 className="card-title">Market Feedback Dashboard</h3>
+                <p>See exactly what recruiters ask about you, top topics, skill gaps, and personalized learning suggestions to accelerate your next offer.</p>
+              </div>
+            </div>
+
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body items-center text-center">
+                <div className="text-5xl mb-4">🎨</div>
+                <h3 className="card-title">Stunning Professional Templates</h3>
+                <p>Choose from designer-crafted templates that render beautifully on web and PDF—make your resume stand out while staying fully ATS-friendly.</p>
+              </div>
+            </div>
+
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body items-center text-center">
+                <div className="text-5xl mb-4">👥</div>
+                <h3 className="card-title">Multi-Faceted Resume Versions</h3>
+                <p>Create unlimited tailored resumes for different roles or industries—share one unified private AI context and bitácora across all versions for smarter, consistent avatar responses.</p>
               </div>
             </div>
           </div>
