@@ -55,18 +55,18 @@ postgres_password: "{{ db_password }}"
 
 # LLM Service Configuration
 llama_model: "llama3.1"
-llama_server_url: "http://localhost:9000"
-vllm_model: "Qwen/Qwen2.5-7B-Instruct"
-vllm_server_url: "http://localhost:11434"
+llama_server_url: "http://localhost:11434"
 llama_api_type: "openai"
+vllm_model: "Qwen/Qwen2.5-7B-Instruct"
+vllm_server_url: "http://localhost:9000"
 
 # PM2 Configuration
 pm2_instances_api: 2
 pm2_max_memory_restart: "512M"
 
 # Nginx Configuration
-enable_ssl: false  # Set to true for Let's Encrypt SSL
-domain: "{{ ansible_host }}"  # Override with your domain
+enable_ssl: false # Set to true for Let's Encrypt SSL
+domain: "{{ ansible_host }}" # Override with your domain
 
 # CloudFlare Configuration (optional)
 enable_cloudflare: false
@@ -83,7 +83,7 @@ monitoring_port: 9090
 
 # Security
 enable_firewall: true
-allowed_ssh_ips: []  # Empty = allow all, or specify IPs like ['1.2.3.4']
+allowed_ssh_ips: [] # Empty = allow all, or specify IPs like ['1.2.3.4']
 fail2ban_enabled: true
 
 # Application Environment
@@ -93,14 +93,13 @@ enable_debug_logging: true
 frontend_url: "https://resumecast.ai"
 
 # Analytics Configuration (optional - set in production)
-gtm_id: ""  # e.g., GTM-XXXXXXX
-ga_id: ""  # e.g., G-XXXXXXXXXX
+gtm_id: "" # e.g., GTM-XXXXXXX
+ga_id: "" # e.g., G-XXXXXXXXXX
 
 # CORS Configuration - Updated for Cloudflare Tunnel subdomain routing
-cors_origins: 
+cors_origins:
   - "http://localhost:3001"
   - "https://{{ domain }}"
   - "https://api.{{ domain }}"
   - "https://llm.{{ domain }}"
   - "https://*.{{ domain }}"
-

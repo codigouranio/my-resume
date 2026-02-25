@@ -44,7 +44,7 @@ VLLM_SERVER_URL = os.getenv("VLLM_SERVER_URL", "http://localhost:8080")
 VLLM_MODEL = os.getenv("VLLM_MODEL", "Qwen/Qwen2.5-7B-Instruct")
 
 LLAMA_SERVER_URL = os.getenv("LLAMA_SERVER_URL", "http://localhost:8080")
-LLAMA_MODEL = os.getenv("LLAMA_MODEL", "llama2:latest")
+LLAMA_MODEL = os.getenv("LLAMA_MODEL", "llama3.1")
 
 LLAMA_API_TYPE = os.getenv("LLAMA_API_TYPE", "llama-cpp")  # or "ollama", "openai"
 

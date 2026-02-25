@@ -175,6 +175,8 @@
           LLAMA_SERVER_URL={{ llama_server_url }}
           LLAMA_API_TYPE={{ llama_api_type }}
           LLAMA_MODEL={{ llama_model }}
+          VLLM_SERVER_URL={{ vllm_server_url }}
+          VLLM_MODEL={{ vllm_model }}
           RESUME_PATH=../../data/resume.md
           DATABASE_URL=postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}
           ADMIN_TOKEN={{ llm_admin_token }}
