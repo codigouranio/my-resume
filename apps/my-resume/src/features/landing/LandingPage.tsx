@@ -51,7 +51,7 @@ export function LandingPage() {
               <div className="card-body items-center text-center">
                 <div className="text-5xl mb-4">🤖</div>
                 <h3 className="card-title">Recruiter-Facing AI Avatar</h3>
-                <p>Let your personal AI representative answer questions 24/7 using public resume + private hidden context—professional responses without ever exposing your notes. Recruiters chat instantly; you sleep.</p>
+                <p>Let your personal AI representative answer questions 24/7 using public resume + private hidden context professional responses without ever exposing your notes. Recruiters chat instantly; you sleep.</p>
               </div>
             </div>
 
@@ -67,7 +67,7 @@ export function LandingPage() {
               <div className="card-body items-center text-center">
                 <div className="text-5xl mb-4">🔐</div>
                 <h3 className="card-title">Full Privacy & Rule-Based Control</h3>
-                <p>Private data stays encrypted and never shown—GDPR-compliant and secure.</p>
+                <p>Private data stays encrypted and never shown GDPR-compliant and secure.</p>
               </div>
             </div>
 
@@ -83,7 +83,7 @@ export function LandingPage() {
               <div className="card-body items-center text-center">
                 <div className="text-5xl mb-4">🎨</div>
                 <h3 className="card-title">Stunning Professional Templates</h3>
-                <p>Choose from designer-crafted templates that render beautifully on web and PDF—make your resume stand out while staying fully ATS-friendly.</p>
+                <p>Choose from designer-crafted templates that render beautifully on web and PDF make your resume stand out while staying fully ATS-friendly.</p>
               </div>
             </div>
 
@@ -91,7 +91,7 @@ export function LandingPage() {
               <div className="card-body items-center text-center">
                 <div className="text-5xl mb-4">👥</div>
                 <h3 className="card-title">Multi-Faceted Resume Versions</h3>
-                <p>Create unlimited tailored resumes for different roles or industries—share one unified private AI context and bitácora across all versions for smarter, consistent avatar responses.</p>
+                <p>Create unlimited tailored resumes for different roles or industries share one unified private AI context and bitácora across all versions for smarter, consistent avatar responses.</p>
               </div>
             </div>
           </div>
