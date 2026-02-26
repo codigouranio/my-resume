@@ -1,9 +1,7 @@
 #!/bin/bash
 set -e
 
-PG_BIN="/usr/lib/postgresql/14/bin"
-
-su postgres -c export PATH="$PG_BIN:$PATH"
+PG_BIN="/usr/lib/postgresql/bin"
 
 # Set up Postgres user if needed
 if ! id -u postgres >/dev/null 2>&1; then

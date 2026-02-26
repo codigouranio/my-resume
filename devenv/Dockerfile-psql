@@ -30,7 +30,10 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Add PostgreSQL bin directory to PATH
-ENV PATH="/usr/lib/postgresql/14/bin:$PATH"
+ENV PATH="/usr/lib/postgresql/$PG_MAJOR/bin:$PATH"
+
+# Create symlink for version-agnostic path
+RUN ln -s /usr/lib/postgresql/$PG_MAJOR/bin /usr/lib/postgresql/bin
 
 # Setup postgres user
 RUN useradd -m -s /bin/bash postgres || true
