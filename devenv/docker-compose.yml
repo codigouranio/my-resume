@@ -1,0 +1,17 @@
+services:
+  db:
+    build:
+      context: .
+      dockerfile: Dockerfile-psql
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: resume_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data # Persist data
+
+volumes:
+  pgdata:

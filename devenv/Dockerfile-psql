@@ -1,0 +1,51 @@
+# Use Ubuntu base (pulls arm64 variant on ARM hosts)
+FROM --platform=linux/arm64 ubuntu:22.04
+
+# Set timezone non-interactively
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends tzdata && rm -rf /var/lib/apt/lists/*
+RUN ln -fs /usr/share/zoneinfo/UTC /etc/localtime && dpkg-reconfigure -f noninteractive tzdata
+
+ARG PG_MAJOR=14
+
+ADD https://github.com/pgvector/pgvector.git#v0.8.2 /tmp/pgvector
+
+RUN apt-get update && \
+    apt-mark hold locales && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    postgresql-$PG_MAJOR \
+    postgresql-contrib-$PG_MAJOR \
+    postgresql-server-dev-$PG_MAJOR && \
+    cd /tmp/pgvector && \
+    make clean && \
+    make OPTFLAGS="" && \
+    make install && \
+    mkdir /usr/share/doc/pgvector && \
+    cp LICENSE README.md /usr/share/doc/pgvector && \
+    rm -r /tmp/pgvector && \
+    apt-get remove -y build-essential postgresql-server-dev-$PG_MAJOR && \
+    apt-get autoremove -y && \
+    apt-mark unhold locales && \
+    rm -rf /var/lib/apt/lists/*
+
+# Add PostgreSQL bin directory to PATH
+ENV PATH="/usr/lib/postgresql/14/bin:$PATH"
+
+# Setup postgres user
+RUN useradd -m -s /bin/bash postgres || true
+
+# Set PG data dir
+ENV PGDATA /var/lib/postgresql/data
+RUN mkdir -p $PGDATA
+
+# Copy entrypoint
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Expose port
+EXPOSE 5432
+
+# Use entrypoint to handle init and start
+ENTRYPOINT ["/entrypoint.sh"]
+
