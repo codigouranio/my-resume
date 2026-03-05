@@ -16,6 +16,7 @@ import { BadgesModule } from './features/badges/badges.module';
 import { SubscriptionsModule } from './features/subscriptions/subscriptions.module';
 import { EmbeddingsModule } from './features/embeddings/embeddings.module';
 import { ChatAnalyticsModule } from './features/analytics/chat-analytics.module';
+import { AIContextModule } from './features/ai-context/ai-context.module';
 import { AppThrottlerGuard } from './shared/guards/throttler.guard';
 
 @Module({
@@ -84,6 +85,7 @@ import { AppThrottlerGuard } from './shared/guards/throttler.guard';
     SubscriptionsModule,
     EmbeddingsModule,
     ChatAnalyticsModule,
+    AIContextModule,
   ],
   providers: [
     {

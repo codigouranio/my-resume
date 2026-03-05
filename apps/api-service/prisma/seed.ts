@@ -98,9 +98,94 @@ async function main() {
     data: { defaultResumeId: janeResume.id },
   });
 
+  // Seed AI Context Journal Posts
+  const josePost1 = await prisma.journalPost.create({
+    data: {
+      userId: jose.id,
+      text: "Presented the new vLLM infrastructure migration to the team today. Got great feedback and approval to proceed with phase 2. The 5-10x throughput improvement is exactly what we need for scaling.",
+      includeInAI: true,
+      publishedAt: new Date("2026-02-28"),
+    },
+  });
+
+  const josePost2 = await prisma.journalPost.create({
+    data: {
+      userId: jose.id,
+      text: "Implemented the recruiter conversation isolation feature with conversationId. This will help us track and analyze individual recruiter interactions more effectively. Testing looks good so far.",
+      includeInAI: true,
+      publishedAt: new Date("2026-02-27"),
+    },
+  });
+
+  const josePost3 = await prisma.journalPost.create({
+    data: {
+      userId: jose.id,
+      text: "Had a great week - closed 2 enterprise deals and the product roadmap alignment meeting went smoothly. Team morale is high and we're on track for Q1 targets.",
+      includeInAI: true,
+      publishedAt: new Date("2026-02-25"),
+    },
+  });
+
+  const janePost1 = await prisma.journalPost.create({
+    data: {
+      userId: jane.id,
+      text: "Onboarding experiment results are in - we achieved 18% activation lift! This validates our hypothesis about the intuitive dashboard design. Rolling out to all new users next week.",
+      includeInAI: true,
+      publishedAt: new Date("2026-02-28"),
+    },
+  });
+
+  const janePost2 = await prisma.journalPost.create({
+    data: {
+      userId: jane.id,
+      text: "Led product strategy workshop with leadership. Aligned on 2026 roadmap priorities and got budget approval for Q2 initiatives. Excited about the growth experiments we're planning.",
+      includeInAI: true,
+      publishedAt: new Date("2026-02-26"),
+    },
+  });
+
+  // Add reactions to posts
+  await prisma.journalPostReaction.create({
+    data: {
+      postId: josePost1.id,
+      reactionType: "FIRE",
+    },
+  });
+
+  await prisma.journalPostReaction.create({
+    data: {
+      postId: josePost2.id,
+      reactionType: "THUMBSUP",
+    },
+  });
+
+  // Add reply to post
+  await prisma.journalPostReply.create({
+    data: {
+      postId: josePost1.id,
+      text: "Follow-up thought: Should also document the load testing results for the vLLM setup to share with stakeholders.",
+    },
+  });
+
+  // Tag posts to resumes
+  await prisma.postResumeTag.create({
+    data: {
+      postId: josePost1.id,
+      resumeId: joseResume.id,
+    },
+  });
+
+  await prisma.postResumeTag.create({
+    data: {
+      postId: janePost1.id,
+      resumeId: janeResume.id,
+    },
+  });
+
   console.log("Seed complete:");
   console.log(`- Users: ${jose.email}, ${jane.email}`);
   console.log(`- Resumes: ${joseResume.slug}, ${janeResume.slug}`);
+  console.log(`- Journal Posts: ${[josePost1.id, josePost2.id, josePost3.id, janePost1.id, janePost2.id].length} total`);
 }
 
 main()

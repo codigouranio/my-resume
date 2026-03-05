@@ -58,6 +58,7 @@ model User {
   refreshTokens RefreshToken[]
   passwordResetTokens PasswordResetToken[]
   defaultResume Resume?  @relation("DefaultResume", fields: [defaultResumeId], references: [id])
+  journalPosts  JournalPost[] // Private life journal
   
   @@index([email])
   @@index([stripeCustomerId])
@@ -128,6 +129,7 @@ model Resume {
   embeddings        ResumeEmbedding?    // Embeddings for semantic search
   chatInteractions  ChatInteraction[]
   chatAnalytics     ChatAnalytics[]
+  postTags          PostResumeTag[]     // Journal posts tagged to this resume
   
   @@index([userId])
   @@index([slug])
@@ -209,9 +211,10 @@ model ResumeEmbedding {
   resumeId              String                       @unique
   
   // Embeddings (nomic-embed-text produces 768-dimensional vectors)
-  contentEmbedding      Unsupported("vector(768)")?  // Public resume content
-  llmContextEmbedding   Unsupported("vector(768)")?  // Hidden AI context
-  combinedEmbedding     Unsupported("vector(768)")?  // Weighted combination for search
+  // TODO: Enable when pgvector extension is installed
+  // contentEmbedding      Unsupported("vector(768)")?  // Public resume content
+  // llmContextEmbedding   Unsupported("vector(768)")?  // Hidden AI context
+  // combinedEmbedding     Unsupported("vector(768)")?  // Weighted combination for search
   
   // Metadata for tracking
   embeddingModel        String                       @default("nomic-embed-text")
@@ -309,3 +312,117 @@ model ChatAnalytics {
   @@index([resumeId])
   @@index([date])
 }
+// AI Context / Private Life Journal
+enum ReactionType {
+  LIKE
+  HEART
+  MEDAL
+  AWARD
+  FIRE
+  LAUGH
+  THUMBSUP
+  CUSTOM
+}
+
+model JournalPost {
+  id              String   @id @default(cuid())
+  userId          String
+  
+  // Content
+  text            String   @db.Text // Up to 500 words
+  publishedAt     DateTime @default(now()) // Can be backdated
+  
+  // AI Context
+  includeInAI     Boolean  @default(true) // Toggle to exclude from AI context
+  
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime? // Soft delete
+  
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attachments     JournalPostAttachment[]
+  reactions       JournalPostReaction[]
+  replies         JournalPostReply[]
+  resumeTags      PostResumeTag[]
+  
+  @@index([userId])
+  @@index([publishedAt])
+  @@index([includeInAI])
+  @@index([deletedAt])
+}
+
+model JournalPostAttachment {
+  id              String   @id @default(cuid())
+  postId          String
+  
+  // File metadata
+  fileName        String
+  fileUrl         String   @db.Text // Stored in cloud storage (S3/Cloudinary)
+  fileType        String   // e.g., "image/jpeg", "application/pdf"
+  fileSizeBytes   Int?
+  
+  // Metadata
+  createdAt       DateTime @default(now())
+  
+  // Relations
+  post            JournalPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  @@index([postId])
+}
+
+model JournalPostReaction {
+  id              String   @id @default(cuid())
+  postId          String
+  
+  // Reaction metadata
+  reactionType    ReactionType
+  customEmoji     String?  // For custom reactions
+  
+  // Metadata
+  createdAt       DateTime @default(now())
+  
+  // Relations
+  post            JournalPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  @@unique([postId, reactionType])
+  @@index([postId])
+}
+
+model JournalPostReply {
+  id              String   @id @default(cuid())
+  postId          String
+  
+  // Reply content
+  text            String   @db.Text // Threaded self-reflection
+  
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+  
+  // Relations
+  post            JournalPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  @@index([postId])
+  @@index([createdAt])
+}
+
+model PostResumeTag {
+  id              String   @id @default(cuid())
+  postId          String
+  resumeId        String
+  
+  // Metadata
+  createdAt       DateTime @default(now())
+  
+  // Relations
+  post            JournalPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  resume          Resume      @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  
+  @@unique([postId, resumeId])
+  @@index([postId])
+  @@index([resumeId])
+}
+

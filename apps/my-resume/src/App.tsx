@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './shared/contexts/AuthContext';
+import { AIContextProvider } from './shared/contexts/AIContextContext';
 import { ProtectedRoute } from './features/auth/ProtectedRoute';
 import { LandingPage } from './features/landing';
 import { LoginPage, RegisterPage, ForgotPasswordPage, ResetPasswordPage } from './features/auth';
@@ -50,60 +51,64 @@ const App = () => {
   if (customSubdomain) {
     return (
       <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="*" element={<Resume customDomain={customSubdomain} />} />
-          </Routes>
-        </BrowserRouter>
+        <AIContextProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="*" element={<Resume customDomain={customSubdomain} />} />
+            </Routes>
+          </BrowserRouter>
+        </AIContextProvider>
       </AuthProvider>
     );
   }
 
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/pricing" element={<PricingPage />} />
-          <Route path="/search" element={<SearchPage />} />
-          <Route path="/resume/:slug" element={<Resume />} />
+      <AIContextProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/search" element={<SearchPage />} />
+            <Route path="/resume/:slug" element={<Resume />} />
 
-          {/* Protected Routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <SettingsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/editor/:id"
-            element={
-              <ProtectedRoute>
-                <EditorPage />
-              </ProtectedRoute>
-            }
-          />
+            {/* Protected Routes */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <SettingsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/editor/:id"
+              element={
+                <ProtectedRoute>
+                  <EditorPage />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Catch all - redirect to home */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-        <VersionBadge />
-      </BrowserRouter>
+            {/* Catch all - redirect to home */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+          <VersionBadge />
+        </BrowserRouter>
+      </AIContextProvider>
     </AuthProvider>
   );
 };

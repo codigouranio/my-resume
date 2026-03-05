@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { apiClient } from '../../shared/api/client';
 import { AnalyticsDashboard, ChatAnalyticsDashboard } from '../analytics';
+import { AIContextFeed } from '../ai-context';
 import { formatResumeDisplayPath, formatResumeUrl, formatCustomDomainUrl } from '../../shared/utils/domain';
 import './Dashboard.css';
 
@@ -39,7 +40,7 @@ export function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingInterests, setIsLoadingInterests] = useState(true);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'resumes' | 'interests'>('resumes');
+  const [activeTab, setActiveTab] = useState<'ai-context' | 'interests'>('ai-context');
   const [selectedResumeForAnalytics, setSelectedResumeForAnalytics] = useState<string | null>(null);
   const [analyticsView, setAnalyticsView] = useState<'views' | 'chat'>('views');
   const [analytics, setAnalytics] = useState<any>(null);
@@ -201,6 +202,12 @@ export function DashboardPage() {
         {/* Tabs */}
         <div className="tabs tabs-boxed mb-6 bg-base-200">
           <a
+            className={`tab tab-lg ${activeTab === 'ai-context' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('ai-context')}
+          >
+            🤖 AI Context
+          </a>
+          <a
             className={`tab tab-lg ${activeTab === 'resumes' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('resumes')}
           >
@@ -219,6 +226,10 @@ export function DashboardPage() {
             )}
           </a>
         </div>
+
+        {activeTab === 'ai-context' ? (
+          <AIContextFeed />
+        ) : (<></>)}
 
         {activeTab === 'resumes' ? (
           <>
@@ -358,7 +369,9 @@ export function DashboardPage() {
               </div>
             )}
           </>
-        ) : (
+        ) : (<></>)}
+
+        {activeTab === 'interests' ? (
           <>
             <div className="dashboard-header">
               <div>
@@ -471,67 +484,69 @@ export function DashboardPage() {
               </div>
             )}
           </>
-        )}
+        ) : (<></>)}
       </div>
 
       {/* Analytics Modal */}
-      {selectedResumeForAnalytics && (
-        <div className="modal modal-open">
-          <div className="modal-box max-w-6xl max-h-[90vh] overflow-y-auto">
-            {/* Close button - top right */}
-            <button
-              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-              onClick={() => {
-                setSelectedResumeForAnalytics(null);
-                setAnalytics(null);
-                setAnalyticsView('views');
-              }}
-            >
-              ✕
-            </button>
-
-            <h3 className="font-bold text-2xl mb-4">
-              Analytics: {resumes.find(r => r.id === selectedResumeForAnalytics)?.title}
-            </h3>
-
-            {/* Analytics Tabs */}
-            <div className="tabs tabs-boxed mb-6">
-              <a
-                className={`tab tab-lg ${analyticsView === 'views' ? 'tab-active' : ''}`}
-                onClick={() => setAnalyticsView('views')}
-              >
-                👁️ Page Views
-              </a>
-              <a
-                className={`tab tab-lg ${analyticsView === 'chat' ? 'tab-active' : ''}`}
-                onClick={() => setAnalyticsView('chat')}
-              >
-                💬 Chat Analytics
-              </a>
-            </div>
-
-            {/* Analytics Content */}
-            {analyticsView === 'views' ? (
-              <AnalyticsDashboard resumeId={selectedResumeForAnalytics} />
-            ) : (
-              <ChatAnalyticsDashboard resumeId={selectedResumeForAnalytics} />
-            )}
-
-            <div className="modal-action mt-6">
+      {
+        selectedResumeForAnalytics && (
+          <div className="modal modal-open">
+            <div className="modal-box max-w-6xl max-h-[90vh] overflow-y-auto">
+              {/* Close button - top right */}
               <button
-                className="btn"
+                className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
                 onClick={() => {
                   setSelectedResumeForAnalytics(null);
                   setAnalytics(null);
                   setAnalyticsView('views');
                 }}
               >
-                Close
+                ✕
               </button>
+
+              <h3 className="font-bold text-2xl mb-4">
+                Analytics: {resumes.find(r => r.id === selectedResumeForAnalytics)?.title}
+              </h3>
+
+              {/* Analytics Tabs */}
+              <div className="tabs tabs-boxed mb-6">
+                <a
+                  className={`tab tab-lg ${analyticsView === 'views' ? 'tab-active' : ''}`}
+                  onClick={() => setAnalyticsView('views')}
+                >
+                  👁️ Page Views
+                </a>
+                <a
+                  className={`tab tab-lg ${analyticsView === 'chat' ? 'tab-active' : ''}`}
+                  onClick={() => setAnalyticsView('chat')}
+                >
+                  💬 Chat Analytics
+                </a>
+              </div>
+
+              {/* Analytics Content */}
+              {analyticsView === 'views' ? (
+                <AnalyticsDashboard resumeId={selectedResumeForAnalytics} />
+              ) : (
+                <ChatAnalyticsDashboard resumeId={selectedResumeForAnalytics} />
+              )}
+
+              <div className="modal-action mt-6">
+                <button
+                  className="btn"
+                  onClick={() => {
+                    setSelectedResumeForAnalytics(null);
+                    setAnalytics(null);
+                    setAnalyticsView('views');
+                  }}
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 }

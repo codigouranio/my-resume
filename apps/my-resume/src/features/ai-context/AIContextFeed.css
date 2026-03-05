@@ -1,0 +1,80 @@
+.ai-context-feed {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.feed-header {
+  margin-bottom: 2rem;
+}
+
+.feed-header h2 {
+  font-size: 1.875rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.feed-description {
+  color: hsl(var(--bc) / 0.6);
+  font-size: 0.95rem;
+}
+
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.empty-state .text-center {
+  text-align: center;
+}
+
+.attachment {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  word-break: break-word;
+}
+
+.attachment img {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 0.5rem;
+}
+
+.reactions-container {
+  margin: 1rem 0;
+}
+
+.replies-section {
+  margin-top: 1.5rem;
+}
+
+.post-action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Media queries for responsive design */
+@media (max-width: 768px) {
+  .ai-context-feed {
+    padding: 1rem;
+  }
+
+  .feed-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .card {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Dark mode specific styles */
+@media (prefers-color-scheme: dark) {
+  .replies-section {
+    border-left-color: hsl(var(--p) / 0.5);
+  }
+}

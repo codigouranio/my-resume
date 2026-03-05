@@ -379,6 +379,111 @@ class ApiClient {
     return this.request(`/resumes/${resumeId}/analytics/detailed`);
   }
 
+  // AI Context
+  async createAIContextPost(text: string, publishedAt?: string, includeInAI?: boolean) {
+    return this.request('/ai-context/posts', {
+      method: 'POST',
+      body: JSON.stringify({ text, publishedAt, includeInAI }),
+    });
+  }
+
+  async getAIContextPosts(search?: string, includeInAI?: boolean, resumeId?: string, limit?: number, offset?: number) {
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    if (includeInAI !== undefined) params.append('includeInAI', String(includeInAI));
+    if (resumeId) params.append('resumeId', resumeId);
+    if (limit) params.append('limit', String(limit));
+    if (offset) params.append('offset', String(offset));
+    const query = params.toString();
+    return this.request(`/ai-context/posts${query ? '?' + query : ''}`);
+  }
+
+  async getAIContextPost(postId: string) {
+    return this.request(`/ai-context/posts/${postId}`);
+  }
+
+  async updateAIContextPost(postId: string, text?: string, publishedAt?: string, includeInAI?: boolean) {
+    return this.request(`/ai-context/posts/${postId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ text, publishedAt, includeInAI }),
+    });
+  }
+
+  async deleteAIContextPost(postId: string) {
+    return this.request(`/ai-context/posts/${postId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async addAIContextReaction(postId: string, reactionType: string, customEmoji?: string) {
+    return this.request(`/ai-context/posts/${postId}/reactions`, {
+      method: 'POST',
+      body: JSON.stringify({ reactionType, customEmoji }),
+    });
+  }
+
+  async removeAIContextReaction(postId: string, reactionType: string, customEmoji?: string) {
+    return this.request(`/ai-context/posts/${postId}/reactions`, {
+      method: 'DELETE',
+      body: JSON.stringify({ reactionType, customEmoji }),
+    });
+  }
+
+  async addAIContextReply(postId: string, text: string) {
+    return this.request(`/ai-context/posts/${postId}/replies`, {
+      method: 'POST',
+      body: JSON.stringify({ text }),
+    });
+  }
+
+  async getAIContextReplies(postId: string) {
+    return this.request(`/ai-context/posts/${postId}/replies`);
+  }
+
+  async updateAIContextReply(postId: string, replyId: string, text: string) {
+    return this.request(`/ai-context/posts/${postId}/replies/${replyId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ text }),
+    });
+  }
+
+  async deleteAIContextReply(postId: string, replyId: string) {
+    return this.request(`/ai-context/posts/${postId}/replies/${replyId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async tagPostToResume(postId: string, resumeId: string) {
+    return this.request(`/ai-context/posts/${postId}/resume-tags`, {
+      method: 'POST',
+      body: JSON.stringify({ resumeId }),
+    });
+  }
+
+  async removePostResumeTag(postId: string, resumeId: string) {
+    return this.request(`/ai-context/posts/${postId}/resume-tags/${resumeId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getAIContextString(resumeId?: string) {
+    const query = resumeId ? `?resumeId=${resumeId}` : '';
+    return this.request(`/ai-context/context${query}`);
+  }
+
+  async addAIContextAttachment(postId: string, fileUrl: string, fileName: string, fileType: string, fileSizeBytes?: number) {
+    return this.request(`/ai-context/posts/${postId}/attachments`, {
+      method: 'POST',
+      body: JSON.stringify({ fileUrl, fileName, fileType, fileSizeBytes }),
+    });
+  }
+
+  async removeAIContextAttachment(postId: string, attachmentId: string) {
+    return this.request(`/ai-context/posts/${postId}/attachments/${attachmentId}`, {
+      method: 'DELETE',
+    });
+  }
+
   async identifySlug(): Promise<{ slug: string | null }> {
     return this.request('/resumes/identify-slug');
   }
