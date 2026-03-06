@@ -487,6 +487,34 @@ class ApiClient {
   async identifySlug(): Promise<{ slug: string | null }> {
     return this.request('/resumes/identify-slug');
   }
+
+  // Document Storage
+  async uploadDocument(file: File): Promise<{ fileKey: string; embedCode: string; viewUrl: string; downloadUrl: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const token = this.getToken();
+    const response = await fetch(`${this.baseURL}/documents/upload`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to upload document');
+    }
+
+    return response.json();
+  }
+
+  async deleteDocument(userId: string, fileName: string) {
+    return this.request(`/documents/${userId}/${fileName}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);

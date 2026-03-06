@@ -26,7 +26,9 @@
   },
   "dependencies": {
     "@apollo/server": "^4.12.2",
+    "@aws-sdk/client-s3": "^3.1003.0",
     "@aws-sdk/client-ses": "^3.982.0",
+    "@aws-sdk/s3-request-presigner": "^3.1003.0",
     "@nestjs/apollo": "^12.2.2",
     "@nestjs/bull": "^11.0.4",
     "@nestjs/common": "^10.3.0",

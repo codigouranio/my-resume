@@ -17,6 +17,7 @@ import { SubscriptionsModule } from './features/subscriptions/subscriptions.modu
 import { EmbeddingsModule } from './features/embeddings/embeddings.module';
 import { ChatAnalyticsModule } from './features/analytics/chat-analytics.module';
 import { AIContextModule } from './features/ai-context/ai-context.module';
+import { DocumentStorageModule } from './features/document-storage/document-storage.module';
 import { AppThrottlerGuard } from './shared/guards/throttler.guard';
 
 @Module({
@@ -86,6 +87,7 @@ import { AppThrottlerGuard } from './shared/guards/throttler.guard';
     EmbeddingsModule,
     ChatAnalyticsModule,
     AIContextModule,
+    DocumentStorageModule,
   ],
   providers: [
     {

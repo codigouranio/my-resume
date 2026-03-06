@@ -6,6 +6,7 @@ import rehypeRaw from 'rehype-raw';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { apiClient } from '../../shared/api/client';
 import { formatResumeDisplayPath } from '../../shared/utils/domain';
+import { FileInsertModal } from './FileInsertModal';
 import './Editor.css';
 
 export function EditorPage() {
@@ -43,6 +44,7 @@ export function EditorPage() {
   const [originalSelectedText, setOriginalSelectedText] = useState('');
   const [selectionStart, setSelectionStart] = useState(0);
   const [selectionEnd, setSelectionEnd] = useState(0);
+  const [showFileInsertModal, setShowFileInsertModal] = useState(false);
 
   useEffect(() => {
     if (!isNew) {
@@ -292,6 +294,34 @@ export function EditorPage() {
     setTimeout(() => setError(originalError), 3000);
   };
 
+  const handleInsertFile = (embedCode: string) => {
+    if (!textareaRef.current) return;
+
+    const textarea = textareaRef.current;
+    const start = textarea.selectionStart || 0;
+    const end = textarea.selectionEnd || 0;
+
+    // Insert embed code at cursor position (or replace selection)
+    const before = formData.content.substring(0, start);
+    const after = formData.content.substring(end);
+
+    // Add newlines around embed code for better formatting
+    const newContent = before + '\n\n' + embedCode + '\n\n' + after;
+
+    setFormData({ ...formData, content: newContent });
+    setHasUnsavedChanges(true);
+    setShowFileInsertModal(false);
+
+    // Focus textarea and move cursor after inserted content
+    setTimeout(() => {
+      if (textareaRef.current) {
+        const newPosition = start + embedCode.length + 4; // +4 for the newlines
+        textareaRef.current.focus();
+        textareaRef.current.setSelectionRange(newPosition, newPosition);
+      }
+    }, 100);
+  };
+
   const cancelImprovedText = () => {
     setShowImproveModal(false);
     setImprovedText('');
@@ -488,20 +518,32 @@ export function EditorPage() {
         <div className={`editor-main ${showPreview ? 'split-view' : 'full-view'}`}>
           {/* Markdown Editor */}
           <div className="editor-pane">
-            <div className="tabs tabs-boxed mb-4">
-              <a
-                className={`tab ${activeTab === 'content' ? 'tab-active' : ''}`}
-                onClick={() => setActiveTab('content')}
-              >
-                📝 Content
-              </a>
-              <a
-                className={`tab ${activeTab === 'ai-context' ? 'tab-active' : ''}`}
-                onClick={() => setActiveTab('ai-context')}
-              >
-                🤖 AI Context
-                <span className="badge badge-secondary badge-sm ml-2">Private</span>
-              </a>
+            <div className="flex justify-between items-center mb-4">
+              <div className="tabs tabs-boxed">
+                <a
+                  className={`tab ${activeTab === 'content' ? 'tab-active' : ''}`}
+                  onClick={() => setActiveTab('content')}
+                >
+                  📝 Content
+                </a>
+                <a
+                  className={`tab ${activeTab === 'ai-context' ? 'tab-active' : ''}`}
+                  onClick={() => setActiveTab('ai-context')}
+                >
+                  🤖 AI Context
+                  <span className="badge badge-secondary badge-sm ml-2">Private</span>
+                </a>
+              </div>
+
+              {activeTab === 'content' && (
+                <button
+                  className="btn btn-outline btn-sm gap-2"
+                  onClick={() => setShowFileInsertModal(true)}
+                  title="Insert file from uploads"
+                >
+                  📎 Insert File
+                </button>
+              )}
             </div>
 
             {activeTab === 'content' ? (
@@ -646,6 +688,13 @@ export function EditorPage() {
           <div className="modal-backdrop" onClick={cancelImprovedText}></div>
         </div>
       )}
+
+      {/* File Insert Modal */}
+      <FileInsertModal
+        isOpen={showFileInsertModal}
+        onClose={() => setShowFileInsertModal(false)}
+        onInsert={handleInsertFile}
+      />
     </div>
   );
 }
