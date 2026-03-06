@@ -38,30 +38,36 @@ export function FileInsertModal({ isOpen, onClose, onInsert }: FileInsertModalPr
     try {
       // Fetch all AI context posts with attachments
       const response = await apiClient.getAIContextPosts();
+      console.log('[FileInsertModal] API response:', response);
 
       // Extract all attachments from posts
       const allAttachments: UploadedDocument[] = [];
 
-      if (response.posts) {
-        response.posts.forEach((post: any) => {
-          if (post.attachments && post.attachments.length > 0) {
-            post.attachments.forEach((attachment: any) => {
-              allAttachments.push({
-                id: attachment.id,
-                fileName: attachment.fileName,
-                fileType: attachment.fileType,
-                fileUrl: attachment.fileUrl,
-                fileSizeBytes: attachment.fileSizeBytes,
-                createdAt: attachment.createdAt,
-                postId: post.id,
-              });
-            });
-          }
-        });
-      }
+      // API returns array directly, not wrapped in { posts: [] }
+      const posts = Array.isArray(response) ? response : response.posts || [];
+      console.log('[FileInsertModal] Found posts:', posts.length);
 
+      posts.forEach((post: any) => {
+        if (post.attachments && post.attachments.length > 0) {
+          console.log(`[FileInsertModal] Post ${post.id} has ${post.attachments.length} attachments`);
+          post.attachments.forEach((attachment: any) => {
+            allAttachments.push({
+              id: attachment.id,
+              fileName: attachment.fileName,
+              fileType: attachment.fileType,
+              fileUrl: attachment.fileUrl,
+              fileSizeBytes: attachment.fileSizeBytes,
+              createdAt: attachment.createdAt,
+              postId: post.id,
+            });
+          });
+        }
+      });
+
+      console.log('[FileInsertModal] Total attachments found:', allAttachments.length);
       setDocuments(allAttachments);
     } catch (err: any) {
+      console.error('[FileInsertModal] Error:', err);
       setError(err.message || 'Failed to load documents');
     } finally {
       setIsLoading(false);

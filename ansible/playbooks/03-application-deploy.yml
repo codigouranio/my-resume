@@ -52,6 +52,7 @@
           AWS_SECRET_ACCESS_KEY={{ aws_secret_access_key | default('') }}
           SES_FROM_EMAIL={{ ses_from_email | default('noreply@resumecast.ai') }}
           FRONTEND_URL={{ frontend_url | default('https://resumecast.ai') }}
+          API_BASE_URL={{ api_base_url | default('https://resumecast.ai') }}
         owner: "{{ ansible_user }}"
         mode: "0600"
 

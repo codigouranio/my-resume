@@ -44,6 +44,9 @@ all:
     
     # Domain (for Nginx and SSL certificates)
     domain: resumecast.ai
+
+    frontend_url: https://resumecast.ai
+    api_base_url: https://resumecast.ai
     
     # SSL Configuration - Disable when using Cloudflare Tunnel
     enable_ssl: false

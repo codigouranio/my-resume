@@ -65,3 +65,5 @@ build/
 
 # Local configuration
 *.local
+
+uploads/

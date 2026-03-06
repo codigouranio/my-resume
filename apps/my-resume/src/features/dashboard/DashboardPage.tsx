@@ -40,13 +40,24 @@ export function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingInterests, setIsLoadingInterests] = useState(true);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'ai-context' | 'interests'>('ai-context');
+
+  // Load saved tab from localStorage or default to 'ai-context'
+  const [activeTab, setActiveTab] = useState<'ai-context' | 'resumes' | 'interests'>(() => {
+    const savedTab = localStorage.getItem('dashboardActiveTab') as 'ai-context' | 'resumes' | 'interests' | null;
+    return savedTab || 'ai-context';
+  });
+
   const [selectedResumeForAnalytics, setSelectedResumeForAnalytics] = useState<string | null>(null);
   const [analyticsView, setAnalyticsView] = useState<'views' | 'chat'>('views');
   const [analytics, setAnalytics] = useState<any>(null);
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const navigate = useNavigate();
+
+  // Save active tab to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('dashboardActiveTab', activeTab);
+  }, [activeTab]);
 
   // Load and apply theme on mount
   useEffect(() => {

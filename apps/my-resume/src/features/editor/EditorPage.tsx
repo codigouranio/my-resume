@@ -463,7 +463,7 @@ export function EditorPage() {
               <span className="label-text">Public</span>
               <input
                 type="checkbox"
-                className="toggle toggle-primary"
+                className="toggle"
                 checked={formData.isPublic}
                 onChange={(e) => handleContentChange('isPublic', e.target.checked)}
               />

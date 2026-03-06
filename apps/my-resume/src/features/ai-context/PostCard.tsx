@@ -15,6 +15,7 @@ export function PostCard({ post, onUpdated, onDeleted }: PostCardProps) {
   const [showReplies, setShowReplies] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [replyCount, setReplyCount] = useState(post.replies?.length || 0);
+  const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(null);
 
   const handleDelete = async () => {
     if (!confirm('Delete this journal entry?')) return;
@@ -27,6 +28,26 @@ export function PostCard({ post, onUpdated, onDeleted }: PostCardProps) {
       alert('Failed to delete post');
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteAttachment = async (attachmentId: string) => {
+    if (!confirm('Delete this file?')) return;
+
+    setDeletingAttachmentId(attachmentId);
+    try {
+      await apiClient.removeAIContextAttachment(post.id, attachmentId);
+
+      // Update post to remove the attachment
+      const updatedPost = {
+        ...post,
+        attachments: post.attachments.filter((a: any) => a.id !== attachmentId),
+      };
+      onUpdated(updatedPost);
+    } catch (err) {
+      alert('Failed to delete attachment');
+    } finally {
+      setDeletingAttachmentId(null);
     }
   };
 
@@ -111,46 +132,67 @@ export function PostCard({ post, onUpdated, onDeleted }: PostCardProps) {
           const isImage = attachment.fileType.startsWith('image/');
           const isPdf = attachment.fileType === 'application/pdf';
           const isDocument = ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/markdown', 'text/plain'].includes(attachment.fileType);
+          const isDeleting = deletingAttachmentId === attachment.id;
 
           return (
             <div
               key={attachment.id}
-              className="attachment mb-2 p-3 bg-base-200 rounded flex items-center gap-2"
+              className="attachment mb-2 p-3 bg-base-200 rounded"
             >
-              {isImage ? (
-                <img
-                  src={attachment.fileUrl}
-                  alt={attachment.fileName}
-                  className="max-h-64 rounded"
-                />
-              ) : isPdf ? (
-                <a
-                  href={attachment.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="link gap-2 flex items-center"
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex-1">
+                  {isImage ? (
+                    <div className="flex flex-col gap-2">
+                      <img
+                        src={attachment.fileUrl}
+                        alt={attachment.fileName}
+                        className="max-h-64 rounded"
+                      />
+                      <span className="text-xs text-base-content/60">{attachment.fileName}</span>
+                    </div>
+                  ) : isPdf ? (
+                    <a
+                      href={attachment.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="link gap-2 flex items-center"
+                    >
+                      📄 {attachment.fileName}
+                    </a>
+                  ) : isDocument ? (
+                    <a
+                      href={attachment.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="link gap-2 flex items-center"
+                    >
+                      📝 {attachment.fileName}
+                    </a>
+                  ) : (
+                    <a
+                      href={attachment.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="link gap-2 flex items-center"
+                    >
+                      📎 {attachment.fileName}
+                    </a>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteAttachment(attachment.id)}
+                  disabled={isDeleting}
+                  className="btn btn-ghost btn-sm btn-circle text-error hover:bg-error hover:text-error-content"
+                  title="Delete file"
                 >
-                  📄 {attachment.fileName}
-                </a>
-              ) : isDocument ? (
-                <a
-                  href={attachment.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="link gap-2 flex items-center"
-                >
-                  📝 {attachment.fileName}
-                </a>
-              ) : (
-                <a
-                  href={attachment.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="link gap-2 flex items-center"
-                >
-                  📎 {attachment.fileName}
-                </a>
-              )}
+                  {isDeleting ? (
+                    <span className="loading loading-spinner loading-xs"></span>
+                  ) : (
+                    '🗑️'
+                  )}
+                </button>
+              </div>
             </div>
           );
         })}
