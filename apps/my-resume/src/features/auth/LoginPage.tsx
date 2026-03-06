@@ -80,6 +80,22 @@ export function LoginPage() {
           </button>
         </form>
 
+        <p className="text-xs text-center text-base-content/60 mt-4">
+          By clicking Sign In, you agree to ResumeCast.ai's{' '}
+          <Link to="/user-agreement" className="link link-primary">
+            User Agreement
+          </Link>
+          ,{' '}
+          <Link to="/privacy-policy" className="link link-primary">
+            Privacy Policy
+          </Link>
+          , and{' '}
+          <Link to="/cookie-policy" className="link link-primary">
+            Cookie Policy
+          </Link>
+          .
+        </p>
+
         <div className="divider">OR</div>
 
         <p className="text-center">

@@ -5,6 +5,7 @@ import { AIContextProvider } from './shared/contexts/AIContextContext';
 import { ProtectedRoute } from './features/auth/ProtectedRoute';
 import { LandingPage } from './features/landing';
 import { LoginPage, RegisterPage, ForgotPasswordPage, ResetPasswordPage } from './features/auth';
+import { UserAgreementPage, PrivacyPolicyPage, CookiePolicyPage } from './features/legal';
 import { DashboardPage } from './features/dashboard';
 import { EditorPage } from './features/editor';
 import { PricingPage } from './features/pricing';
@@ -83,6 +84,11 @@ const App = () => {
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/resume/:slug" element={<Resume />} />
+
+            {/* Legal Pages */}
+            <Route path="/user-agreement" element={<UserAgreementPage />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+            <Route path="/cookie-policy" element={<CookiePolicyPage />} />
 
             {/* Protected Routes */}
             <Route
