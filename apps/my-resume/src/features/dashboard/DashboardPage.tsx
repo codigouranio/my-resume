@@ -173,13 +173,13 @@ export function DashboardPage() {
   return (
     <div className="dashboard-container">
       {/* Header */}
-      <div className="navbar bg-base-300 shadow-lg">
+      <div className="navbar bg-base-300">
         <div className="flex-1">
           <Link to="/dashboard" className="btn btn-ghost normal-case text-xl flex items-center gap-2">
             <img src="/logo.png" alt="RC" className="w-8 h-8" />
             <div>
-              <span style={{ color: '#00C2CB', fontWeight: 700 }}>Resume</span>
-              <span style={{ color: '#007BFF', fontWeight: 700 }}>Cast.ai</span>
+              <span style={{ color: '#525252', fontWeight: 700 }}>Resume</span>
+              <span style={{ color: '#383838', fontWeight: 700 }}>Cast.ai</span>
             </div>
           </Link>
         </div>
@@ -239,7 +239,7 @@ export function DashboardPage() {
           {/* Left Sidebar - Navigation */}
           <div className="col-span-12 lg:col-span-2">
             <div className="sticky top-4">
-              <div className="card bg-base-200 shadow-xl">
+              <div className="card bg-base-200">
                 <div className="card-body p-4">
                   <h3 className="font-bold text-lg mb-4">Navigation</h3>
                   <ul className="menu menu-vertical w-full">
@@ -248,7 +248,7 @@ export function DashboardPage() {
                         className={activeTab === 'ai-context' ? 'active' : ''}
                         onClick={() => setActiveTab('ai-context')}
                       >
-                        🤖 AI Context
+                        🤖 Journal AI Context
                       </a>
                     </li>
                     <li>
@@ -545,7 +545,7 @@ export function DashboardPage() {
           <div className="col-span-12 lg:col-span-3">
             <div className="sticky top-4 space-y-6">
               {/* Quick Stats Card */}
-              <div className="card bg-base-200 shadow-xl">
+              <div className="card bg-base-200">
                 <div className="card-body p-4">
                   <h3 className="font-bold text-lg mb-4">Quick Stats</h3>
                   <div className="space-y-3">
@@ -576,7 +576,7 @@ export function DashboardPage() {
               </div>
 
               {/* Account Info Card */}
-              <div className="card bg-base-200 shadow-xl">
+              <div className="card bg-base-200">
                 <div className="card-body p-4">
                   <h3 className="font-bold text-lg mb-4">Account</h3>
                   <div className="space-y-2">
@@ -609,7 +609,7 @@ export function DashboardPage() {
               </div>
 
               {/* Quick Actions Card */}
-              <div className="card bg-base-200 shadow-xl">
+              <div className="card bg-base-200">
                 <div className="card-body p-4">
                   <h3 className="font-bold text-lg mb-4">Quick Actions</h3>
                   <div className="space-y-2">

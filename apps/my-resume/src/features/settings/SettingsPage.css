@@ -14,6 +14,21 @@
   justify-content: flex-start;
 }
 
+/* Make active tab more visible */
+.settings-container .tab-active {
+  background-color: hsl(var(--p));
+  color: hsl(var(--pc));
+  font-weight: 600;
+}
+
+.settings-container .tab {
+  transition: all 0.2s ease;
+}
+
+.settings-container .tab:hover {
+  opacity: 0.8;
+}
+
 .settings-container .form-control {
   width: 100%;
 }

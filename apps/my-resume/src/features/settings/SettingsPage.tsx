@@ -231,8 +231,8 @@ export function SettingsPage() {
           >
             <img src="/logo.png" alt="RC" className="w-8 h-8" />
             <div>
-              <span style={{ color: '#00C2CB', fontWeight: 700 }}>Resume</span>
-              <span style={{ color: '#007BFF', fontWeight: 700 }}>Cast.ai</span>
+              <span style={{ color: '#525252', fontWeight: 700 }}>Resume</span>
+              <span style={{ color: '#383838', fontWeight: 700 }}>Cast.ai</span>
             </div>
           </Link>
         </div>

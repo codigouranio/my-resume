@@ -1,10 +1,38 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 100 100">
   <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#007BFF;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#00C2CB;stop-opacity:1" />
-    </linearGradient>
+    <style type="text/css">
+      @import url('https://fonts.googleapis.com/css?family=Asap');
+    </style>
   </defs>
-  <rect width="512" height="512" fill="#0A1A2F"/>
-  <text x="256" y="380" font-family="Inter, Arial, sans-serif" font-size="400" font-weight="bold" text-anchor="middle" fill="url(#grad)">Ṛ</text>
+
+<rect x="2.5"
+  y="2.5"
+  rx="10.5"
+  ry="4"
+  width="95"
+  height="95"
+  fill="#383838"></rect>
+
+<text x="50"
+  y="50"
+  dx="0.5"
+  dy="21.5"
+  fill="#ffffff"
+  font-size="110"
+  font-family="Asap"
+  font-weight=""
+  text-anchor="middle"
+  dominant-baseline="central">R</text>
+
+<rect x="2.5"
+  y="2.5"
+  rx="10.5"
+  ry="4"
+  width="95"
+  height="95"
+  fill-opacity="0"
+  stroke="#525252"
+  stroke-width="5"></rect>
 </svg>

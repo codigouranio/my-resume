@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { AuthProvider } from './shared/contexts/AuthContext';
 import { AIContextProvider } from './shared/contexts/AIContextContext';
 import { ProtectedRoute } from './features/auth/ProtectedRoute';
@@ -46,6 +47,12 @@ function getCustomSubdomain(): string | null {
 
 const App = () => {
   const customSubdomain = getCustomSubdomain();
+
+  // Set global default theme on app load
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  }, []);
 
   // If on custom subdomain, show only the resume
   if (customSubdomain) {

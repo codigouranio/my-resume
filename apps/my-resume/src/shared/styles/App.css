@@ -8,6 +8,15 @@ body {
   /* font-family: Inter, Inter Fallback; */
 }
 
+/* Avatar text - make initials more visible */
+.avatar.placeholder .bg-neutral-focus {
+  background-color: #374151;
+}
+
+.avatar.placeholder .text-neutral-content {
+  color: #f3f4f6;
+  font-weight: 600;
+}
 
 .content {
   display: flex;
@@ -172,6 +181,8 @@ body {
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+    --p: 220 90% 56%;        /* Primary color (HSL format) */
+    --pc: 0 0% 100%;         /* Primary content (text on primary) */    
   }
  
   .dark {
