@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
+import { Input } from "@shared/components/input";
+import { Button } from "@shared/components/button";
 
 interface SearchPostsProps {
   onSearch: (query: string) => void;

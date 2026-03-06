@@ -1,8 +1,11 @@
-import { useState, useEffect } from 'react';
+import { Button } from "@shared/components/button";
+import { useEffect, useState } from 'react';
 import { apiClient } from '../../shared/api/client';
-import { PostForm } from './PostForm';
 import { PostCard } from './PostCard';
+import { PostForm } from './PostForm';
 import { SearchPosts } from './SearchPosts';
+import { Input } from "@shared/components/input"
+
 import './AIContextFeed.css';
 
 interface Post {
@@ -59,7 +62,7 @@ export function AIContextFeed() {
   return (
     <div className="ai-context-feed">
       <div className="feed-header">
-        <h2>🤖 AI Context Journal</h2>
+        <h2>Journal</h2>
         <p className="feed-description">
           Organize your personal life and achievements. All enabled posts become rich context for AI.
         </p>
@@ -69,15 +72,17 @@ export function AIContextFeed() {
 
       {/* Post Form Toggle */}
       {!showPostForm ? (
-        <button
-          className="btn btn-primary btn-lg gap-2 mb-6"
+        <Button
+          variant="outline"
+          className="gap-2 mb-6"
+          // className="btn btn-primary btn-lg gap-2 mb-6"
           onClick={() => setShowPostForm(true)}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
           </svg>
           New Journal Entry
-        </button>
+        </Button>
       ) : (
         <PostForm
           onPostCreated={handlePostCreated}
@@ -109,12 +114,12 @@ export function AIContextFeed() {
             </svg>
             <h3 className="mt-4 text-lg font-medium">No entries yet</h3>
             <p className="mt-2 text-sm text-base-content/60">Start capturing your life and achievements</p>
-            <button
+            <Button
               className="btn btn-primary mt-6"
               onClick={() => setShowPostForm(true)}
             >
               Create Your First Entry
-            </button>
+            </Button>
           </div>
         </div>
       ) : (
