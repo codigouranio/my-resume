@@ -11,6 +11,7 @@ import { EditorPage } from './features/editor';
 import { PricingPage } from './features/pricing';
 import { SettingsPage } from './features/settings';
 import { SearchPage } from './features/search';
+import { PublicJournalPage } from './features/public-journal';
 import Resume from './features/resume/Resume';
 import VersionBadge from './shared/components/VersionBadge';
 import './shared/styles/App.css';
@@ -84,6 +85,7 @@ const App = () => {
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/resume/:slug" element={<Resume />} />
+            <Route path="/journal/:username" element={<PublicJournalPage />} />
 
             {/* Legal Pages */}
             <Route path="/user-agreement" element={<UserAgreementPage />} />

@@ -8,6 +8,7 @@ interface PostReactionsProps {
 }
 
 const REACTION_TYPES = [
+  { type: 'STAR', emoji: '⭐' },
   { type: 'LIKE', emoji: '👍' },
   { type: 'HEART', emoji: '❤️' },
   { type: 'MEDAL', emoji: '🏅' },

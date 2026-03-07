@@ -22,6 +22,7 @@ export function PostForm({ onPostCreated, onCancel, initialPost, postId }: PostF
     initialPost?.publishedAt ? new Date(initialPost.publishedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
   );
   const [includeInAI, setIncludeInAI] = useState(initialPost?.includeInAI ?? true);
+  const [isPublic, setIsPublic] = useState(initialPost?.isPublic ?? false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [attachments, setAttachments] = useState<AttachmentItem[]>(initialPost?.attachments || []);
@@ -38,9 +39,9 @@ export function PostForm({ onPostCreated, onCancel, initialPost, postId }: PostF
 
       let response;
       if (postId) {
-        response = await apiClient.updateAIContextPost(postId, text, publishedAtISO, includeInAI);
+        response = await apiClient.updateAIContextPost(postId, text, publishedAtISO, includeInAI, isPublic);
       } else {
-        response = await apiClient.createAIContextPost(text, publishedAtISO, includeInAI);
+        response = await apiClient.createAIContextPost(text, publishedAtISO, includeInAI, isPublic);
       }
 
       // Add attachments to the post after creation
@@ -62,6 +63,7 @@ export function PostForm({ onPostCreated, onCancel, initialPost, postId }: PostF
       setText('');
       setPublishedAt(new Date().toISOString().split('T')[0]);
       setIncludeInAI(true);
+      setIsPublic(false);
       setAttachments([]);
     } catch (err: any) {
       setError(err.message || 'Failed to save post');
@@ -193,6 +195,22 @@ export function PostForm({ onPostCreated, onCancel, initialPost, postId }: PostF
           </label>
           <p className="text-xs text-base-content/60 ml-0">
             When enabled, this post becomes available for the AI to use when generating or improving resumes, cover letters, and providing career coaching.
+          </p>
+        </div>
+
+        {/* Public Toggle */}
+        <div className="form-control">
+          <label className="label cursor-pointer">
+            <span className="label-text">🌐 Make Public</span>
+            <input
+              type="checkbox"
+              checked={isPublic}
+              onChange={(e) => setIsPublic(e.target.checked)}
+              className="checkbox checkbox-secondary"
+            />
+          </label>
+          <p className="text-xs text-base-content/60 ml-0">
+            When enabled, this post will be visible on your public journal page that anyone can view.
           </p>
         </div>
 

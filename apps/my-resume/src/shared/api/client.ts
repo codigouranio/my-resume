@@ -380,10 +380,10 @@ class ApiClient {
   }
 
   // AI Context
-  async createAIContextPost(text: string, publishedAt?: string, includeInAI?: boolean) {
+  async createAIContextPost(text: string, publishedAt?: string, includeInAI?: boolean, isPublic?: boolean) {
     return this.request('/ai-context/posts', {
       method: 'POST',
-      body: JSON.stringify({ text, publishedAt, includeInAI }),
+      body: JSON.stringify({ text, publishedAt, includeInAI, isPublic }),
     });
   }
 
@@ -398,14 +398,23 @@ class ApiClient {
     return this.request(`/ai-context/posts${query ? '?' + query : ''}`);
   }
 
+  async getPublicPosts(username: string, limit?: number, offset?: number) {
+    const params = new URLSearchParams();
+    params.append('isPublic', 'true');
+    if (limit) params.append('limit', String(limit));
+    if (offset) params.append('offset', String(offset));
+    const query = params.toString();
+    return this.request(`/ai-context/public/${username}${query ? '?' + query : ''}`);
+  }
+
   async getAIContextPost(postId: string) {
     return this.request(`/ai-context/posts/${postId}`);
   }
 
-  async updateAIContextPost(postId: string, text?: string, publishedAt?: string, includeInAI?: boolean) {
+  async updateAIContextPost(postId: string, text?: string, publishedAt?: string, includeInAI?: boolean, isPublic?: boolean) {
     return this.request(`/ai-context/posts/${postId}`, {
       method: 'PUT',
-      body: JSON.stringify({ text, publishedAt, includeInAI }),
+      body: JSON.stringify({ text, publishedAt, includeInAI, isPublic }),
     });
   }
 

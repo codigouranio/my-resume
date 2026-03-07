@@ -1,0 +1,1 @@
+export { PublicJournalPage } from './PublicJournalPage';

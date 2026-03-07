@@ -124,6 +124,11 @@ export function PostCard({ post, onUpdated, onDeleted }: PostCardProps) {
                 🔒 Hidden from AI
               </div>
             )}
+            {post.isPublic && (
+              <div className="badge badge-secondary gap-1 text-xs">
+                🌐 Public
+              </div>
+            )}
           </div>
         </div>
 

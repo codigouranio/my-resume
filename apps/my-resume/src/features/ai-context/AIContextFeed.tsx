@@ -1,6 +1,8 @@
 import { Button } from "@shared/components/button";
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { apiClient } from '../../shared/api/client';
+import { useAuth } from '../../shared/contexts/AuthContext';
 import { PostCard } from './PostCard';
 import { PostForm } from './PostForm';
 import { SearchPosts } from './SearchPosts';
@@ -24,6 +26,7 @@ interface Post {
 const API_URL = import.meta.env.PUBLIC_API_URL || '';
 
 export function AIContextFeed() {
+  const { user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -62,10 +65,24 @@ export function AIContextFeed() {
   return (
     <div className="ai-context-feed">
       <div className="feed-header">
-        <h2>Journal</h2>
-        <p className="feed-description">
-          Organize your personal life and achievements. All enabled posts become rich context for AI.
-        </p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h2>Journal</h2>
+            <p className="feed-description">
+              Organize your personal life and achievements. All enabled posts become rich context for AI.
+            </p>
+          </div>
+          {user && (
+            <Link
+              to={`/journal/${user.email.split('@')[0]}`}
+              className="btn btn-ghost btn-sm gap-1"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              🌐 View Public Journal
+            </Link>
+          )}
+        </div>
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
