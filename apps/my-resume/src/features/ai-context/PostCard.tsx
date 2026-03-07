@@ -3,6 +3,7 @@ import { apiClient } from '../../shared/api/client';
 import { PostReactions } from './PostReactions';
 import { PostReplies } from './PostReplies';
 import { PostForm } from './PostForm';
+import { linkifyText } from './utils/linkify';
 
 interface PostCardProps {
   post: any;
@@ -122,7 +123,7 @@ export function PostCard({ post, onUpdated, onDeleted }: PostCardProps) {
         </div>
 
         {/* Content */}
-        <p className="text-base leading-relaxed whitespace-pre-wrap">{post.text}</p>
+        <p className="text-base leading-relaxed whitespace-pre-wrap">{linkifyText(post.text)}</p>
 
         {/* Attachments */}
         {post.attachments && post.attachments.length > 0 && (
