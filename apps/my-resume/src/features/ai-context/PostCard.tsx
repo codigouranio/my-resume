@@ -17,6 +17,11 @@ export function PostCard({ post, onUpdated, onDeleted }: PostCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [replyCount, setReplyCount] = useState(post.replies?.length || 0);
   const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // X/Twitter-style: truncate at ~280 characters
+  const TRUNCATE_LENGTH = 280;
+  const shouldTruncate = post.text.length > TRUNCATE_LENGTH;
 
   const handleDelete = async () => {
     if (!confirm('Delete this journal entry?')) return;
@@ -123,7 +128,22 @@ export function PostCard({ post, onUpdated, onDeleted }: PostCardProps) {
         </div>
 
         {/* Content */}
-        <p className="text-base leading-relaxed whitespace-pre-wrap">{linkifyText(post.text)}</p>
+        <div className="text-base leading-relaxed">
+          <p className="whitespace-pre-wrap">
+            {shouldTruncate && !isExpanded
+              ? linkifyText(post.text.substring(0, TRUNCATE_LENGTH) + '...')
+              : linkifyText(post.text)}
+          </p>
+          {shouldTruncate && (
+            <button
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-primary hover:underline text-sm mt-1 font-medium"
+            >
+              {isExpanded ? '← Show less' : 'Show more →'}
+            </button>
+          )}
+        </div>
 
         {/* Attachments */}
         {post.attachments && post.attachments.length > 0 && (
