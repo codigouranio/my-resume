@@ -349,9 +349,9 @@ export function DashboardPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
                     {resumes.map(resume => (
-                      <div key={resume.id} className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+                      <div key={resume.id} className="card bg-base-100 w-96 shadow-md shadow hover:shadow-xl transition-shadow">
                         <div className="card-body">
                           <h2 className="card-title">{resume.title}</h2>
                           {user?.customDomain ? (
