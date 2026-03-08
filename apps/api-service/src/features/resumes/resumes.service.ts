@@ -30,6 +30,35 @@ export class ResumesService {
   ) {}
 
   async create(userId: string, createResumeDto: CreateResumeDto) {
+    // Get user's subscription tier and count existing resumes
+    const [user, resumeCount] = await Promise.all([
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { subscriptionTier: true },
+      }),
+      this.prisma.resume.count({
+        where: { userId },
+      }),
+    ]);
+
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+
+    // Check resume limits based on subscription tier
+    const resumeLimits = {
+      FREE: 3,
+      PRO: 30,
+      ENTERPRISE: 30,
+    };
+
+    const limit = resumeLimits[user.subscriptionTier];
+    if (resumeCount >= limit) {
+      throw new ForbiddenException(
+        `You have reached the maximum number of resumes (${limit}) for your ${user.subscriptionTier} plan. Please upgrade to create more resumes.`,
+      );
+    }
+
     // Check if slug is already taken
     if (createResumeDto.slug) {
       const existing = await this.prisma.resume.findUnique({

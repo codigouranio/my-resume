@@ -18,6 +18,7 @@ import { EmbeddingQueueService } from './embedding-queue.service';
 import { SearchService } from './search.service';
 import { GenerateEmbeddingDto, EmbeddingJobType } from './dto/generate-embedding.dto';
 import { SearchResumesDto, SearchResumesResponse } from './dto/search-resumes.dto';
+import { UnifiedSearchDto, UnifiedSearchResponse } from './dto/unified-search.dto';
 import { PrismaService } from '@shared/database/prisma.service';
 
 @ApiTags('embeddings')
@@ -46,6 +47,25 @@ export class EmbeddingsController {
     @CurrentUser() user?: any,
   ): Promise<SearchResumesResponse> {
     return this.searchService.searchResumes(searchDto, user?.userId);
+  }
+
+  @Post('unified-search')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ 
+    summary: 'Unified semantic search for resumes and journal posts',
+    description: 'Search across resumes and public journal posts using AI-powered semantic understanding.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Unified search results with type indicators and similarity scores',
+    type: UnifiedSearchResponse,
+  })
+  async unifiedSearch(
+    @Body() searchDto: UnifiedSearchDto,
+    @CurrentUser() user?: any,
+  ): Promise<UnifiedSearchResponse> {
+    return this.searchService.unifiedSearch(searchDto, user?.userId);
   }
 
   @Post('generate/:resumeId')

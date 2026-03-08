@@ -138,6 +138,10 @@ export function PricingPage() {
               <ul className="space-y-3 mb-6">
                 <li className="flex items-start gap-2">
                   <span className="text-success text-xl">✓</span>
+                  <span><strong>Up to 3 resumes</strong></span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-success text-xl">✓</span>
                   <span>
                     Public resume at{' '}
                     <code className="text-sm bg-base-200 px-2 py-1 rounded">
@@ -201,6 +205,10 @@ export function PricingPage() {
               </p>
 
               <ul className="space-y-3 mb-6">
+                <li className="flex items-start gap-2">
+                  <span className="text-warning text-xl">★</span>
+                  <span><strong>Up to 30 resumes</strong></span>
+                </li>
                 <li className="flex items-start gap-2">
                   <span className="text-warning text-xl">★</span>
                   <span>

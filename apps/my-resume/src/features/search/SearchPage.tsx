@@ -3,14 +3,17 @@ import { Link } from 'react-router-dom';
 
 interface SearchResult {
   id: string;
-  slug: string;
-  title: string;
+  type: 'resume' | 'journal';
+  slug?: string;
+  title?: string;
+  text?: string;
   content: string;
   userId: string;
   user?: {
     firstName: string;
     lastName: string;
   };
+  publishedAt?: string;
   similarity: number;
   rank: number;
 }
@@ -19,6 +22,8 @@ interface SearchResponse {
   query: string;
   results: SearchResult[];
   total: number;
+  resumeCount: number;
+  journalCount: number;
   limit: number;
   offset: number;
   executionTime: number;
@@ -31,9 +36,12 @@ export const SearchPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchInfo, setSearchInfo] = useState<{
     total: number;
+    resumeCount: number;
+    journalCount: number;
     executionTime: number;
   } | null>(null);
   const [minSimilarity, setMinSimilarity] = useState(0.4);
+  const [searchType, setSearchType] = useState<'all' | 'resumes' | 'journals'>('all');
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,13 +57,14 @@ export const SearchPage = () => {
 
     try {
       const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
-      const response = await fetch(`${apiUrl}/embeddings/search`, {
+      const response = await fetch(`${apiUrl}/embeddings/unified-search`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           query: query.trim(),
+          type: searchType,
           minSimilarity,
           limit: 20,
         }),
@@ -69,6 +78,8 @@ export const SearchPage = () => {
       setResults(data.results);
       setSearchInfo({
         total: data.total,
+        resumeCount: data.resumeCount,
+        journalCount: data.journalCount,
         executionTime: data.executionTime,
       });
     } catch (err) {
@@ -101,10 +112,10 @@ export const SearchPage = () => {
             <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <h1 className="text-3xl font-bold">Resume Search</h1>
+            <h1 className="text-3xl font-bold">Unified Search</h1>
           </div>
           <p className="text-base-content/70 max-w-2xl">
-            Use AI-powered semantic search to find resumes based on skills, experience, and job descriptions.
+            Search resumes and public journal posts using AI-powered semantic understanding.
           </p>
         </div>
       </div>
@@ -113,6 +124,31 @@ export const SearchPage = () => {
         {/* Search Form */}
         <form onSubmit={handleSearch} className="card bg-base-100 shadow-xl mb-8">
           <div className="card-body">
+            {/* Search Type Filter */}
+            <div className="flex gap-2 mb-4">
+              <button
+                type="button"
+                className={`btn btn-sm ${searchType === 'all' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setSearchType('all')}
+              >
+                All Content
+              </button>
+              <button
+                type="button"
+                className={`btn btn-sm ${searchType === 'resumes' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setSearchType('resumes')}
+              >
+                Resumes Only
+              </button>
+              <button
+                type="button"
+                className={`btn btn-sm ${searchType === 'journals' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setSearchType('journals')}
+              >
+                Journal Posts Only
+              </button>
+            </div>
+
             <div className="form-control">
               <label className="label">
                 <span className="label-text font-semibold">Search Query</span>
@@ -193,11 +229,19 @@ export const SearchPage = () => {
         {/* Search Info */}
         {searchInfo && results.length > 0 && (
           <div className="flex items-center justify-between mb-6 text-sm text-base-content/70">
-            <div className="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-              <span>Found {searchInfo.total} result{searchInfo.total !== 1 ? 's' : ''}</span>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span>Found {searchInfo.total} result{searchInfo.total !== 1 ? 's' : ''}</span>
+              </div>
+              {searchInfo.resumeCount > 0 && (
+                <span className="badge badge-primary badge-sm">{searchInfo.resumeCount} resume{searchInfo.resumeCount !== 1 ? 's' : ''}</span>
+              )}
+              {searchInfo.journalCount > 0 && (
+                <span className="badge badge-secondary badge-sm">{searchInfo.journalCount} journal post{searchInfo.journalCount !== 1 ? 's' : ''}</span>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <span>in {searchInfo.executionTime}ms</span>
@@ -209,18 +253,26 @@ export const SearchPage = () => {
         {results.length > 0 && (
           <div className="space-y-4">
             {results.map((result) => (
-              <div key={result.id} className="card bg-base-100 shadow-lg hover:shadow-xl transition-shadow">
+              <div key={`${result.type}-${result.id}`} className="card bg-base-100 shadow-lg hover:shadow-xl transition-shadow">
                 <div className="card-body">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
+                        <div className={`badge ${result.type === 'resume' ? 'badge-primary' : 'badge-secondary'}`}>
+                          {result.type === 'resume' ? '📄 Resume' : '📝 Journal'}
+                        </div>
                         <h2 className="card-title text-xl">
-                          <Link
-                            to={`/resume/${result.slug}`}
-                            className="link link-hover"
-                          >
-                            {result.title}
-                          </Link>
+                          {result.type === 'resume' ? (
+                            <Link to={`/resume/${result.slug}`} className="link link-hover">
+                              {result.title}
+                            </Link>
+                          ) : (
+                            <span className="text-base-content/90">
+                              {result.text && result.text.length > 80
+                                ? `${result.text.substring(0, 80)}...`
+                                : result.text || 'Journal Post'}
+                            </span>
+                          )}
                         </h2>
                         <div className="badge badge-neutral">#{result.rank}</div>
                       </div>
@@ -231,6 +283,12 @@ export const SearchPage = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                           </svg>
                           <span>{result.user.firstName} {result.user.lastName}</span>
+                          {result.type === 'journal' && result.publishedAt && (
+                            <>
+                              <span className="text-base-content/40">•</span>
+                              <span>{new Date(result.publishedAt).toLocaleDateString()}</span>
+                            </>
+                          )}
                         </div>
                       )}
 
@@ -250,12 +308,15 @@ export const SearchPage = () => {
                   </div>
 
                   <div className="card-actions justify-end mt-4">
-                    <Link
-                      to={`/resume/${result.slug}`}
-                      className="btn btn-primary btn-sm"
-                    >
-                      View Resume
-                    </Link>
+                    {result.type === 'resume' ? (
+                      <Link to={`/resume/${result.slug}`} className="btn btn-primary btn-sm">
+                        View Resume
+                      </Link>
+                    ) : (
+                      <Link to={`/journal/${result.userId}`} className="btn btn-secondary btn-sm">
+                        View Journal
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>
@@ -287,7 +348,7 @@ export const SearchPage = () => {
               </svg>
               <h3 className="text-xl font-semibold mb-2">Start Searching</h3>
               <p className="text-base-content/70 max-w-md mb-4">
-                Enter keywords, skills, or job descriptions to find matching resumes using AI-powered semantic search.
+                Search across resumes and public journal posts using AI-powered semantic understanding.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 text-left">
                 <div className="card bg-base-200">
@@ -298,6 +359,20 @@ export const SearchPage = () => {
                 </div>
                 <div className="card bg-base-200">
                   <div className="card-body p-4">
+                    <h4 className="font-semibold text-sm mb-2">By Experience</h4>
+                    <p className="text-xs text-base-content/70">Senior developer, 5+ years</p>
+                  </div>
+                </div>
+                <div className="card bg-base-200">
+                  <div className="card-body p-4">
+                    <h4 className="font-semibold text-sm mb-2">By Topics</h4>
+                    <p className="text-xs text-base-content/70">Machine learning, AI projects</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
                     <h4 className="font-semibold text-sm mb-2">By Role</h4>
                     <p className="text-xs text-base-content/70">Senior Full Stack Developer</p>
                   </div>
@@ -308,11 +383,11 @@ export const SearchPage = () => {
                     <p className="text-xs text-base-content/70">Cybersecurity, Cloud Infrastructure</p>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
+              </div >
+            </div >
+          </div >
         )}
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };

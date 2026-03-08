@@ -303,15 +303,35 @@ export function DashboardPage() {
                     <h1 className="text-4xl font-bold">My Resumes</h1>
                     <p className="text-base-content/60 mt-2">Manage and share your professional resumes</p>
                   </div>
-                  <button
-                    className="btn btn-primary gap-2"
-                    onClick={() => navigate('/editor/new')}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-                    </svg>
-                    Create Resume
-                  </button>
+                  {(() => {
+                    const resumeLimits = { FREE: 3, PRO: 30, ENTERPRISE: 30 };
+                    const currentTier = user?.subscriptionTier || 'FREE';
+                    const limit = resumeLimits[currentTier as keyof typeof resumeLimits];
+                    const hasReachedLimit = resumes.length >= limit;
+
+                    return (
+                      <div className="flex flex-col items-end gap-2">
+                        <button
+                          className="btn btn-primary gap-2"
+                          onClick={() => navigate('/editor/new')}
+                          disabled={hasReachedLimit}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                          </svg>
+                          Create Resume
+                        </button>
+                        <span className="text-xs text-base-content/60">
+                          {resumes.length} / {limit} resumes
+                          {hasReachedLimit && (
+                            <span className="text-warning ml-2">
+                              - <Link to="/pricing" className="link link-warning">Upgrade to create more</Link>
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {error && (
@@ -624,12 +644,23 @@ export function DashboardPage() {
                 <div className="card-body p-4">
                   <h3 className="font-bold text-lg mb-4">Quick Actions</h3>
                   <div className="space-y-2">
-                    <button
-                      className="btn btn-primary btn-sm btn-block"
-                      onClick={() => navigate('/editor/new')}
-                    >
-                      ➕ Create Resume
-                    </button>
+                    {(() => {
+                      const resumeLimits = { FREE: 3, PRO: 30, ENTERPRISE: 30 };
+                      const currentTier = user?.subscriptionTier || 'FREE';
+                      const limit = resumeLimits[currentTier as keyof typeof resumeLimits];
+                      const hasReachedLimit = resumes.length >= limit;
+
+                      return (
+                        <button
+                          className="btn btn-primary btn-sm btn-block"
+                          onClick={() => navigate('/editor/new')}
+                          disabled={hasReachedLimit}
+                          title={hasReachedLimit ? `You've reached your ${currentTier} plan limit of ${limit} resumes` : 'Create a new resume'}
+                        >
+                          ➕ Create Resume
+                        </button>
+                      );
+                    })()}
                     <Link to="/settings" className="btn btn-ghost btn-sm btn-block">
                       ⚙️ Settings
                     </Link>
