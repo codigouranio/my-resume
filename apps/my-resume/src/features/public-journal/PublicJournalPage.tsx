@@ -46,15 +46,20 @@ export function PublicJournalPage() {
       setPosts(response.posts || []);
 
       // Build user display name
-      const { firstName, lastName, email } = response.user;
-      if (firstName && lastName) {
-        setUserName(`${firstName} ${lastName}`);
-      } else if (firstName) {
-        setUserName(firstName);
-      } else if (lastName) {
-        setUserName(lastName);
+      if (response.user) {
+        const { firstName, lastName, email } = response.user;
+        if (firstName && lastName) {
+          setUserName(`${firstName} ${lastName}`);
+        } else if (firstName) {
+          setUserName(firstName);
+        } else if (lastName) {
+          setUserName(lastName);
+        } else {
+          setUserName(email.split('@')[0]);
+        }
       } else {
-        setUserName(email.split('@')[0]);
+        // Fallback if user data not returned by API
+        setUserName('User');
       }
     } catch (err: any) {
       setError(err.message || 'Failed to load public posts');

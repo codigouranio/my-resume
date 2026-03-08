@@ -9,15 +9,15 @@ export class AIContextController {
   constructor(private readonly aiContextService: AIContextService) {}
 
   // Public endpoint - no auth required
-  @Get('public/:username')
+  @Get('public/:userId')
   @ApiOperation({ summary: 'Get public journal posts for a user (no auth required)' })
   async getPublicPosts(
-    @Param('username') username: string,
+    @Param('userId') userId: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
-    return this.aiContextService.getPublicPostsByUsername(
-      username,
+    return this.aiContextService.getPublicPostsByUserId(
+      userId,
       limit ? parseInt(limit) : 50,
       offset ? parseInt(offset) : 0,
     );

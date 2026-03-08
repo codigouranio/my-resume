@@ -81,23 +81,23 @@ export class AIContextService {
     });
   }
 
-  async getPublicPostsByUsername(username: string, limit: number = 50, offset: number = 0): Promise<{ posts: JournalPost[]; total: number }> {
-    // Find user by email prefix (username)
-    const user = await this.prisma.user.findFirst({
-      where: {
-        email: {
-          startsWith: username,
-          mode: 'insensitive',
-        },
+  async getPublicPostsByUserId(userId: string, limit: number = 50, offset: number = 0): Promise<{ posts: JournalPost[]; total: number; user: { firstName: string | null; lastName: string | null; email: string } }> {
+    // Find user by ID
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        firstName: true,
+        lastName: true,
+        email: true,
       },
     });
 
     if (!user) {
-      return { posts: [], total: 0 };
+      throw new Error('User not found');
     }
 
     const where: Prisma.JournalPostWhereInput = {
-      userId: user.id,
+      userId: userId,
       isPublic: true,
       deletedAt: null,
     };
@@ -116,7 +116,15 @@ export class AIContextService {
       this.prisma.journalPost.count({ where }),
     ]);
 
-    return { posts, total };
+    return { 
+      posts, 
+      total,
+      user: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+      },
+    };
   }
 
   async updatePost(postId: string, userId: string, input: UpdatePostInput): Promise<JournalPost> {
