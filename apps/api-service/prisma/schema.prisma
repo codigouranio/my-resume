@@ -211,10 +211,9 @@ model ResumeEmbedding {
   resumeId              String                       @unique
   
   // Embeddings (nomic-embed-text produces 768-dimensional vectors)
-  // TODO: Enable when pgvector extension is installed
-  // contentEmbedding      Unsupported("vector(768)")?  // Public resume content
-  // llmContextEmbedding   Unsupported("vector(768)")?  // Hidden AI context
-  // combinedEmbedding     Unsupported("vector(768)")?  // Weighted combination for search
+  contentEmbedding      Unsupported("vector(768)")?  // Public resume content
+  llmContextEmbedding   Unsupported("vector(768)")?  // Hidden AI context
+  combinedEmbedding     Unsupported("vector(768)")?  // Weighted combination for search
   
   // Metadata for tracking
   embeddingModel        String                       @default("nomic-embed-text")
