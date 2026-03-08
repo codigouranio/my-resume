@@ -11,6 +11,7 @@ import os
 import logging
 import requests
 from functools import lru_cache
+from prompt_manager import get_prompt_manager
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -18,6 +19,9 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
+
+# Initialize prompt manager
+prompts = get_prompt_manager()
 
 # Load LLAMA model
 # Adjust path to your model file location
@@ -76,20 +80,6 @@ This is the professional resume and career information that should be used to an
 """
 
 
-# Safety guardrails for the AI responses
-SAFETY_INSTRUCTIONS = """
-IMPORTANT GUIDELINES:
-1. Only provide factual information from the resume context provided
-2. Always be professional, positive, and accurate
-3. If asked about information not in the context, politely say you don't have that information
-4. Never make up or infer information that isn't explicitly stated
-5. Never provide negative, critical, or speculative information
-6. Focus on the candidate's professional achievements, skills, and experience
-7. Maintain a helpful and encouraging tone when discussing their career
-8. If asked inappropriate questions, redirect to professional topics
-"""
-
-
 @app.route("/health", methods=["GET"])
 def health_check():
     """Health check endpoint."""
@@ -116,24 +106,16 @@ def chat():
         # Get dynamic resume content
         resume_context = get_resume_context()
 
+        # Load prompts from files
+        safety_guidelines = prompts.get("chat_basic_safety")
+
         # Build prompt with context and safety guardrails
-        prompt = f"""You are a professional AI assistant helping visitors learn about a candidate's career and qualifications.
-
-{SAFETY_INSTRUCTIONS}
-
-PROFESSIONAL INFORMATION:
-{resume_context}
-
-Instructions:
-- Answer questions accurately based only on the information provided above
-- Be professional, positive, and helpful
-- If information is not available, say "I don't have that specific information in the profile"
-- Focus on their accomplishments, skills, and professional experience
-- Never speculate or make up information
-
-User Question: {user_message}
-
-Professional Answer:"""
+        prompt = prompts.get(
+            "chat_basic_system",
+            safety_guidelines=safety_guidelines,
+            resume_context=resume_context,
+            user_message=user_message,
+        )
 
         # Generate response
         logger.info(f"Generating response for: {user_message[:100]}")
@@ -174,23 +156,15 @@ def chat_stream():
         # Get dynamic resume content
         resume_context = get_resume_context()
 
-        prompt = f"""You are a professional AI assistant helping visitors learn about a candidate's career and qualifications.
+        # Load prompts from files
+        safety_guidelines = prompts.get("chat_basic_safety")
 
-{SAFETY_INSTRUCTIONS}
-
-PROFESSIONAL INFORMATION:
-{resume_context}
-
-Instructions:
-- Answer questions accurately based only on the information provided above
-- Be professional, positive, and helpful
-- If information is not available, say "I don't have that specific information in the profile"
-- Focus on their accomplishments, skills, and professional experience
-- Never speculate or make up information
-
-User Question: {user_message}
-
-Professional Answer:"""
+        prompt = prompts.get(
+            "chat_basic_system",
+            safety_guidelines=safety_guidelines,
+            resume_context=resume_context,
+            user_message=user_message,
+        )
 
         def generate():
             for output in llm(

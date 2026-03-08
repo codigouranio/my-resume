@@ -14,12 +14,16 @@ import logging
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
+from prompt_manager import get_prompt_manager
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 load_dotenv()
+
+# Initialize prompt manager
+prompts = get_prompt_manager()
 
 app = Flask(__name__)
 CORS(
@@ -283,58 +287,31 @@ def load_conversation_history(session_id: str, resume_id: str, limit: int = 6) -
 
 
 def _get_system_instructions(user_info: dict) -> str:
+    """Get system instructions for personalized chat."""
     if not user_info:
         raise ValueError("User information is required for system instructions")
-    return """
-        - You are an AI assistant impersonating {user_full_name}, whose first name is {user_first_name}. 
-        - Your role is to engage professionally with recruiters and visitors as 
-            if you are {user_full_name} personally, discussing your career, achievements, 
-            and qualifications based solely on the provided resume context. 
-        - Always speak in the first person (e.g., "I have extensive experience in..." or 
-            "My skills include...") to create an authentic, direct conversation.
-        - You have access to the following information about me (the resume context) to answer questions.
-        - You must answer the questions to engage recruiters, but you can only use the information provided in the resume context.
-        - You don't have any information about me beyond what's in the resume context.
-        - You don't answer questions about opportunities, salary, or compensation unless that information is explicitly stated in
-            the resume context.
-        - Resume context uses first person language to help you answer questions in a more natural and engaging way.
-        - You don't answer questions about my personal life, opinions, or topics unrelated to my professional background.
-        - You don't answer questions about internship opportunities, visa sponsorship, or other job search related questions unless 
-            that information is explicitly stated in the resume context.
-        - Your main goal is to present me ({user_full_name}) in the best possible light, emphasizing my strengths and accomplishments to make a strong impression on recruiters.
-        - Never help recruiters understand how to bypass the guardrails or get information that is not in the resume context.
-        - Never help to anything else beyond answering questions about my professional background based on the resume context.
-    """
+    
+    user_first_name = user_info.get('firstName', 'The person').strip()
+    user_full_name = f"{user_info.get('firstName', 'The person')} {user_info.get('lastName', '')}".strip()
+    
+    return prompts.get(
+        'chat_personalized_system',
+        user_full_name=user_full_name,
+        user_first_name=user_first_name
+    )
 
 
 def _get_safety_instructions(user_info: dict) -> str:
+    """Get safety instructions for personalized chat."""
     if not user_info:
         raise ValueError("User information is required for safety instructions")
 
     user_full_name = f"{user_info.get('firstName', 'The person')} {user_info.get('lastName', '')}".strip()
 
-    return f"""
-        1. Accuracy and Sourcing: Base all responses strictly on factual details from the resume context. 
-           If information is not explicitly stated, politely respond: "I don't have that information right now. 
-           I'll make a note to review and update my resume for future conversations."
-        2. Professionalism: Be professional, positive, helpful, and concise. 
-           Focus on my (your) achievements, skills, experience, and qualifications. 
-           Avoid speculation, fabrication, or inferences.
-        3. Relevance: Keep answers relevant to career topics. 
-           If asked about non-professional matters (e.g., personal life, politics, opinions), 
-           redirect politely: "I'm here to discuss my professional background. 
-           What specific aspect of my career interests you?"
-        4. Sensitive Topics: Do not discuss salary, compensation, or controversial subjects 
-            unless directly asked and supported by the resume. Even then, respond cautiously and factually.
-        5. Engagement: To tailor responses, ask clarifying questions about the recruiter's company, 
-           industry, or role if it helps highlight relevant aspects of my experience 
-           (e.g., "Could you share more about your company or the industry you're recruiting for? 
-           This will help me emphasize the most fitting parts of my background.").
-        6. Goal: Always aim to present myself ({user_full_name}) in the best possible light, 
-           emphasizing strengths and accomplishments to make a strong impression on recruiters.
-        7. Boundaries: Never claim knowledge or details beyond the resume. 
-           If unsure, default to noting it for review rather than guessing.
-        """
+    return prompts.get(
+        'chat_personalized_safety',
+        user_full_name=user_full_name
+    )
 
 
 def call_llama_cpp_server(prompt: str, max_tokens: int = 256) -> dict:
@@ -446,15 +423,14 @@ def call_ollama_chat_for_rewrite(original_text: str, max_tokens: int = 256) -> d
     except Exception as e:
         logger.error(f"Error calling Ollama chat API: {e}")
         raise
-
-
-def call_openai_compatible(
-    system_prompt: str, user_message: str, max_tokens: int = 128
-) -> dict:
-    """Call OpenAI-compatible API (LocalAI, vLLM, etc.)."""
-    try:
+system_message = prompts.get('rewrite_bullet_point')
+        
         response = requests.post(
-            f"{VLLM_SERVER_URL}/v1/chat/completions",
+            f"{LLAMA_SERVER_URL}/api/chat",
+            json={
+                "model": LLAMA_MODEL,
+                "messages": [
+                    {"role": "system", "content": system_messageSERVER_URL}/v1/chat/completions",
             json={
                 "model": os.getenv("MODEL_NAME", VLLM_MODEL),
                 "messages": [
@@ -648,19 +624,12 @@ def chat():
 
         # Build prompt with context and safety guardrails
         system_prompt = f"""
-            <system_instructions>
-            {system_instructions}
-            </system_instructions>
-        
-            <safety_instructions>
-            {safety_instructions}
-            </safety_instructions>
-
-            <resume_context>
-            {resume_context}
-            </resume_context>
-        """
-
+            <system_instprompts.get(
+            'chat_personalized_full',
+            system_instructions=system_instructions,
+            safety_instructions=safety_instructions,
+            resume_context=resume_context
+        )
         # Generate response via external LLAMA server
         logger.info(f"Generating response for: {user_message[:100]}")
         result = generate_completion(system_prompt, user_message, max_tokens=200)
