@@ -22,7 +22,8 @@
     "prisma:migrate": "prisma migrate deploy",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
-    "prisma:seed": "ts-node prisma/seed.ts"
+    "prisma:seed": "ts-node prisma/seed.ts",
+    "embeddings:generate": "ts-node -r tsconfig-paths/register scripts/generate-all-embeddings.ts"
   },
   "dependencies": {
     "@apollo/server": "^4.12.2",
