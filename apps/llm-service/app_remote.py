@@ -290,14 +290,14 @@ def _get_system_instructions(user_info: dict) -> str:
     """Get system instructions for personalized chat."""
     if not user_info:
         raise ValueError("User information is required for system instructions")
-    
-    user_first_name = user_info.get('firstName', 'The person').strip()
+
+    user_first_name = user_info.get("firstName", "The person").strip()
     user_full_name = f"{user_info.get('firstName', 'The person')} {user_info.get('lastName', '')}".strip()
-    
+
     return prompts.get(
-        'chat_personalized_system',
+        "chat_personalized_system",
         user_full_name=user_full_name,
-        user_first_name=user_first_name
+        user_first_name=user_first_name,
     )
 
 
@@ -308,10 +308,7 @@ def _get_safety_instructions(user_info: dict) -> str:
 
     user_full_name = f"{user_info.get('firstName', 'The person')} {user_info.get('lastName', '')}".strip()
 
-    return prompts.get(
-        'chat_personalized_safety',
-        user_full_name=user_full_name
-    )
+    return prompts.get("chat_personalized_safety", user_full_name=user_full_name)
 
 
 def call_llama_cpp_server(prompt: str, max_tokens: int = 256) -> dict:
@@ -396,15 +393,14 @@ def call_ollama_for_completion(
 def call_ollama_chat_for_rewrite(original_text: str, max_tokens: int = 256) -> dict:
     """Call Ollama chat API for text rewriting with a system message."""
     try:
+        system_message = prompts.get("rewrite_bullet_point")
+
         response = requests.post(
             f"{LLAMA_SERVER_URL}/api/chat",
             json={
                 "model": LLAMA_MODEL,
                 "messages": [
-                    {
-                        "role": "system",
-                        "content": "You are a resume bullet point rewriter. Rewrite text to be more professional and impactful using strong action verbs. Stay close to the original meaning - only enhance clarity and professionalism. Add metrics only if the context clearly suggests them, but don't invent details not present in the original. Output ONLY the rewritten bullet point, nothing else.",
-                    },
+                    {"role": "system", "content": system_message},
                     {"role": "user", "content": f'Rewrite: "{original_text}"'},
                 ],
                 "stream": False,
@@ -423,14 +419,15 @@ def call_ollama_chat_for_rewrite(original_text: str, max_tokens: int = 256) -> d
     except Exception as e:
         logger.error(f"Error calling Ollama chat API: {e}")
         raise
-system_message = prompts.get('rewrite_bullet_point')
-        
+
+
+def call_openai_compatible(
+    system_prompt: str, user_message: str, max_tokens: int = 128
+) -> dict:
+    """Call OpenAI-compatible API (LocalAI, vLLM, etc.)."""
+    try:
         response = requests.post(
-            f"{LLAMA_SERVER_URL}/api/chat",
-            json={
-                "model": LLAMA_MODEL,
-                "messages": [
-                    {"role": "system", "content": system_messageSERVER_URL}/v1/chat/completions",
+            f"{VLLM_SERVER_URL}/v1/chat/completions",
             json={
                 "model": os.getenv("MODEL_NAME", VLLM_MODEL),
                 "messages": [
@@ -623,13 +620,13 @@ def chat():
             history_block = "\nCONVERSATION HISTORY:\n" + "\n".join(formatted_history)
 
         # Build prompt with context and safety guardrails
-        system_prompt = f"""
-            <system_instprompts.get(
-            'chat_personalized_full',
+        system_prompt = prompts.get(
+            "chat_personalized_full",
             system_instructions=system_instructions,
             safety_instructions=safety_instructions,
-            resume_context=resume_context
+            resume_context=resume_context,
         )
+
         # Generate response via external LLAMA server
         logger.info(f"Generating response for: {user_message[:100]}")
         result = generate_completion(system_prompt, user_message, max_tokens=200)
@@ -671,8 +668,13 @@ def chat():
 
 @app.route("/api/resume", methods=["GET"])
 def get_resume():
-    """Get resume context."""
-    return jsonify({"context": RESUME_CONTEXT})
+    """Get resume context. Note: Resume is loaded dynamically from database per request."""
+    return jsonify(
+        {
+            "message": "Resume context is loaded dynamically from database on each chat request",
+            "status": "dynamic_loading",
+        }
+    )
 
 
 @app.route("/api/improve-text", methods=["POST"])
@@ -929,9 +931,10 @@ def generate_embeddings_batch():
 
 @app.route("/api/reload-resume", methods=["POST"])
 def reload_resume():
-    """Reload resume context from file. Requires admin authorization."""
-    global RESUME_CONTEXT
-
+    """
+    Deprecated: Resume context is now loaded dynamically from database on each request.
+    This endpoint is kept for backwards compatibility but no longer performs any action.
+    """
     # Simple token-based auth (in production, use proper authentication)
     auth_token = request.headers.get("X-Admin-Token")
     expected_token = os.getenv("ADMIN_TOKEN", "change-me-in-production")
@@ -939,24 +942,13 @@ def reload_resume():
     if auth_token != expected_token:
         return jsonify({"error": "Unauthorized"}), 401
 
-    try:
-        old_length = len(RESUME_CONTEXT)
-        RESUME_CONTEXT = load_resume_context()
-        new_length = len(RESUME_CONTEXT)
-
-        logger.info(f"Resume context reloaded: {old_length} -> {new_length} chars")
-
-        return jsonify(
-            {
-                "status": "success",
-                "message": "Resume context reloaded",
-                "old_length": old_length,
-                "new_length": new_length,
-            }
-        )
-    except Exception as e:
-        logger.error(f"Failed to reload resume: {e}")
-        return jsonify({"error": str(e)}), 500
+    return jsonify(
+        {
+            "status": "success",
+            "message": "Resume context is loaded dynamically from database on each chat request. No reload necessary.",
+            "note": "This endpoint is deprecated and will be removed in a future version.",
+        }
+    )
 
 
 if __name__ == "__main__":
