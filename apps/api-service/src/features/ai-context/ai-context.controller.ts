@@ -5,22 +5,39 @@ import { AIContextService } from './ai-context.service';
 
 @ApiTags('ai-context')
 @Controller('ai-context')
-@UseGuards(JwtAuthGuard)
 export class AIContextController {
   constructor(private readonly aiContextService: AIContextService) {}
 
-  // Posts
+  // Public endpoint - no auth required
+  @Get('public/:username')
+  @ApiOperation({ summary: 'Get public journal posts for a user (no auth required)' })
+  async getPublicPosts(
+    @Param('username') username: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    return this.aiContextService.getPublicPostsByUsername(
+      username,
+      limit ? parseInt(limit) : 50,
+      offset ? parseInt(offset) : 0,
+    );
+  }
+
+  // Protected routes below
+  @UseGuards(JwtAuthGuard)
   @Post('posts')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new journal post' })
-  async createPost(@Request() req, @Body() body: { text: string; publishedAt?: string; includeInAI?: boolean }) {
+  async createPost(@Request() req, @Body() body: { text: string; publishedAt?: string; includeInAI?: boolean; isPublic?: boolean }) {
     return this.aiContextService.createPost(req.user.id, {
       text: body.text,
       publishedAt: body.publishedAt ? new Date(body.publishedAt) : undefined,
       includeInAI: body.includeInAI,
+      isPublic: body.isPublic,
     });
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('posts/:postId')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a single journal post' })
@@ -32,6 +49,7 @@ export class AIContextController {
     return post;
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('posts')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all journal posts with optional filters' })
@@ -52,21 +70,24 @@ export class AIContextController {
     });
   }
 
+  @UseGuards(JwtAuthGuard)
   @Put('posts/:postId')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update an existing journal post' })
   async updatePost(
     @Request() req,
     @Param('postId') postId: string,
-    @Body() body: { text?: string; publishedAt?: string; includeInAI?: boolean },
+    @Body() body: { text?: string; publishedAt?: string; includeInAI?: boolean; isPublic?: boolean },
   ) {
     return this.aiContextService.updatePost(postId, req.user.id, {
       text: body.text,
       publishedAt: body.publishedAt ? new Date(body.publishedAt) : undefined,
       includeInAI: body.includeInAI,
+      isPublic: body.isPublic,
     });
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete('posts/:postId')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a journal post' })
@@ -79,6 +100,7 @@ export class AIContextController {
   }
 
   // Reactions
+  @UseGuards(JwtAuthGuard)
   @Post('posts/:postId/reactions')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Add a reaction to a journal post' })
@@ -90,6 +112,7 @@ export class AIContextController {
     return this.aiContextService.addReaction(postId, req.user.id, body.reactionType, body.customEmoji);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete('posts/:postId/reactions')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Remove a reaction from a journal post' })
@@ -103,6 +126,7 @@ export class AIContextController {
   }
 
   // Replies
+  @UseGuards(JwtAuthGuard)
   @Post('posts/:postId/replies')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Add a reply to a journal post' })
@@ -110,6 +134,7 @@ export class AIContextController {
     return this.aiContextService.addReply(postId, req.user.id, body.text);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('posts/:postId/replies')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all replies for a journal post' })
@@ -117,6 +142,7 @@ export class AIContextController {
     return this.aiContextService.getPostReplies(postId, req.user.id);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Put('posts/:postId/replies/:replyId')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update a reply on a journal post' })
@@ -129,6 +155,7 @@ export class AIContextController {
     return this.aiContextService.updateReply(postId, replyId, req.user.id, body.text);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete('posts/:postId/replies/:replyId')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a reply from a journal post' })
@@ -141,6 +168,7 @@ export class AIContextController {
   }
 
   // Resume tags
+  @UseGuards(JwtAuthGuard)
   @Post('posts/:postId/resume-tags')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Tag a journal post to a resume' })
@@ -152,6 +180,7 @@ export class AIContextController {
     return this.aiContextService.tagPostToResume(postId, req.user.id, body.resumeId);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete('posts/:postId/resume-tags/:resumeId')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Remove a resume tag from a journal post' })
@@ -165,6 +194,7 @@ export class AIContextController {
   }
 
   // AI Context
+  @UseGuards(JwtAuthGuard)
   @Get('context')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get AI context string from all journal posts' })
@@ -173,6 +203,7 @@ export class AIContextController {
   }
 
   // Attachments
+  @UseGuards(JwtAuthGuard)
   @Post('posts/:postId/attachments')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Add an attachment to a journal post' })
@@ -184,6 +215,7 @@ export class AIContextController {
     return this.aiContextService.addAttachment(postId, req.user.id, body.fileUrl, body.fileName, body.fileType, body.fileSizeBytes);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete('posts/:postId/attachments/:attachmentId')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Remove an attachment from a journal post' })

@@ -10,6 +10,7 @@ interface Post {
   updatedAt: string;
   isPublic: boolean;
   reactions?: any[];
+  attachments?: any[];
 }
 
 export function PublicJournalPage() {
@@ -157,6 +158,63 @@ export function PublicJournalPage() {
                         </button>
                       )}
                     </div>
+
+                    {/* Attachments */}
+                    {post.attachments && post.attachments.length > 0 && (
+                      <>
+                        <div className="divider my-2"></div>
+                        {post.attachments.map((attachment: any) => {
+                          const isImage = attachment.fileType.startsWith('image/');
+                          const isPdf = attachment.fileType === 'application/pdf';
+                          const isDocument = ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/markdown', 'text/plain'].includes(attachment.fileType);
+
+                          return (
+                            <div
+                              key={attachment.id}
+                              className="attachment mb-2 p-3 bg-base-200 rounded"
+                            >
+                              {isImage ? (
+                                <div className="flex flex-col gap-2">
+                                  <img
+                                    src={attachment.fileUrl}
+                                    alt={attachment.fileName}
+                                    className="max-h-64 rounded object-contain"
+                                  />
+                                  <span className="text-xs text-base-content/60">{attachment.fileName}</span>
+                                </div>
+                              ) : isPdf ? (
+                                <a
+                                  href={attachment.fileUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="link link-primary gap-2 flex items-center"
+                                >
+                                  📄 {attachment.fileName}
+                                </a>
+                              ) : isDocument ? (
+                                <a
+                                  href={attachment.fileUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="link link-primary gap-2 flex items-center"
+                                >
+                                  📝 {attachment.fileName}
+                                </a>
+                              ) : (
+                                <a
+                                  href={attachment.fileUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="link link-primary gap-2 flex items-center"
+                                >
+                                  📎 {attachment.fileName}
+                                </a>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </>
+                    )}
 
                     {/* Reactions */}
                     {reactionGroups.length > 0 && (

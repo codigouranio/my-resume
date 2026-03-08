@@ -6,12 +6,14 @@ export interface CreatePostInput {
   text: string;
   publishedAt?: Date;
   includeInAI?: boolean;
+  isPublic?: boolean;
 }
 
 export interface UpdatePostInput {
   text?: string;
   publishedAt?: Date;
   includeInAI?: boolean;
+  isPublic?: boolean;
 }
 
 export interface PostFilters {
@@ -34,6 +36,7 @@ export class AIContextService {
         text: input.text,
         publishedAt: input.publishedAt || new Date(),
         includeInAI: input.includeInAI ?? true,
+        isPublic: input.isPublic ?? false,
       },
       include: this.getPostInclude(),
     });
@@ -76,6 +79,44 @@ export class AIContextService {
       take: filters.limit || 50,
       skip: filters.offset || 0,
     });
+  }
+
+  async getPublicPostsByUsername(username: string, limit: number = 50, offset: number = 0): Promise<{ posts: JournalPost[]; total: number }> {
+    // Find user by email prefix (username)
+    const user = await this.prisma.user.findFirst({
+      where: {
+        email: {
+          startsWith: username,
+          mode: 'insensitive',
+        },
+      },
+    });
+
+    if (!user) {
+      return { posts: [], total: 0 };
+    }
+
+    const where: Prisma.JournalPostWhereInput = {
+      userId: user.id,
+      isPublic: true,
+      deletedAt: null,
+    };
+
+    const [posts, total] = await Promise.all([
+      this.prisma.journalPost.findMany({
+        where,
+        include: {
+          reactions: true,
+          attachments: true,
+        },
+        orderBy: { publishedAt: 'desc' },
+        take: limit,
+        skip: offset,
+      }),
+      this.prisma.journalPost.count({ where }),
+    ]);
+
+    return { posts, total };
   }
 
   async updatePost(postId: string, userId: string, input: UpdatePostInput): Promise<JournalPost> {

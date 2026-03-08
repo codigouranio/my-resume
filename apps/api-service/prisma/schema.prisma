@@ -335,6 +335,9 @@ model JournalPost {
   // AI Context
   includeInAI     Boolean  @default(true) // Toggle to exclude from AI context
   
+  // Public Sharing
+  isPublic        Boolean  @default(false) // Make post visible on public journal page
+  
   // Metadata
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -350,6 +353,7 @@ model JournalPost {
   @@index([userId])
   @@index([publishedAt])
   @@index([includeInAI])
+  @@index([isPublic])
   @@index([deletedAt])
 }
 
