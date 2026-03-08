@@ -77,7 +77,7 @@ export function PostReactions({ postId, reactions, onReactionUpdated }: PostReac
               key={type}
               onClick={() => toggleReaction(type, emoji)}
               disabled={isLoading}
-              className={`btn btn-xs gap-1 ${isActive ? 'btn-primary' : 'btn-ghost'}`}
+              className={`btn btn-sm gap-1 ${isActive ? 'btn-primary' : 'btn-ghost'}`}
               title={type}
             >
               {emoji}
