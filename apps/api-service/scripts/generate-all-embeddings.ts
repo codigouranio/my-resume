@@ -18,8 +18,8 @@ async function generateAllEmbeddings() {
         id: true, 
         title: true, 
         userId: true,
-        _count: {
-          select: { embeddings: true }
+        embeddings: {
+          select: { id: true }
         }
       },
     });
@@ -27,7 +27,7 @@ async function generateAllEmbeddings() {
     console.log(`📊 Found ${resumes.length} total resumes\n`);
 
     // Filter resumes without embeddings
-    const resumesWithoutEmbeddings = resumes.filter(r => r._count.embeddings === 0);
+    const resumesWithoutEmbeddings = resumes.filter(r => !r.embeddings);
     console.log(`📝 Resumes needing embeddings: ${resumesWithoutEmbeddings.length}\n`);
 
     if (resumesWithoutEmbeddings.length === 0) {
