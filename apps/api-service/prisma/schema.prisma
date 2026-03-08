@@ -314,6 +314,7 @@ model ChatAnalytics {
 }
 // AI Context / Private Life Journal
 enum ReactionType {
+  STAR
   LIKE
   HEART
   MEDAL
