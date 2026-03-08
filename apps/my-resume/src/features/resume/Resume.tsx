@@ -218,6 +218,7 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
           <button
             onClick={handleInterestClick}
             className="btn btn-primary btn-lg shadow-lg hover:shadow-xl transition-all gap-2"
+            style={{ backgroundColor: 'var(--p)', color: 'var(--pc)', border: 'none' }}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
