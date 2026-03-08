@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { apiClient } from '../../shared/api/client';
 import { PostReactions } from './PostReactions';
 import { PostReplies } from './PostReplies';
@@ -18,10 +19,23 @@ export function PostCard({ post, onUpdated, onDeleted }: PostCardProps) {
   const [replyCount, setReplyCount] = useState(post.replies?.length || 0);
   const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<{ url: string; name: string } | null>(null);
 
   // X/Twitter-style: truncate at ~280 characters
   const TRUNCATE_LENGTH = 280;
   const shouldTruncate = post.text.length > TRUNCATE_LENGTH;
+
+  // Prevent body scroll when lightbox is open
+  useEffect(() => {
+    if (lightboxImage) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [lightboxImage]);
 
   const handleDelete = async () => {
     if (!confirm('Delete this journal entry?')) return;
@@ -172,7 +186,9 @@ export function PostCard({ post, onUpdated, onDeleted }: PostCardProps) {
                       <img
                         src={attachment.fileUrl}
                         alt={attachment.fileName}
-                        className="max-h-64 rounded"
+                        className="max-h-64 rounded cursor-pointer hover:opacity-90 transition-opacity"
+                        onClick={() => setLightboxImage({ url: attachment.fileUrl, name: attachment.fileName })}
+                        title="Click to view full size"
                       />
                       <span className="text-xs text-base-content/60">{attachment.fileName}</span>
                     </div>
@@ -273,6 +289,34 @@ export function PostCard({ post, onUpdated, onDeleted }: PostCardProps) {
           />
         )}
       </div>
+
+      {/* Image Lightbox Modal - Rendered via Portal */}
+      {lightboxImage && createPortal(
+        <div
+          className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 overflow-hidden"
+          style={{ zIndex: 99999 }}
+          onClick={() => setLightboxImage(null)}
+        >
+          {/* Close Button - Fixed at top right of screen */}
+          <button
+            className="fixed top-4 right-4 btn btn-circle btn-sm bg-white/10 border-white/20 text-white hover:bg-white/20"
+            onClick={() => setLightboxImage(null)}
+          >
+            ✕
+          </button>
+
+          <div className="relative max-w-7xl max-h-full flex flex-col items-center gap-4">
+            <img
+              src={lightboxImage.url}
+              alt={lightboxImage.name}
+              className="max-w-full max-h-[85vh] object-contain rounded"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <p className="text-white text-center text-sm">{lightboxImage.name}</p>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

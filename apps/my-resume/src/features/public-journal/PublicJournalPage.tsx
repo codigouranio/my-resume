@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams } from 'react-router-dom';
 import { apiClient } from '../../shared/api/client';
 import { linkifyText } from '../ai-context/utils/linkify';
@@ -29,8 +30,21 @@ export function PublicJournalPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
+  const [lightboxImage, setLightboxImage] = useState<{ url: string; name: string } | null>(null);
 
   const TRUNCATE_LENGTH = 280;
+
+  // Prevent body scroll when lightbox is open
+  useEffect(() => {
+    if (lightboxImage) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [lightboxImage]);
 
   useEffect(() => {
     loadPosts();
@@ -233,7 +247,9 @@ export function PublicJournalPage() {
                                   <img
                                     src={attachment.fileUrl}
                                     alt={attachment.fileName}
-                                    className="max-h-64 rounded object-contain"
+                                    className="max-h-64 rounded object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                                    onClick={() => setLightboxImage({ url: attachment.fileUrl, name: attachment.fileName })}
+                                    title="Click to view full size"
                                   />
                                   <span className="text-xs text-base-content/60">{attachment.fileName}</span>
                                 </div>
@@ -288,6 +304,34 @@ export function PublicJournalPage() {
           </div>
         )}
       </div>
+
+      {/* Image Lightbox Modal - Rendered via Portal */}
+      {lightboxImage && createPortal(
+        <div
+          className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 overflow-hidden"
+          style={{ zIndex: 99999 }}
+          onClick={() => setLightboxImage(null)}
+        >
+          {/* Close Button - Fixed at top right of screen */}
+          <button
+            className="fixed top-4 right-4 btn btn-circle btn-sm bg-white/10 border-white/20 text-white hover:bg-white/20"
+            onClick={() => setLightboxImage(null)}
+          >
+            ✕
+          </button>
+
+          <div className="relative max-w-7xl max-h-full flex flex-col items-center gap-4">
+            <img
+              src={lightboxImage.url}
+              alt={lightboxImage.name}
+              className="max-w-full max-h-[85vh] object-contain rounded"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <p className="text-white text-center text-sm">{lightboxImage.name}</p>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
