@@ -398,13 +398,13 @@ class ApiClient {
     return this.request(`/ai-context/posts${query ? '?' + query : ''}`);
   }
 
-  async getPublicPosts(username: string, limit?: number, offset?: number) {
+  async getPublicPosts(userId: string, limit?: number, offset?: number) {
     const params = new URLSearchParams();
     params.append('isPublic', 'true');
     if (limit) params.append('limit', String(limit));
     if (offset) params.append('offset', String(offset));
     const query = params.toString();
-    return this.request(`/ai-context/public/${username}${query ? '?' + query : ''}`);
+    return this.request(`/ai-context/public/${userId}${query ? '?' + query : ''}`);
   }
 
   async getAIContextPost(postId: string) {

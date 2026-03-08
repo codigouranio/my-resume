@@ -85,7 +85,7 @@ const App = () => {
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/resume/:slug" element={<Resume />} />
-            <Route path="/journal/:username" element={<PublicJournalPage />} />
+            <Route path="/journal/:userId" element={<PublicJournalPage />} />
 
             {/* Legal Pages */}
             <Route path="/user-agreement" element={<UserAgreementPage />} />

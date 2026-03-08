@@ -13,9 +13,19 @@ interface Post {
   attachments?: any[];
 }
 
+interface PublicJournalResponse {
+  posts: Post[];
+  user: {
+    firstName?: string;
+    lastName?: string;
+    email: string;
+  };
+}
+
 export function PublicJournalPage() {
-  const { username } = useParams<{ username: string }>();
+  const { userId } = useParams<{ userId: string }>();
   const [posts, setPosts] = useState<Post[]>([]);
+  const [userName, setUserName] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
@@ -24,16 +34,28 @@ export function PublicJournalPage() {
 
   useEffect(() => {
     loadPosts();
-  }, [username]);
+  }, [userId]);
 
   const loadPosts = async () => {
-    if (!username) return;
+    if (!userId) return;
 
     setIsLoading(true);
     setError('');
     try {
-      const response = await apiClient.getPublicPosts(username);
+      const response: PublicJournalResponse = await apiClient.getPublicPosts(userId);
       setPosts(response.posts || []);
+
+      // Build user display name
+      const { firstName, lastName, email } = response.user;
+      if (firstName && lastName) {
+        setUserName(`${firstName} ${lastName}`);
+      } else if (firstName) {
+        setUserName(firstName);
+      } else if (lastName) {
+        setUserName(lastName);
+      } else {
+        setUserName(email.split('@')[0]);
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to load public posts');
     } finally {
@@ -48,6 +70,29 @@ export function PublicJournalPage() {
       month: 'long',
       day: 'numeric',
     });
+  };
+
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const getRelativeTime = (dateString: string) => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (seconds < 60) return 'just now';
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+    return formatDateTime(dateString);
   };
 
   const toggleExpanded = (postId: string) => {
@@ -109,7 +154,7 @@ export function PublicJournalPage() {
       {/* Header */}
       <div className="bg-base-100 shadow-sm border-b border-base-300">
         <div className="container mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold">📖 {username}'s Journal</h1>
+          <h1 className="text-3xl font-bold">📖 {userName ? `${userName}'s Journal` : 'Journal'}</h1>
           <p className="text-base-content/60 mt-2">
             Public thoughts, achievements, and reflections
           </p>
@@ -140,6 +185,11 @@ export function PublicJournalPage() {
                     <p className="text-sm text-base-content/60">
                       📅 {formatDate(post.publishedAt)}
                     </p>
+                    {post.updatedAt && post.publishedAt !== post.updatedAt && (
+                      <p className="text-xs text-base-content/40 mt-0.5">
+                        edited {getRelativeTime(post.updatedAt)}
+                      </p>
+                    )}
 
                     {/* Content */}
                     <div className="text-base leading-relaxed mt-2">

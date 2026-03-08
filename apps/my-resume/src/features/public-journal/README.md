@@ -16,19 +16,21 @@ Allows users to make their journal posts public and share them via a dedicated p
 - Badge shown on posts marked as public
 
 ### 3. **Public Journal Page**
-- Route: `/journal/:username`
-- Displays all public posts for a given user
+- Route: `/journal/:userId`
+- Displays all public posts for a given user by their user ID
+- Shows user's full name (firstName + lastName) in the header
 - Features:
   - Clean, read-only view of public posts
   - URL linkification (clickable links)
   - Show more/less for long posts (280 char truncation)
   - Reaction counts displayed
+  - Photo and file attachments displayed
   - No edit/delete controls (public view only)
 
 ### 4. **Quick Access Link**
 - "View Public Journal" button in AI Context Feed header
 - Opens user's public journal in new tab
-- Uses email prefix as username (e.g., user@example.com → /journal/user)
+- Uses user ID for reliable routing (e.g., `/journal/[userId]`)
 
 ## Files Created
 
@@ -68,9 +70,21 @@ The backend needs to support:
 }
 ```
 
-### GET `/api/ai-context/public/:username`
+### GET `/api/ai-context/public/:userId`
 Returns public posts for a specific user (no auth required)
 Query params: `limit`, `offset`
+
+Response format:
+```json
+{
+  "posts": [...],
+  "user": {
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john@example.com"
+  }
+}
+```
 
 ## Usage
 
@@ -83,7 +97,8 @@ Query params: `limit`, `offset`
 
 2. **Viewing public journal:**
    - Click "🌐 View Public Journal" in the feed header
-   - Or navigate to `/journal/[username]`
+   - Or navigate to `/journal/[userId]`
+   - Page displays user's full name (firstName + lastName) in header
 
 3. **Adding star reactions:**
    - Click the ⭐ emoji in the reactions section

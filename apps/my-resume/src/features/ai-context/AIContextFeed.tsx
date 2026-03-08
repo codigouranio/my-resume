@@ -74,7 +74,7 @@ export function AIContextFeed() {
           </div>
           {user && (
             <Link
-              to={`/journal/${user.email.split('@')[0]}`}
+              to={`/journal/${user.id}`}
               className="btn btn-ghost btn-sm gap-1"
               target="_blank"
               rel="noopener noreferrer"
