@@ -373,21 +373,7 @@ export const SearchPage = () => {
             </div>
           </div>
         )}
-                    <h4 className="font-semibold text-sm mb-2">By Role</h4>
-                    <p className="text-xs text-base-content/70">Senior Full Stack Developer</p>
-                  </div>
-                </div>
-                <div className="card bg-base-200">
-                  <div className="card-body p-4">
-                    <h4 className="font-semibold text-sm mb-2">By Domain</h4>
-                    <p className="text-xs text-base-content/70">Cybersecurity, Cloud Infrastructure</p>
-                  </div>
-                </div>
-              </div >
-            </div >
-          </div >
-        )}
-      </div >
-    </div >
+      </div>
+    </div>
   );
 };
