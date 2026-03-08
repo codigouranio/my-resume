@@ -1,10 +1,14 @@
+# 1. Run database
 (docker compose down --rmi local && docker compose up --build)
 
-(cd ../.. && ./apps/api-service && npx prisma migrate reset --force)
+# 2. start backend
+cd ./apps/api-resume && yarn install && yarn start
 
-# start frontend 
-
+# 3. start frontend 
 cd ./apps/my-resume && yarn install && yarn dev
 
-# start backend
-cd ./apps/api-resume && yarn install && yarn start
+# deployment
+(cd ../.. && ./apps/api-service && npx prisma migrate reset --force)
+
+
+
