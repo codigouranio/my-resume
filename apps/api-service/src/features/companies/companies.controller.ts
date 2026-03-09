@@ -2,7 +2,7 @@ import { Controller, Post, Get, Body, Param, UseGuards, Req } from '@nestjs/comm
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CompaniesService } from './companies.service';
 import { EnrichCompanyDto } from './dto/enrich-company.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { enqueueCompanyEnrichment, getCompanyEnrichmentQueue } from './companies.queue';
 
 @ApiTags('companies')

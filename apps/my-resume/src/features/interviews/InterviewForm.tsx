@@ -110,11 +110,8 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
     }
   };
 
-  return () => clearTimeout(timer);
-}, [company, interview?.companyInfo]);
-
-const handleAddSkill = () => {
-  const skill = skillInput.trim();
+  const handleAddSkill = () => {
+    const skill = skillInput.trim();
   if (skill && !skillTags.includes(skill)) {
     setSkillTags([...skillTags, skill]);
     setSkillInput('');
