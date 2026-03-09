@@ -213,9 +213,19 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
   return createPortal(
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
       <div className="bg-base-100 rounded-lg shadow-xl max-w-2xl w-full flex flex-col" style={{ position: 'relative', zIndex: 10000, maxHeight: 'calc(100vh - 4rem)' }}>
+        {/* Close button */}
+        <button
+          type="button"
+          onClick={onCancel}
+          className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+          style={{ zIndex: 10 }}
+          disabled={isSaving}
+        >
+          ✕
+        </button>
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
           <div className="p-6 overflow-y-auto flex-1">
-            <h2 className="text-2xl font-bold mb-4">
+            <h2 className="text-2xl font-bold mb-4 pr-8">
               {interview ? 'Edit Interview' : 'New Interview'}
             </h2>
 
@@ -533,8 +543,22 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
       {showTemplateModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4" style={{ zIndex: 10001 }}>
           <div className="bg-base-100 rounded-lg shadow-xl max-w-md w-full overflow-y-auto" style={{ position: 'relative', zIndex: 10002, maxHeight: 'calc(100vh - 4rem)' }}>
+            {/* Close button */}
+            <button
+              type="button"
+              onClick={() => {
+                setShowTemplateModal(false);
+                setTemplateName('');
+                setTemplateDescription('');
+              }}
+              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+              style={{ zIndex: 10 }}
+              disabled={isSavingTemplate}
+            >
+              ✕
+            </button>
             <div className="p-6">
-              <h3 className="text-xl font-bold mb-4">Save as Template</h3>
+              <h3 className="text-xl font-bold mb-4 pr-8">Save as Template</h3>
 
               <div className="form-control mb-4">
                 <label className="label">
