@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { apiClient } from '../../shared/api/client';
 import type { Interview, TimelineEntry, Reminder } from './types';
 import { STATUS_LABELS, STATUS_COLORS } from './types';
@@ -25,6 +26,14 @@ export function InterviewDetail({ interviewId, onClose, onUpdate }: InterviewDet
   useEffect(() => {
     loadInterview();
   }, [interviewId]);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
 
   const loadInterview = async () => {
     setIsLoading(true);
@@ -177,8 +186,8 @@ export function InterviewDetail({ interviewId, onClose, onUpdate }: InterviewDet
     );
   }
 
-  return (
-    <div className="modal modal-open">
+  return createPortal(
+    <div className="modal modal-open" style={{ zIndex: 9999 }}>
       <div className="modal-box max-w-4xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex justify-between items-start mb-6">
@@ -427,10 +436,10 @@ export function InterviewDetail({ interviewId, onClose, onUpdate }: InterviewDet
                   <div
                     key={reminder.id}
                     className={`flex items-center gap-3 p-3 rounded ${reminder.completed
-                        ? 'bg-success/10'
-                        : isOverdue
-                          ? 'bg-error/10'
-                          : 'bg-base-200'
+                      ? 'bg-success/10'
+                      : isOverdue
+                        ? 'bg-error/10'
+                        : 'bg-base-200'
                       }`}
                   >
                     <input
@@ -520,6 +529,7 @@ export function InterviewDetail({ interviewId, onClose, onUpdate }: InterviewDet
         </div>
       </div>
       <div className="modal-backdrop" onClick={onClose}></div>
-    </div>
+    </div>,
+    document.body
   );
 }
