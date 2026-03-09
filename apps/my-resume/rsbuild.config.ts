@@ -14,9 +14,16 @@ export default defineConfig({
   server: {
     port: 3001,
   },
+  // source: {
+  //   define: {
+  //     'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageJson.version),
+  //   },
+  // },
   source: {
     define: {
       'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageJson.version),
+      // AÑADE ESTA LÍNEA AQUÍ ABAJO:
+      'process.env': JSON.stringify(process.env),
     },
   },
   html: {
