@@ -60,6 +60,7 @@ model User {
   defaultResume Resume?  @relation("DefaultResume", fields: [defaultResumeId], references: [id])
   journalPosts  JournalPost[] // Private life journal
   interviews    InterviewProcess[] // Job interview tracking
+  interviewTemplates InterviewTemplate[] // Reusable interview templates
   
   @@index([email])
   @@index([stripeCustomerId])
@@ -525,5 +526,33 @@ model InterviewReminder {
   
   @@index([dueAt, completed])
   @@index([interviewId])
+}
+
+model InterviewTemplate {
+  id              String   @id @default(cuid())
+  userId          String
+  
+  // Template metadata
+  name            String
+  description     String?
+  
+  // Pre-filled fields
+  company         String?
+  position        String?
+  jobUrl          String?  @db.Text
+  templateDescription String? @db.Text
+  skillTags       String[]
+  recruiterName   String?
+  recruiterEmail  String?
+  recruiterPhone  String?
+  
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
 }
 

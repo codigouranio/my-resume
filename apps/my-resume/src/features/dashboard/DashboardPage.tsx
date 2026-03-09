@@ -4,6 +4,7 @@ import { useAuth } from '../../shared/contexts/AuthContext';
 import { apiClient } from '../../shared/api/client';
 import { AnalyticsDashboard, ChatAnalyticsDashboard } from '../analytics';
 import { AIContextFeed } from '../ai-context';
+import { InterviewBoard } from '../interviews';
 import { formatResumeDisplayPath, formatResumeUrl, formatCustomDomainUrl } from '../../shared/utils/domain';
 import './Dashboard.css';
 
@@ -42,8 +43,8 @@ export function DashboardPage() {
   const [error, setError] = useState('');
 
   // Load saved tab from localStorage or default to 'ai-context'
-  const [activeTab, setActiveTab] = useState<'ai-context' | 'resumes' | 'interests'>(() => {
-    const savedTab = localStorage.getItem('dashboardActiveTab') as 'ai-context' | 'resumes' | 'interests' | null;
+  const [activeTab, setActiveTab] = useState<'ai-context' | 'resumes' | 'interests' | 'interviews'>(() => {
+    const savedTab = localStorage.getItem('dashboardActiveTab') as 'ai-context' | 'resumes' | 'interests' | 'interviews' | null;
     return savedTab || 'ai-context';
   });
 
@@ -187,7 +188,6 @@ export function DashboardPage() {
       <div className="navbar bg-base-300">
         <div className="flex-1">
           <Link to="/dashboard" className="btn btn-ghost normal-case text-xl flex items-center gap-2">
-            <img src="/logo.png" alt="RC" className="w-8 h-8" />
             <div>
               <span style={{ color: '#525252', fontWeight: 700 }}>Resume</span>
               <span style={{ color: '#383838', fontWeight: 700 }}>Cast.ai</span>
@@ -284,13 +284,13 @@ export function DashboardPage() {
                         )}
                       </a>
                     </li>
-                    <li className="menu-title mt-4">
-                      <span>Tools</span>
-                    </li>
                     <li>
-                      <Link to="/interviews">
+                      <a
+                        className={activeTab === 'interviews' ? 'active' : ''}
+                        onClick={() => setActiveTab('interviews')}
+                      >
                         📋 Interview Tracker
-                      </Link>
+                      </a>
                     </li>
                   </ul>
                 </div>
@@ -462,6 +462,10 @@ export function DashboardPage() {
                   </div>
                 )}
               </>
+            ) : (<></>)}
+
+            {activeTab === 'interviews' ? (
+              <InterviewBoard />
             ) : (<></>)}
 
             {activeTab === 'interests' ? (

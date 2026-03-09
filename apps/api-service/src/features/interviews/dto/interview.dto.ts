@@ -135,3 +135,58 @@ export class CreateTimelineEntryDto {
   @IsString()
   attachmentType?: string;
 }
+
+export class CreateReminderDto {
+  @IsString()
+  title: string;
+
+  @IsDateString()
+  dueAt: string;
+}
+
+export class CompleteReminderDto {
+  @IsOptional()
+  completed?: boolean;
+}
+
+export class CreateTemplateDto {
+  @IsString()
+  name: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  company?: string;
+
+  @IsOptional()
+  @IsString()
+  position?: string;
+
+  @IsOptional()
+  @IsString()
+  jobUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  templateDescription?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  skillTags?: string[];
+
+  @IsOptional()
+  @IsString()
+  recruiterName?: string;
+
+  @IsOptional()
+  @IsString()
+  recruiterEmail?: string;
+
+  @IsOptional()
+  @IsString()
+  recruiterPhone?: string;
+}

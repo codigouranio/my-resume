@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { apiClient } from '../../shared/api/client';
-import type { Interview, InterviewStatus } from './types';
+import type { Interview, InterviewStatus, Template } from './types';
 import { INTERVIEW_STATUS } from './types';
 
 interface InterviewFormProps {
@@ -24,6 +24,15 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
     interview?.appliedAt ? new Date(interview.appliedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const [templateDescription, setTemplateDescription] = useState('');
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+
+  useEffect(() => {
+    loadTemplates();
+  }, []);
 
   const handleAddSkill = () => {
     const skill = skillInput.trim();
@@ -67,6 +76,63 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
     }
   };
 
+  const loadTemplates = async () => {
+    try {
+      const data = await apiClient.getInterviewTemplates();
+      setTemplates(data);
+    } catch (error) {
+      console.error('Failed to load templates:', error);
+    }
+  };
+
+  const handleLoadTemplate = (templateId: string) => {
+    const template = templates.find((t) => t.id === templateId);
+    if (!template) return;
+
+    setCompany(template.company || '');
+    setPosition(template.position || '');
+    setJobUrl(template.jobUrl || '');
+    setDescription(template.templateDescription || '');
+    setSkillTags(template.skillTags || []);
+    setRecruiterName(template.recruiterName || '');
+    setRecruiterEmail(template.recruiterEmail || '');
+    setRecruiterPhone(template.recruiterPhone || '');
+  };
+
+  const handleSaveAsTemplate = async () => {
+    if (!templateName.trim()) {
+      alert('Please enter a template name');
+      return;
+    }
+
+    setIsSavingTemplate(true);
+    try {
+      await apiClient.createInterviewTemplate({
+        name: templateName,
+        description: templateDescription || undefined,
+        company: company || undefined,
+        position: position || undefined,
+        jobUrl: jobUrl || undefined,
+        templateDescription: description || undefined,
+        skillTags,
+        recruiterName: recruiterName || undefined,
+        recruiterEmail: recruiterEmail || undefined,
+        recruiterPhone: recruiterPhone || undefined,
+      });
+
+      setShowTemplateModal(false);
+      setTemplateName('');
+      setTemplateDescription('');
+      await loadTemplates();
+      alert('Template saved successfully!');
+    } catch (error) {
+      console.error('Failed to save template:', error);
+      alert('Failed to save template');
+    } finally {
+      setIsSavingTemplate(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
       <div className="bg-base-100 rounded-lg shadow-xl max-w-2xl w-full my-8">
@@ -75,6 +141,29 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
             <h2 className="text-2xl font-bold mb-4">
               {interview ? 'Edit Interview' : 'New Interview'}
             </h2>
+
+            {/* Templates Section */}
+            {!interview && templates.length > 0 && (
+              <div className="mb-4 p-4 bg-base-200 rounded-lg">
+                <label className="label">
+                  <span className="label-text font-semibold">📋 Load from Template</span>
+                </label>
+                <select
+                  className="select select-bordered w-full"
+                  onChange={(e) => handleLoadTemplate(e.target.value)}
+                  defaultValue=""
+                >
+                  <option value="" disabled>
+                    Select a template...
+                  </option>
+                  {templates.map((template) => (
+                    <option key={template.id} value={template.id}>
+                      {template.name} {template.description && `- ${template.description}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Company & Position */}
             <div className="grid grid-cols-2 gap-4 mb-4">
@@ -247,31 +336,105 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-2 p-6 border-t">
+          <div className="flex justify-between p-6 border-t">
             <button
               type="button"
-              className="btn btn-ghost"
-              onClick={onCancel}
-              disabled={isSaving}
+              className="btn btn-outline btn-sm"
+              onClick={() => setShowTemplateModal(true)}
+              disabled={isSaving || !company || !position}
             >
-              Cancel
+              💾 Save as Template
             </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={isSaving}
-            >
-              {isSaving ? (
-                <span className="loading loading-spinner loading-sm"></span>
-              ) : interview ? (
-                'Update'
-              ) : (
-                'Create'
-              )}
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={onCancel}
+                disabled={isSaving}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <span className="loading loading-spinner loading-sm"></span>
+                ) : interview ? (
+                  'Update'
+                ) : (
+                  'Create'
+                )}
+              </button>
+            </div>
           </div>
         </form>
       </div>
+
+      {/* Template Save Modal */}
+      {showTemplateModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4" style={{ zIndex: 60 }}>
+          <div className="bg-base-100 rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold mb-4">Save as Template</h3>
+
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text">Template Name *</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered"
+                placeholder="e.g., Software Engineer - FAANG"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                disabled={isSavingTemplate}
+              />
+            </div>
+
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text">Description (optional)</span>
+              </label>
+              <textarea
+                className="textarea textarea-bordered"
+                placeholder="Brief description of this template..."
+                value={templateDescription}
+                onChange={(e) => setTemplateDescription(e.target.value)}
+                rows={2}
+                disabled={isSavingTemplate}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => {
+                  setShowTemplateModal(false);
+                  setTemplateName('');
+                  setTemplateDescription('');
+                }}
+                disabled={isSavingTemplate}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleSaveAsTemplate}
+                disabled={isSavingTemplate || !templateName.trim()}
+              >
+                {isSavingTemplate ? (
+                  <span className="loading loading-spinner loading-sm"></span>
+                ) : (
+                  'Save Template'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

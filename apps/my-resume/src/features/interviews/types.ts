@@ -80,3 +80,29 @@ export interface InterviewStats {
   recentActivity: number;
   byStatus: Record<string, number>;
 }
+
+export interface Reminder {
+  id: string;
+  interviewId: string;
+  title: string;
+  dueAt: string;
+  completed: boolean;
+  completedAt?: string;
+  createdAt: string;
+}
+
+export interface Template {
+  id: string;
+  name: string;
+  description?: string;
+  company?: string;
+  position?: string;
+  jobUrl?: string;
+  templateDescription?: string;
+  skillTags?: string[];
+  recruiterName?: string;
+  recruiterEmail?: string;
+  recruiterPhone?: string;
+  createdAt: string;
+  updatedAt: string;
+}

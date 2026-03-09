@@ -229,7 +229,6 @@ export function SettingsPage() {
             to="/dashboard"
             className="btn btn-ghost normal-case text-xl flex items-center gap-2"
           >
-            <img src="/logo.png" alt="RC" className="w-8 h-8" />
             <div>
               <span style={{ color: '#525252', fontWeight: 700 }}>Resume</span>
               <span style={{ color: '#383838', fontWeight: 700 }}>Cast.ai</span>

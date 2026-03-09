@@ -6,9 +6,10 @@ interface InterviewCardProps {
   onEdit: (interview: Interview) => void;
   onDelete: (id: string) => void;
   onArchive: (id: string) => void;
+  onView: () => void;
 }
 
-export function InterviewCard({ interview, onEdit, onDelete, onArchive }: InterviewCardProps) {
+export function InterviewCard({ interview, onEdit, onDelete, onArchive, onView }: InterviewCardProps) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -81,6 +82,12 @@ export function InterviewCard({ interview, onEdit, onDelete, onArchive }: Interv
 
         {/* Actions */}
         <div className="card-actions justify-end mt-4 border-t pt-4">
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={onView}
+          >
+            👁️ View Details
+          </button>
           <button
             className="btn btn-ghost btn-sm"
             onClick={() => onEdit(interview)}

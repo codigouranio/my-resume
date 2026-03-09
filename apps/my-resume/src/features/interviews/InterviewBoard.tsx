@@ -4,6 +4,7 @@ import type { Interview, InterviewStats } from './types';
 import { InterviewCard } from './InterviewCard.tsx';
 import { InterviewForm } from './InterviewForm.tsx';
 import { InterviewStats as StatsComponent } from './InterviewStats.tsx';
+import { InterviewDetail } from './InterviewDetail.tsx';
 
 export function InterviewBoard() {
   const [interviews, setInterviews] = useState<Interview[]>([]);
@@ -12,6 +13,7 @@ export function InterviewBoard() {
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingInterview, setEditingInterview] = useState<Interview | null>(null);
+  const [viewingInterviewId, setViewingInterviewId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [filterCompany, setFilterCompany] = useState('');
   const [showArchived, setShowArchived] = useState(false);
@@ -233,7 +235,7 @@ export function InterviewBoard() {
           </div>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
           {interviews.map((interview) => (
             <InterviewCard
               key={interview.id}
@@ -241,9 +243,26 @@ export function InterviewBoard() {
               onEdit={handleEdit}
               onDelete={handleDelete}
               onArchive={handleArchive}
+              onView={() => setViewingInterviewId(interview.id)}
             />
           ))}
         </div>
+      )}
+
+      {/* Detail Modal */}
+      {viewingInterviewId && (
+        <InterviewDetail
+          interviewId={viewingInterviewId}
+          onClose={() => setViewingInterviewId(null)}
+          onUpdate={(updatedInterview) => {
+            setInterviews(
+              interviews.map((i) =>
+                i.id === updatedInterview.id ? updatedInterview : i
+              )
+            );
+            loadStats();
+          }}
+        />
       )}
     </div>
   );

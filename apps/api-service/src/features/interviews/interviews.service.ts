@@ -291,4 +291,118 @@ export class InterviewsService {
       byStatus: statusCounts,
     };
   }
+
+  // Reminders
+  async createReminder(interviewId: string, userId: string, title: string, dueAt: Date) {
+    // Verify interview ownership
+    const interview = await this.prisma.interviewProcess.findFirst({
+      where: { id: interviewId, userId },
+    });
+    if (!interview) throw new Error('Interview not found');
+
+    return this.prisma.interviewReminder.create({
+      data: {
+        interviewId,
+        title,
+        dueAt,
+      },
+    });
+  }
+
+  async getReminders(interviewId: string, userId: string) {
+    // Verify interview ownership
+    const interview = await this.prisma.interviewProcess.findFirst({
+      where: { id: interviewId, userId },
+    });
+    if (!interview) throw new Error('Interview not found');
+
+    return this.prisma.interviewReminder.findMany({
+      where: { interviewId },
+      orderBy: { dueAt: 'asc' },
+    });
+  }
+
+  async completeReminder(reminderId: string, userId: string, completed: boolean) {
+    // Verify ownership through interview
+    const reminder = await this.prisma.interviewReminder.findUnique({
+      where: { id: reminderId },
+      include: { interview: true },
+    });
+
+    if (!reminder || reminder.interview.userId !== userId) {
+      throw new Error('Reminder not found');
+    }
+
+    return this.prisma.interviewReminder.update({
+      where: { id: reminderId },
+      data: {
+        completed,
+        completedAt: completed ? new Date() : null,
+      },
+    });
+  }
+
+  async deleteReminder(reminderId: string, userId: string) {
+    // Verify ownership through interview
+    const reminder = await this.prisma.interviewReminder.findUnique({
+      where: { id: reminderId },
+      include: { interview: true },
+    });
+
+    if (!reminder || reminder.interview.userId !== userId) {
+      throw new Error('Reminder not found');
+    }
+
+    return this.prisma.interviewReminder.delete({
+      where: { id: reminderId },
+    });
+  }
+
+  // Templates
+  async createTemplate(userId: string, data: any) {
+    return this.prisma.interviewTemplate.create({
+      data: {
+        userId,
+        ...data,
+      },
+    });
+  }
+
+  async getTemplates(userId: string) {
+    return this.prisma.interviewTemplate.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getTemplate(templateId: string, userId: string) {
+    const template = await this.prisma.interviewTemplate.findFirst({
+      where: { id: templateId, userId },
+    });
+    if (!template) throw new Error('Template not found');
+    return template;
+  }
+
+  async updateTemplate(templateId: string, userId: string, data: any) {
+    const template = await this.prisma.interviewTemplate.findFirst({
+      where: { id: templateId, userId },
+    });
+    if (!template) throw new Error('Template not found');
+
+    return this.prisma.interviewTemplate.update({
+      where: { id: templateId },
+      data,
+    });
+  }
+
+  async deleteTemplate(templateId: string, userId: string) {
+    const template = await this.prisma.interviewTemplate.findFirst({
+      where: { id: templateId, userId },
+    });
+    if (!template) throw new Error('Template not found');
+
+    return this.prisma.interviewTemplate.delete({
+      where: { id: templateId },
+    });
+  }
 }

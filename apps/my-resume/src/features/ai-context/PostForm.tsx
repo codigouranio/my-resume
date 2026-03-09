@@ -184,9 +184,10 @@ export function PostForm({ onPostCreated, onCancel, initialPost, postId }: PostF
 
         {/* AI Context Toggle */}
         <div className="form-control">
-          <label className="label cursor-pointer">
+          <label className="label cursor-pointer" htmlFor="includeInAI">
             <span className="label-text">🤖 Include in AI Context</span>
             <input
+              id="includeInAI"
               type="checkbox"
               checked={includeInAI}
               onChange={(e) => setIncludeInAI(e.target.checked)}
@@ -200,9 +201,10 @@ export function PostForm({ onPostCreated, onCancel, initialPost, postId }: PostF
 
         {/* Public Toggle */}
         <div className="form-control">
-          <label className="label cursor-pointer">
+          <label className="label cursor-pointer" htmlFor="isPublic">
             <span className="label-text">🌐 Make Public</span>
             <input
+              id="isPublic"
               type="checkbox"
               checked={isPublic}
               onChange={(e) => setIsPublic(e.target.checked)}

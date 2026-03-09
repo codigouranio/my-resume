@@ -571,15 +571,95 @@ class ApiClient {
     });
   }
 
-  async addInterviewTimelineEntry(id: string, data: { comment: string; statusChange?: string; attachmentName?: string; attachmentUrl?: string; attachmentType?: string }) {
+  async addInterviewTimelineEntry(
+    id: string,
+    data: {
+      comment: string;
+      statusChange?: string;
+      attachmentFile?: File;
+    }
+  ) {
+    let attachmentData = {};
+
+    // If there's a file, upload it first
+    if (data.attachmentFile) {
+      try {
+        const uploadResult = await this.uploadDocument(data.attachmentFile);
+        attachmentData = {
+          attachmentName: data.attachmentFile.name,
+          attachmentUrl: uploadResult.downloadUrl,
+          attachmentType: data.attachmentFile.type,
+        };
+      } catch (error) {
+        console.error('Failed to upload attachment:', error);
+        throw new Error('Failed to upload attachment file');
+      }
+    }
+
     return this.request(`/interviews/${id}/timeline`, {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        comment: data.comment,
+        statusChange: data.statusChange,
+        ...attachmentData,
+      }),
     });
   }
 
   async getInterviewStats() {
     return this.request('/interviews/stats');
+  }
+
+  async createInterviewReminder(interviewId: string, title: string, dueAt: string) {
+    return this.request(`/interviews/${interviewId}/reminders`, {
+      method: 'POST',
+      body: JSON.stringify({ title, dueAt }),
+    });
+  }
+
+  async getInterviewReminders(interviewId: string) {
+    return this.request(`/interviews/${interviewId}/reminders`);
+  }
+
+  async completeInterviewReminder(reminderId: string, completed: boolean = true) {
+    return this.request(`/interviews/reminders/${reminderId}/complete`, {
+      method: 'PATCH',
+      body: JSON.stringify({ completed }),
+    });
+  }
+
+  async deleteInterviewReminder(reminderId: string) {
+    return this.request(`/interviews/reminders/${reminderId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async createInterviewTemplate(data: any) {
+    return this.request('/interviews/templates', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getInterviewTemplates() {
+    return this.request('/interviews/templates');
+  }
+
+  async getInterviewTemplate(templateId: string) {
+    return this.request(`/interviews/templates/${templateId}`);
+  }
+
+  async updateInterviewTemplate(templateId: string, data: any) {
+    return this.request(`/interviews/templates/${templateId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteInterviewTemplate(templateId: string) {
+    return this.request(`/interviews/templates/${templateId}`, {
+      method: 'DELETE',
+    });
   }
 }
 
