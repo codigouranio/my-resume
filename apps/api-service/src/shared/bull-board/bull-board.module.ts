@@ -4,31 +4,39 @@ import { createBullBoard } from '@bull-board/api';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bullmq';
-import { BullBoardController } from './bull-board.controller';
 
 @Module({
-  controllers: [BullBoardController],
   providers: [
     {
       provide: 'BULL_BOARD_INSTANCE',
       useFactory: (configService: ConfigService) => {
         const serverAdapter = new ExpressAdapter();
-        serverAdapter.setBasePath('/admin/queues');
+        serverAdapter.setBasePath('/api/admin/queues');
 
         // Create the queue connection (must match your existing queue config)
+        const redisConfig = {
+          host: configService.get('REDIS_HOST', 'localhost'),
+          port: configService.get('REDIS_PORT', 6379),
+          password: configService.get('REDIS_PASSWORD'),
+          db: configService.get('REDIS_DB', 0),
+        };
+
+        console.log('🔌 Connecting Bull Board to Redis:', {
+          host: redisConfig.host,
+          port: redisConfig.port,
+          db: redisConfig.db,
+        });
+
         const companyQueue = new Queue('company-enrichment', {
-          connection: {
-            host: configService.get('REDIS_HOST', 'localhost'),
-            port: configService.get('REDIS_PORT', 6379),
-            password: configService.get('REDIS_PASSWORD'),
-            db: configService.get('REDIS_DB', 0),
-          },
+          connection: redisConfig,
         });
 
         createBullBoard({
           queues: [new BullMQAdapter(companyQueue)],
           serverAdapter,
         });
+
+        console.log('✅ Bull Board initialized with company-enrichment queue');
 
         return serverAdapter;
       },
@@ -41,6 +49,6 @@ export class CustomBullBoardModule implements OnModuleInit {
   constructor(private readonly configService: ConfigService) {}
 
   onModuleInit() {
-    console.log('🎯 Bull Board available at: /admin/queues');
+    console.log('🎯 Bull Board available at: /api/admin/queues (local network only - protected by nginx)');
   }
 }

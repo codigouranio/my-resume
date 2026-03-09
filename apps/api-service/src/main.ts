@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
+import { ExpressAdapter } from '@bull-board/express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -51,6 +52,15 @@ async function bootstrap() {
 
   // Global prefix
   app.setGlobalPrefix('api');
+
+  // Mount Bull Board
+  const serverAdapter = app.get<ExpressAdapter>('BULL_BOARD_INSTANCE');
+  if (serverAdapter) {
+    app.use('/api/admin/queues', serverAdapter.getRouter());
+    console.log('✅ Bull Board router mounted at /api/admin/queues');
+  } else {
+    console.warn('⚠️  Bull Board instance not found');
+  }
 
   // Swagger documentation
   const config = new DocumentBuilder()
