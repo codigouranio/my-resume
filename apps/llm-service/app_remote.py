@@ -58,19 +58,6 @@ DATABASE_URL = os.getenv(
     "DATABASE_URL", "postgresql://resume_user:resume_password@localhost:5432/resume_db"
 )
 
-# Initialize research agent (lazy loading)
-research_agent = None
-
-
-def get_research_agent():
-    """Lazy load the research agent."""
-    global research_agent
-    if research_agent is None:
-        logger.info("Initializing company research agent...")
-        research_agent = CompanyResearchAgent(llama_server_url=LLAMA_SERVER_URL)
-        logger.info("Research agent initialized")
-    return research_agent
-
 
 def get_db_connection():
     """Create a database connection."""
@@ -485,6 +472,49 @@ def generate_completion(
         return call_openai_compatible(system_prompt, user_message, max_tokens)
     else:
         raise ValueError(f"Unsupported LLAMA_API_TYPE: {LLAMA_API_TYPE}")
+
+
+# Company Research Agent Setup
+class RemoteLLMWrapper:
+    """Wrapper to adapt remote LLM calls to research agent interface."""
+
+    def generate(
+        self, prompt: str, temperature: float = 0.7, max_tokens: int = 500
+    ) -> str:
+        """Generate text using the remote LLM server."""
+        try:
+            if LLAMA_API_TYPE == "ollama":
+                result = call_ollama_for_completion(prompt, max_tokens, temperature)
+            elif LLAMA_API_TYPE == "llama-cpp":
+                result = call_llama_cpp_server(prompt, max_tokens)
+            elif LLAMA_API_TYPE == "openai":
+                result = call_openai_compatible(
+                    system_prompt="You are a helpful assistant.",
+                    user_message=prompt,
+                    max_tokens=max_tokens,
+                )
+            else:
+                raise ValueError(f"Unsupported LLAMA_API_TYPE: {LLAMA_API_TYPE}")
+
+            return result.get("text", "")
+        except Exception as e:
+            logger.error(f"LLM generation failed: {e}")
+            return ""
+
+
+# Initialize research agent (lazy loading)
+research_agent = None
+
+
+def get_research_agent():
+    """Lazy load the research agent."""
+    global research_agent
+    if research_agent is None:
+        logger.info("Initializing company research agent...")
+        llm_wrapper = RemoteLLMWrapper()
+        research_agent = CompanyResearchAgent(llm_wrapper)
+        logger.info("Research agent initialized")
+    return research_agent
 
 
 def get_user_info(resume_slug: str = None):
