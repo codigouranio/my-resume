@@ -71,13 +71,17 @@ export function InterviewBoard() {
     }
   };
 
-  const handleArchive = async (id: string) => {
+  const handleArchive = async (id: string, isArchived: boolean) => {
     try {
-      await apiClient.archiveInterview(id);
+      if (isArchived) {
+        await apiClient.unarchiveInterview(id);
+      } else {
+        await apiClient.archiveInterview(id);
+      }
       await loadInterviews();
       await loadStats();
     } catch (err: any) {
-      alert(err.message || 'Failed to archive interview');
+      alert(err.message || `Failed to ${isArchived ? 'unarchive' : 'archive'} interview`);
     }
   };
 

@@ -5,7 +5,7 @@ interface InterviewCardProps {
   interview: Interview;
   onEdit: (interview: Interview) => void;
   onDelete: (id: string) => void;
-  onArchive: (id: string) => void;
+  onArchive: (id: string, isArchived: boolean) => void;
   onView: () => void;
 }
 
@@ -96,9 +96,9 @@ export function InterviewCard({ interview, onEdit, onDelete, onArchive, onView }
           </button>
           <button
             className="btn btn-ghost btn-sm"
-            onClick={() => onArchive(interview.id)}
+            onClick={() => onArchive(interview.id, !!interview.archivedAt)}
           >
-            📦 Archive
+            {interview.archivedAt ? '📂 Unarchive' : '📦 Archive'}
           </button>
           <button
             className="btn btn-ghost btn-sm text-error"
