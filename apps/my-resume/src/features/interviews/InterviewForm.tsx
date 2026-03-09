@@ -211,10 +211,10 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
   };
 
   return createPortal(
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-      <div className="bg-base-100 rounded-lg shadow-xl max-w-2xl w-full my-8">
-        <form onSubmit={handleSubmit}>
-          <div className="p-6">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
+      <div className="bg-base-100 rounded-lg shadow-xl max-w-2xl w-full flex flex-col" style={{ position: 'relative', zIndex: 10000, maxHeight: 'calc(100vh - 4rem)' }}>
+        <form onSubmit={handleSubmit} className="flex flex-col h-full">
+          <div className="p-6 overflow-y-auto flex-1">
             <h2 className="text-2xl font-bold mb-4">
               {interview ? 'Edit Interview' : 'New Interview'}
             </h2>
@@ -493,7 +493,7 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
           </div>
 
           {/* Actions */}
-          <div className="flex justify-between p-6 border-t">
+          <div className="flex justify-between p-6 border-t flex-shrink-0 bg-base-100">
             <button
               type="button"
               className="btn btn-outline btn-sm"
@@ -531,63 +531,65 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
 
       {/* Template Save Modal */}
       {showTemplateModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4" style={{ zIndex: 60 }}>
-          <div className="bg-base-100 rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold mb-4">Save as Template</h3>
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4" style={{ zIndex: 10001 }}>
+          <div className="bg-base-100 rounded-lg shadow-xl max-w-md w-full overflow-y-auto" style={{ position: 'relative', zIndex: 10002, maxHeight: 'calc(100vh - 4rem)' }}>
+            <div className="p-6">
+              <h3 className="text-xl font-bold mb-4">Save as Template</h3>
 
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">Template Name *</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered"
-                placeholder="e.g., Software Engineer - FAANG"
-                value={templateName}
-                onChange={(e) => setTemplateName(e.target.value)}
-                disabled={isSavingTemplate}
-              />
-            </div>
+              <div className="form-control mb-4">
+                <label className="label">
+                  <span className="label-text">Template Name *</span>
+                </label>
+                <input
+                  type="text"
+                  className="input input-bordered"
+                  placeholder="e.g., Software Engineer - FAANG"
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  disabled={isSavingTemplate}
+                />
+              </div>
 
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">Description (optional)</span>
-              </label>
-              <textarea
-                className="textarea textarea-bordered"
-                placeholder="Brief description of this template..."
-                value={templateDescription}
-                onChange={(e) => setTemplateDescription(e.target.value)}
-                rows={2}
-                disabled={isSavingTemplate}
-              />
-            </div>
+              <div className="form-control mb-4">
+                <label className="label">
+                  <span className="label-text">Description (optional)</span>
+                </label>
+                <textarea
+                  className="textarea textarea-bordered"
+                  placeholder="Brief description of this template..."
+                  value={templateDescription}
+                  onChange={(e) => setTemplateDescription(e.target.value)}
+                  rows={2}
+                  disabled={isSavingTemplate}
+                />
+              </div>
 
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={() => {
-                  setShowTemplateModal(false);
-                  setTemplateName('');
-                  setTemplateDescription('');
-                }}
-                disabled={isSavingTemplate}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleSaveAsTemplate}
-                disabled={isSavingTemplate || !templateName.trim()}
-              >
-                {isSavingTemplate ? (
-                  <span className="loading loading-spinner loading-sm"></span>
-                ) : (
-                  'Save Template'
-                )}
-              </button>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => {
+                    setShowTemplateModal(false);
+                    setTemplateName('');
+                    setTemplateDescription('');
+                  }}
+                  disabled={isSavingTemplate}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleSaveAsTemplate}
+                  disabled={isSavingTemplate || !templateName.trim()}
+                >
+                  {isSavingTemplate ? (
+                    <span className="loading loading-spinner loading-sm"></span>
+                  ) : (
+                    'Save Template'
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
