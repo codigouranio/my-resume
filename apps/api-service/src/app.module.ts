@@ -21,6 +21,7 @@ import { DocumentStorageModule } from './features/document-storage/document-stor
 import { InterviewsModule } from './features/interviews/interviews.module';
 import { CompaniesModule } from './features/companies/companies.module';
 import { AppThrottlerGuard } from './shared/guards/throttler.guard';
+import { CustomBullBoardModule } from './shared/bull-board/bull-board.module';
 
 @Module({
   imports: [
@@ -92,6 +93,7 @@ import { AppThrottlerGuard } from './shared/guards/throttler.guard';
     DocumentStorageModule,
     InterviewsModule,
     CompaniesModule,
+    CustomBullBoardModule,
   ],
   providers: [
     {
