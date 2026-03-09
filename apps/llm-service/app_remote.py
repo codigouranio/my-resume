@@ -15,6 +15,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 from prompt_manager import get_prompt_manager
+from company_research_agent import CompanyResearchAgent
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -56,6 +57,19 @@ LLAMA_API_TYPE = os.getenv("LLAMA_API_TYPE", "llama-cpp")  # or "ollama", "opena
 DATABASE_URL = os.getenv(
     "DATABASE_URL", "postgresql://resume_user:resume_password@localhost:5432/resume_db"
 )
+
+# Initialize research agent (lazy loading)
+research_agent = None
+
+
+def get_research_agent():
+    """Lazy load the research agent."""
+    global research_agent
+    if research_agent is None:
+        logger.info("Initializing company research agent...")
+        research_agent = CompanyResearchAgent(llama_server_url=LLAMA_SERVER_URL)
+        logger.info("Research agent initialized")
+    return research_agent
 
 
 def get_db_connection():
@@ -532,6 +546,7 @@ def health_check():
                 "llama_server": LLAMA_SERVER_URL,
                 "api_type": LLAMA_API_TYPE,
                 "server_reachable": server_healthy,
+                "research_agent_available": True,
             }
         )
     except Exception as e:
@@ -949,6 +964,36 @@ def reload_resume():
             "note": "This endpoint is deprecated and will be removed in a future version.",
         }
     )
+
+
+@app.route("/api/companies/enrich", methods=["POST"])
+def enrich_company():
+    """
+    Company enrichment endpoint using ReAct research agent.
+    Expects JSON: {"companyName": "Company Name"}
+    Returns JSON: {structured company info}
+    """
+    try:
+        data = request.get_json()
+        company_name = data.get("companyName", "").strip()
+
+        if not company_name:
+            return jsonify({"error": "companyName is required"}), 400
+
+        logger.info(f"Starting company enrichment for: {company_name}")
+
+        # Get research agent (lazy initialization)
+        agent = get_research_agent()
+
+        # Perform research
+        company_info = agent.research_company(company_name)
+
+        logger.info(f"Company enrichment complete for: {company_name}")
+        return jsonify(company_info)
+
+    except Exception as e:
+        logger.error(f"Error enriching company: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
