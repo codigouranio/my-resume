@@ -11,56 +11,46 @@ Flask API service that uses LLAMA (via Ollama) to answer questions about resumes
 
 ## Setup
 
-### 1. Install Dependencies
-
-#### Option A: Using Poetry (Recommended for Development)
+### 1. Install Poetry
 
 ```bash
-# Install Poetry if not already installed
+# Install Poetry (if not already installed)
 curl -sSL https://install.python-poetry.org | python3 -
 
-# Run automated setup
+# Verify installation
+poetry --version
+```
+
+### 2. Install Dependencies
+
+#### Automated Setup (Recommended)
+
+```bash
 ./setup_poetry.sh
 ```
 
-Or manually:
+This script will:
+- Configure Poetry to create virtualenv in project
+- Install all dependencies
+- Install llama-cpp-python with CUDA support
+- Create .env file from template
+- Create models directory
+
+#### Manual Setup
+
 ```bash
 # Install dependencies
 poetry install --no-root
 
-# Install llama-cpp-python with CUDA support
+# Install llama-cpp-python with CUDA support (for GPU acceleration)
 poetry run pip install llama-cpp-python --force-reinstall --no-cache-dir \
     --config-settings=cmake.args="-DLLAMA_CUBLAS=on"
+
+# Or without CUDA (CPU only)
+poetry run pip install llama-cpp-python
 ```
 
-#### Option B: Using conda
-
-```bash
-# Create conda environment from environment.yml
-conda env create -f environment.yml
-
-# Activate the environment
-conda activate llm-service
-
-# Install llama-cpp-python with CUDA support
-CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip install llama-cpp-python --force-reinstall --no-cache-dir
-```
-
-#### Option C: Using pip with virtualenv
-
-```bash
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install llama-cpp-python with CUDA support
-CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip install llama-cpp-python --force-reinstall --no-cache-dir
-
-# Install other dependencies
-pip install -r requirements.txt
-```
-
-### 2. Download LLAMA Model
+### 3. Download LLAMA Model
 
 Download a LLAMA model in GGUF format (recommended: llama-2-7b-chat or llama-2-13b-chat):
 
@@ -82,48 +72,49 @@ cp .env.example .env
 
 ### 4. Run the Service
 
-#### Quick Setup (Automated)
+#### Development Mode
 
 ```bash
-# With Poetry
-./setup_poetry.sh
+# Option 1: Using run.sh script
 USE_POETRY=true ./run.sh
 
-# With Conda
-./setup_conda.sh
-USE_CONDA=true ./run.sh
-```
-
-#### Manual Start - Development Mode
-
-```bash
-# With Poetry
-poetry shell
-python app.py
-
-# With conda
-conda activate llm-service
-python app.py
-
-# With venv
-source venv/bin/activate
-python app.py
+# Option 2: Direct with Poetry
+poetry run python app.py
 ```
 
 #### Production Mode with Gunicorn
 
 ```bash
-# With Poetry
-USE_POETRY=true ./run.sh
+# Using run.sh (recommended)
+USE_POETRY=true FLASK_ENV=production ./run.sh
 
-# With conda
-USE_CONDA=true ./run.sh
-
-# With venv
-./run.sh
+# Or directly
+poetry run gunicorn -w 1 -b 0.0.0.0:5000 --timeout 120 app:app
 ```
 
 **Note:** Use only 1 worker (-w 1) since the model is loaded in GPU memory.
+
+#### Available Commands
+
+```bash
+# Run tests
+poetry run pytest
+
+# Format code
+poetry run black .
+
+# Lint code
+poetry run flake8
+
+# Update dependencies
+poetry update
+
+# Add new dependency
+poetry add package-name
+
+# Add dev dependency
+poetry add --group dev package-name
+```
 
 ## API Endpoints
 

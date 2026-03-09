@@ -151,22 +151,45 @@
         mode: "0755"
       become: yes # Needed if /opt/my-resume requires root to create/write
 
-    - name: Create conda environment for LLM service (Python)
-      command: /opt/miniconda3/bin/conda create -p {{ llm_service_path }}/conda-env python=3.10 pip -y --quiet
-      args:
-        creates: "{{ llm_service_path }}/conda-env/conda-meta/history"
+    - name: Check if Poetry is installed
+      command: which poetry
+      register: poetry_check
+      ignore_errors: yes
+      changed_when: false
       become_user: "{{ ansible_user }}"
-      register: conda_create_llm
-      changed_when: conda_create_llm.rc == 0
 
-    - name: Install LLM service Python dependencies
+    - name: Install Poetry
       shell: |
-        source /opt/miniconda3/etc/profile.d/conda.sh
-        conda activate {{ llm_service_path }}/conda-env
-        conda install -y -c conda-forge flask flask-cors requests python-dotenv psycopg2-binary
+        curl -sSL https://install.python-poetry.org | python3 -
+        echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
       args:
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
+      when: poetry_check.rc != 0
+
+    - name: Configure Poetry to use in-project virtualenvs
+      command: ~/.local/bin/poetry config virtualenvs.in-project true
+      become_user: "{{ ansible_user }}"
+
+    - name: Install LLM service Python dependencies with Poetry
+      shell: |
+        export PATH="$HOME/.local/bin:$PATH"
+        cd {{ llm_service_path }}
+        poetry install --no-root
+      args:
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+
+    - name: Install CUDA-enabled llama-cpp-python
+      shell: |
+        export PATH="$HOME/.local/bin:$PATH"
+        cd {{ llm_service_path }}
+        poetry run pip install llama-cpp-python --force-reinstall --no-cache-dir \
+          --extra-index-url https://jllllll.github.io/llama-cpp-python-cuBLAS-wheels/AVX2/cu121
+      args:
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+      when: ansible_facts['distribution'] != 'MacOS'
 
     - name: Configure LLM Service environment
       copy:

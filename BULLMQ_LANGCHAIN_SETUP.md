@@ -45,13 +45,18 @@ cd apps/api-service
 npm install bullmq ioredis
 ```
 
-**LLM Service (Python):**
+**LLM Service (Python with Poetry):**
 ```bash
 cd apps/llm-service
-pip install langchain==0.1.0 langchain-core==0.1.10 langchain-community==0.0.13
-# Or with Poetry:
-poetry add langchain langchain-core langchain-community
+
+# If dependencies already in pyproject.toml (they are!)
+poetry install --no-root
+
+# Or to add them individually:
+# poetry add langchain langchain-core langchain-community
 ```
+
+**Note:** Dependencies are now managed exclusively with Poetry. Run `poetry install` to get all dependencies including LangChain packages.
 
 ### 2. Install Redis
 

@@ -102,6 +102,11 @@ pm2 restart llm-service
 ```bash
 # 1. Install Gunicorn
 cd /opt/my-resume/apps/llm-service
+
+# Using Poetry (recommended):
+poetry add gunicorn
+
+# Or using conda (legacy):
 source /opt/miniconda3/etc/profile.d/conda.sh
 conda activate /opt/my-resume/apps/api-service/conda-env
 pip install gunicorn
@@ -246,9 +251,14 @@ lsof -i :5000
 
 # 3. Missing dependencies
 cd /opt/my-resume/apps/llm-service
+
+# Using Poetry (recommended):
+poetry install --no-root
+
+# Or using conda (legacy):
 source /opt/miniconda3/etc/profile.d/conda.sh
 conda activate /opt/my-resume/apps/api-service/conda-env
-pip install -r requirements.txt
+pip install -r requirements.txt.backup
 ```
 
 ### Slow Responses
@@ -387,6 +397,12 @@ find . -name "resume.md.backup.*" -mtime +30 -delete
 
 ```bash
 cd /opt/my-resume/apps/llm-service
+
+# Using Poetry (recommended):
+poetry update flask requests
+pm2 restart llm-service
+
+# Or using conda (legacy):
 source /opt/miniconda3/etc/profile.d/conda.sh
 conda activate /opt/my-resume/apps/api-service/conda-env
 pip install --upgrade flask requests

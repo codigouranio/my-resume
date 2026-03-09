@@ -25,7 +25,7 @@ module.exports = {
     {
       name: 'llm-service',
       cwd: '{{ llm_service_path }}',
-      interpreter: '{{ llm_service_path }}/conda-env/bin/python',
+      interpreter: '{{ llm_service_path }}/.venv/bin/python',
       script: './app_remote.py',
       instances: 1,
       max_memory_restart: '1G',
