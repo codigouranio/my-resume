@@ -284,6 +284,14 @@ export function DashboardPage() {
                         )}
                       </a>
                     </li>
+                    <li className="menu-title mt-4">
+                      <span>Tools</span>
+                    </li>
+                    <li>
+                      <Link to="/interviews">
+                        📋 Interview Tracker
+                      </Link>
+                    </li>
                   </ul>
                 </div>
               </div>

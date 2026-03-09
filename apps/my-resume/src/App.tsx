@@ -12,6 +12,7 @@ import { PricingPage } from './features/pricing';
 import { SettingsPage } from './features/settings';
 import { SearchPage } from './features/search';
 import { PublicJournalPage } from './features/public-journal';
+import { InterviewBoard } from './features/interviews';
 import Resume from './features/resume/Resume';
 import VersionBadge from './shared/components/VersionBadge';
 import './shared/styles/App.css';
@@ -114,6 +115,14 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <EditorPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/interviews"
+              element={
+                <ProtectedRoute>
+                  <InterviewBoard />
                 </ProtectedRoute>
               }
             />

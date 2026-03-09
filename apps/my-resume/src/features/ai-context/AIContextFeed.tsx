@@ -1,5 +1,5 @@
 import { Button } from "@shared/components/button";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../../shared/api/client';
 import { useAuth } from '../../shared/contexts/AuthContext';
@@ -24,29 +24,119 @@ interface Post {
 }
 
 const API_URL = import.meta.env.PUBLIC_API_URL || '';
+const POSTS_PER_PAGE = 20;
 
 export function AIContextFeed() {
   const { user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState('');
   const [showPostForm, setShowPostForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  // Reset pagination when search changes
   useEffect(() => {
-    fetchPosts();
+    setPosts([]);
+    setPage(0);
+    setHasMore(true);
+    fetchPosts(true);
   }, [searchQuery]);
 
-  const fetchPosts = async () => {
-    setIsLoading(true);
+  // Infinite scroll observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoading && !isLoadingMore) {
+          loadMorePosts();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [hasMore, isLoading, isLoadingMore, page, searchQuery]);
+
+  // Show scroll to top button after scrolling
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 800);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const fetchPosts = async (reset = false) => {
+    if (reset) {
+      setIsLoading(true);
+    }
+
     try {
-      const posts = await apiClient.getAIContextPosts(searchQuery);
-      setPosts(posts);
+      const offset = reset ? 0 : page * POSTS_PER_PAGE;
+      const newPosts = await apiClient.getAIContextPosts(
+        searchQuery,
+        undefined,
+        undefined,
+        POSTS_PER_PAGE,
+        offset
+      );
+
+      if (reset) {
+        setPosts(newPosts);
+        setPage(1);
+      } else {
+        setPosts(prev => [...prev, ...newPosts]);
+        setPage(prev => prev + 1);
+      }
+
+      // Check if we got fewer posts than requested (means no more data)
+      setHasMore(newPosts.length === POSTS_PER_PAGE);
     } catch (err: any) {
       setError(err.message || 'Failed to load posts');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const loadMorePosts = async () => {
+    if (isLoadingMore || !hasMore) return;
+
+    setIsLoadingMore(true);
+    try {
+      const offset = page * POSTS_PER_PAGE;
+      const newPosts = await apiClient.getAIContextPosts(
+        searchQuery,
+        undefined,
+        undefined,
+        POSTS_PER_PAGE,
+        offset
+      );
+
+      setPosts(prev => [...prev, ...newPosts]);
+      setPage(prev => prev + 1);
+      setHasMore(newPosts.length === POSTS_PER_PAGE);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load more posts');
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handlePostCreated = (newPost: Post) => {
@@ -140,16 +230,56 @@ export function AIContextFeed() {
           </div>
         </div>
       ) : (
-        <div className="space-y-4">
-          {posts.map(post => (
-            <PostCard
-              key={post.id}
-              post={post}
-              onUpdated={handlePostUpdated}
-              onDeleted={handlePostDeleted}
+        <>
+          <div className="space-y-4">
+            {posts.map(post => (
+              <PostCard
+                key={post.id}
+                post={post}
+                onUpdated={handlePostUpdated}
+                onDeleted={handlePostDeleted}
+              />
+            ))}
+          </div>
+
+          {/* Infinite scroll trigger */}
+          <div ref={observerTarget} className="py-4">
+            {isLoadingMore && (
+              <div className="flex justify-center">
+                <span className="loading loading-spinner loading-md text-primary"></span>
+              </div>
+            )}
+            {!hasMore && posts.length > 0 && (
+              <p className="text-center text-base-content/60 text-sm">
+                🎉 You've reached the end
+              </p>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Scroll to top button */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-8 right-8 btn btn-circle btn-primary shadow-lg z-50 hover:scale-110 transition-transform"
+          title="Scroll to top"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M5 10l7-7m0 0l7 7m-7-7v18"
             />
-          ))}
-        </div>
+          </svg>
+        </button>
       )}
     </div>
   );

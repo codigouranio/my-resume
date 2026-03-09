@@ -20,6 +20,7 @@ export function PostCard({ post, onUpdated, onDeleted }: PostCardProps) {
   const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<{ url: string; name: string } | null>(null);
+  const [isTogglingAI, setIsTogglingAI] = useState(false);
 
   // X/Twitter-style: truncate at ~280 characters
   const TRUNCATE_LENGTH = 280;
@@ -68,6 +69,25 @@ export function PostCard({ post, onUpdated, onDeleted }: PostCardProps) {
       alert('Failed to delete attachment');
     } finally {
       setDeletingAttachmentId(null);
+    }
+  };
+
+  const handleToggleAI = async () => {
+    setIsTogglingAI(true);
+    try {
+      const newIncludeInAI = !post.includeInAI;
+      await apiClient.updateAIContextPost(post.id, undefined, undefined, newIncludeInAI, undefined);
+
+      // Update post with new includeInAI status
+      const updatedPost = {
+        ...post,
+        includeInAI: newIncludeInAI,
+      };
+      onUpdated(updatedPost);
+    } catch (err) {
+      alert('Failed to update AI context setting');
+    } finally {
+      setIsTogglingAI(false);
     }
   };
 
@@ -261,12 +281,28 @@ export function PostCard({ post, onUpdated, onDeleted }: PostCardProps) {
 
         {/* Actions */}
         <div className="card-actions justify-between mt-3">
-          <button
-            className="btn btn-ghost btn-sm gap-1"
-            onClick={() => setShowReplies(!showReplies)}
-          >
-            💭 {replyCount} Reflections
-          </button>
+          <div className="flex gap-1">
+            <button
+              className="btn btn-ghost btn-sm gap-1"
+              onClick={() => setShowReplies(!showReplies)}
+            >
+              💭 {replyCount} Reflections
+            </button>
+            <button
+              className={`btn btn-sm gap-1 ${post.includeInAI ? 'btn-ghost' : 'btn-warning'}`}
+              onClick={handleToggleAI}
+              disabled={isTogglingAI}
+              title={post.includeInAI ? 'Hide from AI context' : 'Include in AI context'}
+            >
+              {isTogglingAI ? (
+                <span className="loading loading-spinner loading-xs"></span>
+              ) : (
+                <>
+                  {post.includeInAI ? '🔓' : '🔒'} {post.includeInAI ? 'AI' : 'Hidden'}
+                </>
+              )}
+            </button>
+          </div>
           <div className="flex gap-1">
             <button className="btn btn-ghost btn-sm" onClick={() => setIsEditing(true)}>
               ✏️ Edit

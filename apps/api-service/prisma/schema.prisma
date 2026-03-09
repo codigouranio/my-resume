@@ -59,6 +59,7 @@ model User {
   passwordResetTokens PasswordResetToken[]
   defaultResume Resume?  @relation("DefaultResume", fields: [defaultResumeId], references: [id])
   journalPosts  JournalPost[] // Private life journal
+  interviews    InterviewProcess[] // Job interview tracking
   
   @@index([email])
   @@index([stripeCustomerId])
@@ -130,6 +131,7 @@ model Resume {
   chatInteractions  ChatInteraction[]
   chatAnalytics     ChatAnalytics[]
   postTags          PostResumeTag[]     // Journal posts tagged to this resume
+  interviews        InterviewProcess[]  // Job applications using this resume
   
   @@index([userId])
   @@index([slug])
@@ -428,5 +430,100 @@ model PostResumeTag {
   @@unique([postId, resumeId])
   @@index([postId])
   @@index([resumeId])
+}
+
+// ============================================
+// Interview Tracking
+// ============================================
+
+enum InterviewStatus {
+  APPLIED
+  SCREENING
+  TECHNICAL
+  ONSITE
+  FINAL_ROUND
+  OFFER
+  NEGOTIATING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+model InterviewProcess {
+  id              String   @id @default(cuid())
+  userId          String
+  
+  // Core fields
+  company         String
+  position        String
+  jobUrl          String?  @db.Text
+  description     String?  @db.Text
+  status          InterviewStatus @default(APPLIED)
+  skillTags       String[] // ["Python", "React", "AWS"]
+  
+  // Optional associations
+  resumeId        String?  // Which resume was used
+  
+  // Recruiter info
+  recruiterName   String?
+  recruiterEmail  String?
+  recruiterPhone  String?
+  recruiterLinks  String[] // ["linkedin.com/...", "calendly.com/..."]
+  
+  // Metadata
+  appliedAt       DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  archivedAt      DateTime? // Soft archive completed/rejected
+  
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resume          Resume?  @relation(fields: [resumeId], references: [id], onDelete: SetNull)
+  timeline        InterviewTimeline[]
+  reminders       InterviewReminder[]
+  
+  @@index([userId, status])
+  @@index([appliedAt])
+  @@index([archivedAt])
+}
+
+model InterviewTimeline {
+  id              String   @id @default(cuid())
+  interviewId     String
+  
+  // Content
+  comment         String   @db.Text
+  statusChange    InterviewStatus? // null if just comment
+  attachmentName  String?
+  attachmentUrl   String?  @db.Text
+  attachmentType  String?
+  
+  // Metadata
+  createdAt       DateTime @default(now())
+  
+  // Relations
+  interview       InterviewProcess @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  
+  @@index([interviewId, createdAt])
+}
+
+model InterviewReminder {
+  id              String   @id @default(cuid())
+  interviewId     String
+  
+  // Reminder details
+  title           String
+  dueAt           DateTime
+  completed       Boolean  @default(false)
+  completedAt     DateTime?
+  
+  // Metadata
+  createdAt       DateTime @default(now())
+  
+  // Relations
+  interview       InterviewProcess @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  
+  @@index([dueAt, completed])
+  @@index([interviewId])
 }
 

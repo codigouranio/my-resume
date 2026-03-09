@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams } from 'react-router-dom';
 import { apiClient } from '../../shared/api/client';
@@ -23,15 +23,22 @@ interface PublicJournalResponse {
   };
 }
 
+const POSTS_PER_PAGE = 20;
+
 export function PublicJournalPage() {
   const { userId } = useParams<{ userId: string }>();
   const [posts, setPosts] = useState<Post[]>([]);
   const [userName, setUserName] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState('');
   const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
   const [lightboxImage, setLightboxImage] = useState<{ url: string; name: string } | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
+  const observerTarget = useRef<HTMLDivElement>(null);
   const TRUNCATE_LENGTH = 280;
 
   // Prevent body scroll when lightbox is open
@@ -46,21 +53,71 @@ export function PublicJournalPage() {
     };
   }, [lightboxImage]);
 
+  // Load initial posts
   useEffect(() => {
-    loadPosts();
+    loadPosts(true);
   }, [userId]);
 
-  const loadPosts = async () => {
+  // Infinite scroll observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoading && !isLoadingMore) {
+          loadMorePosts();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [hasMore, isLoading, isLoadingMore, page]);
+
+  // Show scroll to top button after scrolling
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 800);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const loadPosts = async (reset = false) => {
     if (!userId) return;
 
-    setIsLoading(true);
+    if (reset) {
+      setIsLoading(true);
+    }
+
     setError('');
     try {
-      const response: PublicJournalResponse = await apiClient.getPublicPosts(userId);
-      setPosts(response.posts || []);
+      const offset = reset ? 0 : page * POSTS_PER_PAGE;
+      const response: PublicJournalResponse = await apiClient.getPublicPosts(
+        userId,
+        POSTS_PER_PAGE,
+        offset
+      );
 
-      // Build user display name
-      if (response.user) {
+      if (reset) {
+        setPosts(response.posts || []);
+        setPage(1);
+      } else {
+        setPosts(prev => [...prev, ...(response.posts || [])]);
+        setPage(prev => prev + 1);
+      }
+
+      // Check if we got fewer posts than requested (means no more data)
+      setHasMore((response.posts || []).length === POSTS_PER_PAGE);
+
+      // Build user display name (only set on first load)
+      if (reset && response.user) {
         const { firstName, lastName, email } = response.user;
         if (firstName && lastName) {
           setUserName(`${firstName} ${lastName}`);
@@ -71,15 +128,38 @@ export function PublicJournalPage() {
         } else {
           setUserName(email.split('@')[0]);
         }
-      } else {
-        // Fallback if user data not returned by API
-        setUserName('User');
       }
     } catch (err: any) {
       setError(err.message || 'Failed to load public posts');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const loadMorePosts = async () => {
+    if (!userId || isLoadingMore || !hasMore) return;
+
+    setIsLoadingMore(true);
+    try {
+      const offset = page * POSTS_PER_PAGE;
+      const response: PublicJournalResponse = await apiClient.getPublicPosts(
+        userId,
+        POSTS_PER_PAGE,
+        offset
+      );
+
+      setPosts(prev => [...prev, ...(response.posts || [])]);
+      setPage(prev => prev + 1);
+      setHasMore((response.posts || []).length === POSTS_PER_PAGE);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load more posts');
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const formatDate = (dateString: string) => {
@@ -303,7 +383,47 @@ export function PublicJournalPage() {
             })}
           </div>
         )}
+
+        {/* Infinite scroll trigger */}
+        {posts.length > 0 && (
+          <div ref={observerTarget} className="py-8">
+            {isLoadingMore && (
+              <div className="flex justify-center">
+                <span className="loading loading-spinner loading-md text-primary"></span>
+              </div>
+            )}
+            {!hasMore && (
+              <p className="text-center text-base-content/60 text-sm">
+                🎉 You've reached the end
+              </p>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Scroll to top button */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-8 right-8 btn btn-circle btn-primary shadow-lg z-50 hover:scale-110 transition-transform"
+          title="Scroll to top"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M5 10l7-7m0 0l7 7m-7-7v18"
+            />
+          </svg>
+        </button>
+      )}
 
       {/* Image Lightbox Modal - Rendered via Portal */}
       {lightboxImage && createPortal(

@@ -524,6 +524,63 @@ class ApiClient {
       method: 'DELETE',
     });
   }
+
+  // Interview Tracking
+  async createInterview(data: any) {
+    return this.request('/interviews', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getInterviews(filters?: { status?: string; company?: string; archived?: boolean }) {
+    const params = new URLSearchParams();
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.company) params.append('company', filters.company);
+    if (filters?.archived !== undefined) params.append('archived', String(filters.archived));
+    const query = params.toString();
+    return this.request(`/interviews${query ? '?' + query : ''}`);
+  }
+
+  async getInterview(id: string) {
+    return this.request(`/interviews/${id}`);
+  }
+
+  async updateInterview(id: string, data: any) {
+    return this.request(`/interviews/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteInterview(id: string) {
+    return this.request(`/interviews/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async archiveInterview(id: string) {
+    return this.request(`/interviews/${id}/archive`, {
+      method: 'POST',
+    });
+  }
+
+  async unarchiveInterview(id: string) {
+    return this.request(`/interviews/${id}/unarchive`, {
+      method: 'POST',
+    });
+  }
+
+  async addInterviewTimelineEntry(id: string, data: { comment: string; statusChange?: string; attachmentName?: string; attachmentUrl?: string; attachmentType?: string }) {
+    return this.request(`/interviews/${id}/timeline`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getInterviewStats() {
+    return this.request('/interviews/stats');
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);
