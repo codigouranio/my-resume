@@ -61,6 +61,7 @@ export interface Interview {
     title: string;
     slug: string;
   };
+  companyInfo?: CompanyInfo;
   timeline?: TimelineEntry[];
 }
 
@@ -105,4 +106,30 @@ export interface Template {
   recruiterPhone?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CompanyInfo {
+  id: string;
+  companyName: string;
+  description?: string;
+  industry?: string;
+  founded?: number;
+  headquarters?: string;
+  website?: string;
+  employeeCount?: string;
+  revenue?: string;
+  companySize?: string;
+  fundingTotal?: string;
+  lastFunding?: string;
+  investors?: string[];
+  logoUrl?: string;
+  avgSalary?: string;
+  glassdoorRating?: number;
+  benefits?: string[];
+  linkedinUrl?: string;
+  twitterHandle?: string;
+  githubUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+  source?: string;
 }

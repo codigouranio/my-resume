@@ -31,6 +31,7 @@ export class InterviewsService {
             slug: true,
           },
         },
+        companyInfo: true,
       },
     });
   }
@@ -72,6 +73,7 @@ export class InterviewsService {
             slug: true,
           },
         },
+        companyInfo: true,
         timeline: {
           orderBy: {
             createdAt: 'desc',
@@ -96,6 +98,7 @@ export class InterviewsService {
             slug: true,
           },
         },
+        companyInfo: true,
         timeline: {
           orderBy: {
             createdAt: 'asc',
@@ -152,6 +155,7 @@ export class InterviewsService {
             slug: true,
           },
         },
+        companyInfo: true,
       },
     });
   }

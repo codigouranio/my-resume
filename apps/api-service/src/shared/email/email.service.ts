@@ -194,6 +194,85 @@ export class EmailService {
     await this.sendEmail(email, subject, htmlBody, textBody);
   }
 
+  async sendCompanyEnrichmentEmail(
+    email: string,
+    firstName: string,
+    companyName: string,
+    companyInfo: any,
+  ): Promise<void> {
+    this.logger.debug(`Preparing company enrichment notification for ${email} (${companyName})`);
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'https://resumecast.ai');
+    const subject = `✅ Company Research Complete: ${companyName}`;
+    
+    // Build company details summary
+    const details = [];
+    if (companyInfo.industry) details.push(`<strong>Industry:</strong> ${companyInfo.industry}`);
+    if (companyInfo.companySize) details.push(`<strong>Size:</strong> ${companyInfo.companySize}`);
+    if (companyInfo.employeeCount) details.push(`<strong>Employees:</strong> ${companyInfo.employeeCount}`);
+    if (companyInfo.avgSalary) details.push(`<strong>Avg. Salary:</strong> ${companyInfo.avgSalary}`);
+    if (companyInfo.glassdoorRating) details.push(`<strong>Glassdoor:</strong> ⭐ ${companyInfo.glassdoorRating}`);
+    
+    const htmlBody = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #10b981;">🎉 Company Research Complete!</h1>
+        <p>Hi ${firstName},</p>
+        <p>Great news! We've finished researching <strong>${companyName}</strong> for your interview tracker.</p>
+        
+        ${companyInfo.logoUrl ? `
+          <div style="text-align: center; margin: 20px 0;">
+            <img src="${companyInfo.logoUrl}" alt="${companyName} logo" style="max-width: 120px; height: auto;" />
+          </div>
+        ` : ''}
+        
+        ${companyInfo.description ? `
+          <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #374151;">About ${companyName}</h3>
+            <p style="margin-bottom: 0;">${companyInfo.description}</p>
+          </div>
+        ` : ''}
+        
+        ${details.length > 0 ? `
+          <div style="margin: 20px 0;">
+            <h3 style="color: #374151;">Key Details</h3>
+            <ul style="list-style: none; padding: 0;">
+              ${details.map(d => `<li style="padding: 5px 0;">${d}</li>`).join('')}
+            </ul>
+          </div>
+        ` : ''}
+        
+        <p>
+          <a href="${frontendUrl}/dashboard/interviews" 
+             style="display: inline-block; padding: 12px 24px; background-color: #10b981; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
+            View Interview Tracker
+          </a>
+        </p>
+        
+        <p style="color: #6b7280; font-size: 14px;">
+          This information is now available in your interview details and will help you prepare better for your interview.
+        </p>
+        
+        <p>Best regards,<br>ResumeCast Team</p>
+      </div>
+    `;
+
+    const textBody = `Hi ${firstName},
+
+Great news! We've finished researching ${companyName} for your interview tracker.
+
+${companyInfo.description ? `About: ${companyInfo.description}\n\n` : ''}
+
+${details.length > 0 ? `Key Details:\n${details.map(d => `- ${d.replace(/<\/?strong>/g, '')}`).join('\n')}\n\n` : ''}
+
+View your interview tracker: ${frontendUrl}/dashboard/interviews
+
+This information is now available in your interview details.
+
+Best regards,
+ResumeCast Team`;
+
+    await this.sendEmail(email, subject, htmlBody, textBody);
+  }
+
   private async sendEmail(
     recipient: string,
     subject: string,

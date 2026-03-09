@@ -19,6 +19,7 @@ import { ChatAnalyticsModule } from './features/analytics/chat-analytics.module'
 import { AIContextModule } from './features/ai-context/ai-context.module';
 import { DocumentStorageModule } from './features/document-storage/document-storage.module';
 import { InterviewsModule } from './features/interviews/interviews.module';
+import { CompaniesModule } from './features/companies/companies.module';
 import { AppThrottlerGuard } from './shared/guards/throttler.guard';
 
 @Module({
@@ -90,6 +91,7 @@ import { AppThrottlerGuard } from './shared/guards/throttler.guard';
     AIContextModule,
     DocumentStorageModule,
     InterviewsModule,
+    CompaniesModule,
   ],
   providers: [
     {

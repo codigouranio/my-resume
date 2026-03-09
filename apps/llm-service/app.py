@@ -12,6 +12,7 @@ import logging
 import requests
 from functools import lru_cache
 from prompt_manager import get_prompt_manager
+from company_research_agent import CompanyResearchAgent
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -29,11 +30,12 @@ MODEL_PATH = os.getenv("LLAMA_MODEL_PATH", "./models/llama-2-7b-chat.gguf")
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:3000/api")
 RESUME_SLUG = os.getenv("RESUME_SLUG", "default-resume")
 llm = None
+research_agent = None
 
 
 def load_model():
     """Load LLAMA model with GPU acceleration."""
-    global llm
+    global llm, research_agent
     try:
         logger.info(f"Loading LLAMA model from {MODEL_PATH}")
         llm = Llama(
@@ -44,6 +46,30 @@ def load_model():
             verbose=False,
         )
         logger.info("Model loaded successfully")
+
+        # Initialize research agent with LLM wrapper
+        class LLMWrapper:
+            """Wrapper to adapt llama_cpp.Llama to research agent interface."""
+
+            def __init__(self, llama_model):
+                self.model = llama_model
+
+            def generate(
+                self, prompt: str, temperature: float = 0.7, max_tokens: int = 500
+            ) -> str:
+                response = self.model(
+                    prompt,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    top_p=0.9,
+                    stop=["\n\n\n"],
+                    echo=False,
+                )
+                return response["choices"][0]["text"].strip()
+
+        research_agent = CompanyResearchAgent(LLMWrapper(llm))
+        logger.info("Research agent initialized")
+
     except Exception as e:
         logger.error(f"Failed to load model: {e}")
         raise
@@ -205,6 +231,39 @@ def refresh_cache():
         )
     except Exception as e:
         logger.error(f"Error clearing cache: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/companies/enrich", methods=["POST"])
+def enrich_company():
+    """
+    Company enrichment endpoint using ReAct research agent.
+    Expects JSON: {"companyName": "Company Name"}
+    Returns JSON: {structured company info}
+    """
+    try:
+        data = request.get_json()
+        company_name = data.get("companyName", "").strip()
+
+        if not company_name:
+            return jsonify({"error": "companyName is required"}), 400
+
+        if llm is None:
+            return jsonify({"error": "LLM not loaded"}), 503
+
+        if research_agent is None:
+            return jsonify({"error": "Research agent not initialized"}), 503
+
+        logger.info(f"Starting company enrichment for: {company_name}")
+
+        # Perform research
+        company_info = research_agent.research_company(company_name)
+
+        logger.info(f"Company enrichment complete for: {company_name}")
+        return jsonify(company_info)
+
+    except Exception as e:
+        logger.error(f"Error enriching company: {e}")
         return jsonify({"error": str(e)}), 500
 
 

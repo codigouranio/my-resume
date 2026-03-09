@@ -464,6 +464,7 @@ model InterviewProcess {
   
   // Optional associations
   resumeId        String?  // Which resume was used
+  companyInfoId   String?  // Linked enriched company data
   
   // Recruiter info
   recruiterName   String?
@@ -480,12 +481,14 @@ model InterviewProcess {
   // Relations
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   resume          Resume?  @relation(fields: [resumeId], references: [id], onDelete: SetNull)
+  companyInfo     CompanyInfo? @relation(fields: [companyInfoId], references: [id], onDelete: SetNull)
   timeline        InterviewTimeline[]
   reminders       InterviewReminder[]
   
   @@index([userId, status])
   @@index([appliedAt])
   @@index([archivedAt])
+  @@index([companyInfoId])
 }
 
 model InterviewTimeline {
@@ -554,5 +557,51 @@ model InterviewTemplate {
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@index([userId])
+}
+
+// Company information enrichment (research agent data)
+model CompanyInfo {
+  id              String   @id @default(cuid())
+  companyName     String   @unique
+  
+  // Basic Info
+  description     String?  @db.Text
+  industry        String?
+  founded         Int?
+  headquarters    String?
+  website         String?
+  
+  // Size Metrics
+  employeeCount   String?  // e.g., "1,001-5,000" or "500"
+  revenue         String?  // e.g., "$100M-$500M"
+  companySize     String?  // "Startup", "Mid-size", "Enterprise"
+  
+  // Financial
+  fundingTotal    String?  // e.g., "$50M"
+  lastFunding     String?  // e.g., "Series B"
+  investors       String[] // Array of investor names
+  
+  // Branding
+  logoUrl         String?  @db.Text
+  
+  // Salary Data
+  avgSalary       String?  // e.g., "$120k-$180k"
+  glassdoorRating Float?
+  benefits        String[] // e.g., ["Remote", "401k", "Health"]
+  
+  // Social Links
+  linkedinUrl     String?  @db.Text
+  twitterHandle   String?
+  githubUrl       String?  @db.Text
+  
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  source          String?  // "langchain_research", "manual", etc.
+  
+  // Relations
+  interviews      InterviewProcess[]
+  
+  @@index([companyName])
 }
 

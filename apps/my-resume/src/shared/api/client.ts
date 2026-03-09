@@ -661,6 +661,33 @@ class ApiClient {
       method: 'DELETE',
     });
   }
+
+  // Company Enrichment
+  async enrichCompany(companyName: string) {
+    return this.request('/companies/enrich', {
+      method: 'POST',
+      body: JSON.stringify({ companyName }),
+    });
+  }
+
+  async queueCompanyEnrichment(companyName: string) {
+    return this.request('/companies/enrich/queue', {
+      method: 'POST',
+      body: JSON.stringify({ companyName }),
+    });
+  }
+
+  async getEnrichmentJobStatus(jobId: string) {
+    return this.request(`/companies/enrich/status/${jobId}`);
+  }
+
+  async getCompanyInfo(companyName: string) {
+    return this.request(`/companies/${encodeURIComponent(companyName)}`);
+  }
+
+  async getAllCompanies() {
+    return this.request('/companies');
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);

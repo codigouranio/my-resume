@@ -294,6 +294,172 @@ export function InterviewDetail({ interviewId, onClose, onUpdate }: InterviewDet
           )}
         </div>
 
+        {/* Company Information Section */}
+        {interview.companyInfo && (
+          <>
+            <div className="divider">Company Information</div>
+            <div className="bg-base-200 rounded-lg p-6 mb-6">
+              <div className="flex items-start gap-4 mb-4">
+                {interview.companyInfo.logoUrl && (
+                  <img
+                    src={interview.companyInfo.logoUrl}
+                    alt={`${interview.company} logo`}
+                    className="w-20 h-20 rounded object-contain bg-white border border-base-300"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                )}
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h4 className="text-xl font-bold">{interview.company}</h4>
+                    {interview.companyInfo.website && (
+                      <a
+                        href={interview.companyInfo.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-xs btn-ghost"
+                        title="Company Website"
+                      >
+                        🌐
+                      </a>
+                    )}
+                    {interview.companyInfo.linkedinUrl && (
+                      <a
+                        href={interview.companyInfo.linkedinUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-xs btn-ghost"
+                        title="LinkedIn"
+                      >
+                        🔗
+                      </a>
+                    )}
+                    {interview.companyInfo.twitterHandle && (
+                      <a
+                        href={`https://twitter.com/${interview.companyInfo.twitterHandle.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-xs btn-ghost"
+                        title="Twitter"
+                      >
+                        🐦
+                      </a>
+                    )}
+                    {interview.companyInfo.githubUrl && (
+                      <a
+                        href={interview.companyInfo.githubUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-xs btn-ghost"
+                        title="GitHub"
+                      >
+                        💻
+                      </a>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {interview.companyInfo.industry && (
+                      <span className="badge badge-primary">{interview.companyInfo.industry}</span>
+                    )}
+                    {interview.companyInfo.companySize && (
+                      <span className="badge badge-secondary">{interview.companyInfo.companySize}</span>
+                    )}
+                    {interview.companyInfo.glassdoorRating && (
+                      <span className="badge">⭐ {interview.companyInfo.glassdoorRating}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {interview.companyInfo.description && (
+                <p className="text-sm mb-4">{interview.companyInfo.description}</p>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {interview.companyInfo.founded && (
+                  <div>
+                    <span className="text-sm font-semibold">Founded</span>
+                    <p className="text-sm">{interview.companyInfo.founded}</p>
+                  </div>
+                )}
+
+                {interview.companyInfo.headquarters && (
+                  <div>
+                    <span className="text-sm font-semibold">Headquarters</span>
+                    <p className="text-sm">{interview.companyInfo.headquarters}</p>
+                  </div>
+                )}
+
+                {interview.companyInfo.employeeCount && (
+                  <div>
+                    <span className="text-sm font-semibold">Employee Count</span>
+                    <p className="text-sm">👥 {interview.companyInfo.employeeCount}</p>
+                  </div>
+                )}
+
+                {interview.companyInfo.revenue && (
+                  <div>
+                    <span className="text-sm font-semibold">Revenue</span>
+                    <p className="text-sm">💰 {interview.companyInfo.revenue}</p>
+                  </div>
+                )}
+
+                {interview.companyInfo.avgSalary && (
+                  <div>
+                    <span className="text-sm font-semibold">Average Salary</span>
+                    <p className="text-sm text-success font-semibold">{interview.companyInfo.avgSalary}</p>
+                  </div>
+                )}
+
+                {interview.companyInfo.fundingTotal && (
+                  <div>
+                    <span className="text-sm font-semibold">Total Funding</span>
+                    <p className="text-sm">{interview.companyInfo.fundingTotal}</p>
+                  </div>
+                )}
+
+                {interview.companyInfo.lastFunding && (
+                  <div>
+                    <span className="text-sm font-semibold">Last Funding</span>
+                    <p className="text-sm">{interview.companyInfo.lastFunding}</p>
+                  </div>
+                )}
+              </div>
+
+              {interview.companyInfo.investors && interview.companyInfo.investors.length > 0 && (
+                <div className="mt-4">
+                  <span className="text-sm font-semibold block mb-2">Investors</span>
+                  <div className="flex flex-wrap gap-2">
+                    {interview.companyInfo.investors.map((investor, idx) => (
+                      <span key={idx} className="badge badge-outline">{investor}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {interview.companyInfo.benefits && interview.companyInfo.benefits.length > 0 && (
+                <div className="mt-4">
+                  <span className="text-sm font-semibold block mb-2">Benefits</span>
+                  <div className="flex flex-wrap gap-2">
+                    {interview.companyInfo.benefits.map((benefit, idx) => (
+                      <span key={idx} className="badge badge-success badge-outline">{benefit}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {interview.companyInfo.updatedAt && (
+                <div className="mt-4 pt-4 border-t border-base-300">
+                  <p className="text-xs text-base-content/50">
+                    Company data last updated: {formatDate(interview.companyInfo.updatedAt)}
+                  </p>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
         <div className="divider"></div>
 
         {/* Timeline */}

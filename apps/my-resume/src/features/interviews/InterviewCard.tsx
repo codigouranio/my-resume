@@ -24,9 +24,56 @@ export function InterviewCard({ interview, onEdit, onDelete, onArchive, onView }
       <div className="card-body">
         {/* Header */}
         <div className="flex justify-between items-start gap-2">
-          <div className="flex-1">
-            <h3 className="card-title text-lg">{interview.company}</h3>
-            <p className="text-sm text-base-content/70">{interview.position}</p>
+          <div className="flex-1 flex items-start gap-3">
+            {/* Company Logo */}
+            {interview.companyInfo?.logoUrl && (
+              <img
+                src={interview.companyInfo.logoUrl}
+                alt={`${interview.company} logo`}
+                className="w-12 h-12 rounded object-contain bg-white border border-base-300"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            )}
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <h3 className="card-title text-lg">{interview.company}</h3>
+                {interview.companyInfo?.linkedinUrl && (
+                  <a
+                    href={interview.companyInfo.linkedinUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-xs btn-circle btn-ghost"
+                    title="LinkedIn"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    🔗
+                  </a>
+                )}
+              </div>
+              <p className="text-sm text-base-content/70">{interview.position}</p>
+              {/* Company Info Badges */}
+              {interview.companyInfo && (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {interview.companyInfo.companySize && (
+                    <span className="badge badge-xs badge-primary">
+                      {interview.companyInfo.companySize}
+                    </span>
+                  )}
+                  {interview.companyInfo.glassdoorRating && (
+                    <span className="badge badge-xs">
+                      ⭐ {interview.companyInfo.glassdoorRating}
+                    </span>
+                  )}
+                  {interview.companyInfo.industry && (
+                    <span className="badge badge-xs badge-outline">
+                      {interview.companyInfo.industry}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
           <div className={`badge ${STATUS_COLORS[interview.status]} badge-sm`}>
             {STATUS_LABELS[interview.status]}
@@ -73,6 +120,18 @@ export function InterviewCard({ interview, onEdit, onDelete, onArchive, onView }
           <p className="text-xs text-base-content/50 mt-2">
             📄 {interview.resume.title}
           </p>
+        )}
+
+        {/* Company Metadata */}
+        {interview.companyInfo && (interview.companyInfo.employeeCount || interview.companyInfo.avgSalary) && (
+          <div className="flex flex-wrap gap-3 text-xs text-base-content/60 mt-2">
+            {interview.companyInfo.employeeCount && (
+              <span>👥 {interview.companyInfo.employeeCount}</span>
+            )}
+            {interview.companyInfo.avgSalary && (
+              <span className="text-success">💰 {interview.companyInfo.avgSalary}</span>
+            )}
+          </div>
         )}
 
         {/* Date */}
