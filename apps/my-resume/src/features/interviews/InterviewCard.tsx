@@ -75,8 +75,24 @@ export function InterviewCard({ interview, onEdit, onDelete, onArchive, onView }
               )}
             </div>
           </div>
-          <div className={`badge ${STATUS_COLORS[interview.status]} badge-sm`}>
-            {STATUS_LABELS[interview.status]}
+          <div className="flex flex-col items-end gap-2">
+            <div className={`badge ${STATUS_COLORS[interview.status]} badge-sm`}>
+              {STATUS_LABELS[interview.status]}
+            </div>
+            {/* Fit Score Badge */}
+            {interview.fitScore !== undefined && interview.fitScore !== null && (
+              <div
+                className={`badge badge-lg font-bold ${interview.fitScore >= 8
+                    ? 'badge-success'
+                    : interview.fitScore >= 6
+                      ? 'badge-warning'
+                      : 'badge-error'
+                  }`}
+                title="AI Position Fit Score"
+              >
+                🎯 {interview.fitScore.toFixed(1)}/10
+              </div>
+            )}
           </div>
         </div>
 

@@ -194,10 +194,24 @@ export function InterviewDetail({ interviewId, onClose, onUpdate }: InterviewDet
           <div className="flex-1">
             <h3 className="text-2xl font-bold">{interview.position}</h3>
             <p className="text-lg text-base-content/70">{interview.company}</p>
-            <div className="mt-2">
+            <div className="mt-2 flex flex-wrap gap-2 items-center">
               <span className={`badge ${STATUS_COLORS[interview.status]}`}>
                 {STATUS_LABELS[interview.status]}
               </span>
+              {/* Fit Score Badge */}
+              {interview.fitScore !== undefined && interview.fitScore !== null && (
+                <span
+                  className={`badge badge-lg font-bold ${interview.fitScore >= 8
+                      ? 'badge-success'
+                      : interview.fitScore >= 6
+                        ? 'badge-warning'
+                        : 'badge-error'
+                    }`}
+                  title="AI Position Fit Score"
+                >
+                  🎯 {interview.fitScore.toFixed(1)}/10
+                </span>
+              )}
             </div>
           </div>
           <button
@@ -293,6 +307,60 @@ export function InterviewDetail({ interviewId, onClose, onUpdate }: InterviewDet
             </div>
           )}
         </div>
+
+        {/* AI Fit Analysis */}
+        {interview.fitScore !== undefined && interview.fitAnalysis && (() => {
+          try {
+            const analysis = JSON.parse(interview.fitAnalysis);
+            return (
+              <div className="mb-6 p-4 bg-base-200 rounded-lg">
+                <h4 className="text-lg font-bold mb-3">🎯 AI Position Fit Analysis</h4>
+
+                {analysis.summary && (
+                  <div className="mb-4">
+                    <p className="text-sm font-semibold mb-1">Summary:</p>
+                    <p className="text-sm text-base-content/80">{analysis.summary}</p>
+                  </div>
+                )}
+
+                {analysis.strengths && analysis.strengths.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-sm font-semibold mb-2 text-success">✅ Strengths:</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      {analysis.strengths.map((strength: string, idx: number) => (
+                        <li key={idx} className="text-sm text-base-content/80">{strength}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {analysis.gaps && analysis.gaps.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-sm font-semibold mb-2 text-warning">⚠️ Gaps:</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      {analysis.gaps.map((gap: string, idx: number) => (
+                        <li key={idx} className="text-sm text-base-content/80">{gap}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {analysis.recommendations && analysis.recommendations.length > 0 && (
+                  <div>
+                    <p className="text-sm font-semibold mb-2 text-info">💡 Recommendations:</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      {analysis.recommendations.map((rec: string, idx: number) => (
+                        <li key={idx} className="text-sm text-base-content/80">{rec}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            );
+          } catch (e) {
+            return null; // Invalid JSON, skip rendering
+          }
+        })()}
 
         {/* Company Information Section */}
         {interview.companyInfo && (

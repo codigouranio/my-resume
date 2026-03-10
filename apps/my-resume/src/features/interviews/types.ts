@@ -56,6 +56,8 @@ export interface Interview {
   createdAt: string;
   updatedAt: string;
   archivedAt?: string;
+  fitScore?: number; // 1-10 AI-calculated fit score
+  fitAnalysis?: string; // JSON: {strengths, gaps, recommendations, summary}
   resume?: {
     id: string;
     title: string;

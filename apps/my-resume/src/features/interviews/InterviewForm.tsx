@@ -31,6 +31,10 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
   const [templateDescription, setTemplateDescription] = useState('');
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
 
+  // Resume selection
+  const [resumes, setResumes] = useState<Array<{ id: string; title: string; slug: string }>>([]);
+  const [selectedResumeId, setSelectedResumeId] = useState<string>(interview?.resumeId || '');
+
   // Company enrichment state
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(interview?.companyInfo || null);
   const [isEnriching, setIsEnriching] = useState(false);
@@ -39,6 +43,7 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
 
   useEffect(() => {
     loadTemplates();
+    loadResumes();
   }, []);
 
   // Auto-enrich company info when company name changes (debounced)
@@ -135,6 +140,7 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
         description: description || undefined,
         status,
         skillTags,
+        resumeId: selectedResumeId || undefined,
         recruiterName: recruiterName || undefined,
         recruiterEmail: recruiterEmail || undefined,
         recruiterPhone: recruiterPhone || undefined,
@@ -176,6 +182,20 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
       setTemplates(data);
     } catch (error) {
       console.error('Failed to load templates:', error);
+    }
+  };
+
+  const loadResumes = async () => {
+    try {
+      const data = await apiClient.getMyResumes();
+      setResumes(data);
+
+      // If editing and resume is already associated, keep it selected
+      if (interview?.resumeId) {
+        setSelectedResumeId(interview.resumeId);
+      }
+    } catch (error) {
+      console.error('Failed to load resumes:', error);
     }
   };
 
@@ -298,6 +318,33 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
                   required
                 />
               </div>
+            </div>
+
+            {/* Resume Selection */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Resume Used</span>
+                <span className="label-text-alt text-base-content/60">Optional</span>
+              </label>
+              <select
+                className="select select-bordered"
+                value={selectedResumeId}
+                onChange={(e) => setSelectedResumeId(e.target.value)}
+              >
+                <option value="">No resume selected</option>
+                {resumes.map((resume) => (
+                  <option key={resume.id} value={resume.id}>
+                    {resume.title}
+                  </option>
+                ))}
+              </select>
+              {selectedResumeId && (
+                <label className="label">
+                  <span className="label-text-alt text-success">
+                    ✓ This resume will be used for AI position fit analysis
+                  </span>
+                </label>
+              )}
             </div>
 
             {/* Company Enrichment Display */}
