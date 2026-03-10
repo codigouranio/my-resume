@@ -212,7 +212,10 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
 
   return createPortal(
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
-      <div className="bg-base-100 rounded-lg shadow-xl max-w-2xl w-full flex flex-col" style={{ position: 'relative', zIndex: 10000, maxHeight: 'calc(100vh - 4rem)' }}>
+      <div
+        className="bg-base-100 rounded-lg shadow-xl max-w-2xl w-full flex flex-col overflow-hidden"
+        style={{ position: 'relative', zIndex: 10000, maxHeight: 'calc(100vh - 4rem)', height: 'auto' }}
+      >
         {/* Close button */}
         <button
           type="button"
@@ -223,8 +226,8 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
         >
           ✕
         </button>
-        <form onSubmit={handleSubmit} className="flex flex-col h-full">
-          <div className="p-6 overflow-y-auto flex-1">
+        <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
+          <div className="p-6 overflow-y-auto flex-1 min-h-0">
             <h2 className="text-2xl font-bold mb-4 pr-8">
               {interview ? 'Edit Interview' : 'New Interview'}
             </h2>
