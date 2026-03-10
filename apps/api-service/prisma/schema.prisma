@@ -466,6 +466,10 @@ model InterviewProcess {
   resumeId        String?  // Which resume was used
   companyInfoId   String?  // Linked enriched company data
   
+  // AI-powered analysis
+  fitScore        Float?   // 1-10 AI-calculated fit score
+  fitAnalysis     String?  @db.Text // JSON: {strengths, gaps, recommendations, summary}
+  
   // Recruiter info
   recruiterName   String?
   recruiterEmail  String?

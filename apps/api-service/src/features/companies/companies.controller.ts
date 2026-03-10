@@ -2,8 +2,10 @@ import { Controller, Post, Get, Body, Param, UseGuards, Req } from '@nestjs/comm
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CompaniesService } from './companies.service';
 import { EnrichCompanyDto } from './dto/enrich-company.dto';
+import { ScorePositionDto } from './dto/score-position.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { enqueueCompanyEnrichment, getCompanyEnrichmentQueue } from './companies.queue';
+import { enqueuePositionScoring, getPositionScoringQueue } from './position-scoring.queue';
 
 @ApiTags('companies')
 @Controller('companies')
@@ -104,4 +106,72 @@ export class CompaniesController {
   async getAllCompanies() {
     return this.companiesService.getAllCompanies();
   }
+
+  @Post('positions/score/queue')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Queue position fit scoring job (async with BullMQ)',
+    description:
+      'Queues a background job to analyze position fit using AI. ' +
+      'Analyzes job posting, resume, journal entries, and generates a 1-10 fit score. ' +
+      'Returns immediately with job ID. Use GET /companies/positions/score/status/:jobId to check progress.',
+  })
+  async queuePositionScoring(@Body() dto: ScorePositionDto, @Req() req: any) {
+    const userId = req.user?.userId || 'system';
+    
+    const job = await enqueuePositionScoring({
+      interviewId: dto.interviewId,
+      userId,
+      company: dto.company,
+      position: dto.position,
+      jobUrl: dto.jobUrl,
+      jobDescription: dto.jobDescription,
+    });
+
+    return {
+      jobId: job.id,
+      interviewId: dto.interviewId,
+      status: 'queued',
+      message: 'Position scoring job queued successfully',
+    };
+  }
+
+  @Get('positions/score/status/:jobId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Check position scoring job status',
+    description: 'Get the status of a queued position scoring job by job ID',
+  })
+  async getPositionScoringStatus(@Param('jobId') jobId: string) {
+    const queue = getPositionScoringQueue();
+    const job = await queue.getJob(jobId);
+
+    if (!job) {
+      return {
+        jobId,
+        status: 'not_found',
+        message: 'Job not found',
+      };
+    }
+
+    const state = await job.getState();
+    const progress = job.progress;
+    const returnValue = job.returnvalue;
+
+    return {
+      jobId: job.id,
+      interviewId: job.data.interviewId,
+      position: job.data.position,
+      company: job.data.company,
+      status: state,
+      progress,
+      result: state === 'completed' ? returnValue : null,
+      failedReason: job.failedReason,
+      attemptsMade: job.attemptsMade,
+      timestamp: job.timestamp,
+    };
+  }
 }
+

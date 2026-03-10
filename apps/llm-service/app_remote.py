@@ -16,6 +16,7 @@ from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 from prompt_manager import get_prompt_manager
 from company_research_agent import CompanyResearchAgent
+from position_fit_agent import PositionFitAgent
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -517,6 +518,21 @@ def get_research_agent():
     return research_agent
 
 
+# Initialize position fit agent (lazy loading)
+position_fit_agent = None
+
+
+def get_position_fit_agent():
+    """Lazy load the position fit agent."""
+    global position_fit_agent
+    if position_fit_agent is None:
+        logger.info("Initializing position fit agent...")
+        llm_wrapper = RemoteLLMWrapper()
+        position_fit_agent = PositionFitAgent(llm_wrapper)
+        logger.info("Position fit agent initialized")
+    return position_fit_agent
+
+
 def get_user_info(resume_slug: str = None):
     """Get user information from database by resume slug or get all users."""
     try:
@@ -577,6 +593,7 @@ def health_check():
                 "api_type": LLAMA_API_TYPE,
                 "server_reachable": server_healthy,
                 "research_agent_available": True,
+                "position_fit_agent_available": True,
             }
         )
     except Exception as e:
@@ -1023,6 +1040,77 @@ def enrich_company():
 
     except Exception as e:
         logger.error(f"Error enriching company: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/positions/score", methods=["POST"])
+def score_position():
+    """
+    Position fit scoring endpoint using AI analysis.
+    Expects JSON: {
+        "company": "Company Name",
+        "position": "Position Title",
+        "jobUrl": "https://...",  // optional
+        "jobDescription": "...",  // optional
+        "resume": {
+            "content": "...",
+            "llmContext": "..."
+        },
+        "journalEntries": [...]
+    }
+    Returns JSON: {
+        "fitScore": 7.5,
+        "analysis": {
+            "summary": "...",
+            "strengths": [...],
+            "gaps": [...],
+            "recommendations": [...]
+        }
+    }
+    """
+    try:
+        data = request.get_json()
+
+        company = data.get("company", "").strip()
+        position = data.get("position", "").strip()
+
+        if not company or not position:
+            return jsonify({"error": "company and position are required"}), 400
+
+        job_url = data.get("jobUrl")
+        job_description = data.get("jobDescription")
+        resume = data.get("resume", {})
+        journal_entries = data.get("journalEntries", [])
+
+        resume_content = resume.get("content", "")
+        resume_llm_context = resume.get("llmContext", "")
+
+        if not resume_content:
+            return jsonify({"error": "resume.content is required"}), 400
+
+        logger.info(f"Starting position fit analysis for: {position} at {company}")
+
+        # Get position fit agent (lazy initialization)
+        agent = get_position_fit_agent()
+
+        # Analyze fit
+        result = agent.analyze_fit(
+            company=company,
+            position=position,
+            job_url=job_url,
+            job_description=job_description,
+            resume_content=resume_content,
+            resume_llm_context=resume_llm_context,
+            journal_entries=journal_entries,
+        )
+
+        logger.info(
+            f"Position fit analysis complete. Score: {result.get('fitScore')}/10"
+        )
+        return jsonify(result)
+
+    except Exception as e:
+        logger.error(f"Error analyzing position fit: {e}")
         return jsonify({"error": str(e)}), 500
 
 

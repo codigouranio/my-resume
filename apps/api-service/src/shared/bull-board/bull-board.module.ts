@@ -31,12 +31,19 @@ import { Queue } from 'bullmq';
           connection: redisConfig,
         });
 
+        const positionScoringQueue = new Queue('position-scoring', {
+          connection: redisConfig,
+        });
+
         createBullBoard({
-          queues: [new BullMQAdapter(companyQueue)],
+          queues: [
+            new BullMQAdapter(companyQueue),
+            new BullMQAdapter(positionScoringQueue),
+          ],
           serverAdapter,
         });
 
-        console.log('✅ Bull Board initialized with company-enrichment queue');
+        console.log('✅ Bull Board initialized with company-enrichment and position-scoring queues');
 
         return serverAdapter;
       },
