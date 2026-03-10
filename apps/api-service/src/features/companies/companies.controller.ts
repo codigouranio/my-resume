@@ -118,7 +118,7 @@ export class CompaniesController {
       'Returns immediately with job ID. Use GET /companies/positions/score/status/:jobId to check progress.',
   })
   async queuePositionScoring(@Body() dto: ScorePositionDto, @Req() req: any) {
-    const userId = req.user?.userId || 'system';
+    const userId = req.user?.id || 'system';
     
     const job = await enqueuePositionScoring({
       interviewId: dto.interviewId,

@@ -65,36 +65,59 @@ export class PositionScoringWorkerService implements OnModuleInit, OnModuleDestr
     );
 
     try {
-      // Fetch additional context from database
-      const user = await this.prisma.user.findUnique({
-        where: { id: userId },
+      // Fetch interview to get the selected resume
+      const interview = await this.prisma.interviewProcess.findUnique({
+        where: { id: interviewId },
         select: {
-          email: true,
-          firstName: true,
-          defaultResumeId: true,
-          defaultResume: {
+          resumeId: true,
+          resume: {
             select: {
               id: true,
               content: true,
               llmContext: true,
             },
           },
+          user: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              defaultResumeId: true,
+              defaultResume: {
+                select: {
+                  id: true,
+                  content: true,
+                  llmContext: true,
+                },
+              },
+            },
+          },
         },
       });
 
+      if (!interview) {
+        throw new Error(`Interview ${interviewId} not found`);
+      }
+
+      const user = interview.user;
       if (!user) {
         throw new Error(`User ${userId} not found`);
       }
 
-      const resume = user.defaultResume;
+      // Use interview's selected resume, or fall back to user's default resume
+      const resume = interview.resume || user.defaultResume;
       if (!resume) {
-        throw new Error(`No default resume found for user ${userId}`);
+        throw new Error(`No resume found for interview ${interviewId} (neither selected nor default)`);
       }
+
+      this.logger.log(
+        `Using resume ${resume.id} for interview ${interviewId} ${interview.resumeId ? '(selected)' : '(default)'}`,
+      );
 
       // Fetch journal posts for additional context
       const journalPosts = await this.prisma.journalPost.findMany({
         where: { 
-          userId,
+          userId: user.id,
           includeInAI: true, // Only include posts marked for AI
           deletedAt: null, // Exclude soft-deleted posts
         },
