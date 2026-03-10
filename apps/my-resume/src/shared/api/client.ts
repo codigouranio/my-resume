@@ -688,6 +688,24 @@ class ApiClient {
   async getAllCompanies() {
     return this.request('/companies');
   }
+
+  // Position Fit Scoring
+  async queuePositionScoring(data: {
+    interviewId: string;
+    company: string;
+    position: string;
+    jobUrl?: string;
+    jobDescription?: string;
+  }) {
+    return this.request('/companies/positions/score/queue', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getScoringJobStatus(jobId: string) {
+    return this.request(`/companies/positions/score/status/${jobId}`);
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);

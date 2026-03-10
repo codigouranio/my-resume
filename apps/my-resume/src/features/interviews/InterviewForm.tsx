@@ -145,6 +145,23 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
         ? await apiClient.updateInterview(interview.id, data)
         : await apiClient.createInterview(data);
 
+      // Auto-trigger position fit scoring if jobUrl or description provided
+      if (data.jobUrl || data.description) {
+        try {
+          await apiClient.queuePositionScoring({
+            interviewId: result.id,
+            company: data.company,
+            position: data.position,
+            jobUrl: data.jobUrl,
+            jobDescription: data.description,
+          });
+          console.log('Position fit scoring queued for interview:', result.id);
+        } catch (scoringError) {
+          // Don't fail the save if scoring fails
+          console.error('Failed to queue position scoring:', scoringError);
+        }
+      }
+
       onSave(result);
     } catch (err: any) {
       alert(err.message || 'Failed to save interview');
