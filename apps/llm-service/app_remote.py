@@ -5,7 +5,6 @@ Use this if you already have LLAMA running (llama.cpp server, Ollama, etc.)
 """
 
 import re
-import threading
 import hmac
 import hashlib
 import json
@@ -23,6 +22,20 @@ from dotenv import load_dotenv
 from prompt_manager import get_prompt_manager
 from company_research_agent import CompanyResearchAgent
 from position_fit_agent import PositionFitAgent
+
+# Import Celery app and tasks  (optional - graceful fallback if not available)
+try:
+    from celery_config import celery_app
+    from tasks import research_company_task, analyze_position_task
+
+    CELERY_AVAILABLE = True
+    logger = logging.getLogger(__name__)
+    logger.info("Celery enabled - using task queue for async operations")
+except ImportError:
+    CELERY_AVAILABLE = False
+    logger = logging.getLogger(__name__)
+    logger.warning("Celery not available - falling back to threading mode")
+    import threading
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -1291,13 +1304,24 @@ def enrich_company():
                 f"Queueing async enrichment for: {company_name} (job: {job_id}, callback: {callback_url})"
             )
 
-            # Start research in background thread
-            thread = threading.Thread(
-                target=research_company_async,
-                args=(company_name, callback_url, metadata, job_id),
-                daemon=True,
-            )
-            thread.start()
+            # Use Celery if available, otherwise fall back to threading
+            if CELERY_AVAILABLE:
+                # Queue task with Celery
+                task = research_company_task.delay(
+                    company_name, callback_url, metadata, job_id
+                )
+                logger.info(f"Celery task queued: {task.id}")
+            else:
+                # Fallback to threading (original implementation)
+                import threading
+
+                thread = threading.Thread(
+                    target=research_company_async,
+                    args=(company_name, callback_url, metadata, job_id),
+                    daemon=True,
+                )
+                thread.start()
+                logger.info("Threading mode: background thread started")
 
             # Return immediately
             return (
@@ -1307,6 +1331,7 @@ def enrich_company():
                         "status": "processing",
                         "estimatedTime": "30s",
                         "message": f"Research queued for {company_name}",
+                        "backend": "celery" if CELERY_AVAILABLE else "threading",
                     }
                 ),
                 202,
@@ -1407,23 +1432,43 @@ def score_position():
                 f"Queueing async position analysis for: {position} at {company} (job: {job_id}, callback: {callback_url})"
             )
 
-            # Start analysis in background thread
-            thread = threading.Thread(
-                target=analyze_position_async,
-                args=(
+            # Use Celery if available, otherwise fall back to threading
+            if CELERY_AVAILABLE:
+                # Queue task with Celery
+                task = analyze_position_task.delay(
                     company,
                     position,
                     job_url,
                     job_description,
-                    resume,
+                    resume_content,
+                    resume_llm_context,
                     journal_entries,
                     callback_url,
                     metadata,
                     job_id,
-                ),
-                daemon=True,
-            )
-            thread.start()
+                )
+                logger.info(f"Celery task queued: {task.id}")
+            else:
+                # Fallback to threading (original implementation)
+                import threading
+
+                thread = threading.Thread(
+                    target=analyze_position_async,
+                    args=(
+                        company,
+                        position,
+                        job_url,
+                        job_description,
+                        resume,
+                        journal_entries,
+                        callback_url,
+                        metadata,
+                        job_id,
+                    ),
+                    daemon=True,
+                )
+                thread.start()
+                logger.info("Threading mode: background thread started")
 
             # Return immediately
             return (
@@ -1433,6 +1478,7 @@ def score_position():
                         "status": "processing",
                         "estimatedTime": "30s",
                         "message": f"Position analysis queued for {position} at {company}",
+                        "backend": "celery" if CELERY_AVAILABLE else "threading",
                     }
                 ),
                 202,

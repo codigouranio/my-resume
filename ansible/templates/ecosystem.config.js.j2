@@ -39,7 +39,11 @@ module.exports = {
         DATABASE_URL: 'postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}',
         RESUME_PATH: '../../data/resume.md',
         ADMIN_TOKEN: '{{ llm_admin_token }}',
-        LLM_WEBHOOK_SECRET: '{{ llm_webhook_secret }}'
+        LLM_WEBHOOK_SECRET: '{{ llm_webhook_secret }}',
+        REDIS_HOST: '{{ llm_redis_host }}',
+        REDIS_PORT: {{ llm_redis_port }},
+        REDIS_DB: {{ llm_redis_db }},
+        REDIS_PASSWORD: '{{ llm_redis_password }}'
       },
       error_file: '{{ llm_service_path }}/logs/llm-error.log',
       out_file: '{{ llm_service_path }}/logs/llm-out.log',
@@ -48,6 +52,58 @@ module.exports = {
       watch: false,
       max_restarts: 10,
       min_uptime: '10s'
-    }
+    },
+    {
+      name: 'llm-celery-worker',
+      cwd: '{{ llm_service_path }}',
+      interpreter: '{{ llm_service_path }}/.venv/bin/python',
+      script: '{{ llm_service_path }}/.venv/bin/celery',
+      args: '-A celery_config worker --loglevel=info --concurrency={{ celery_worker_concurrency }} --max-tasks-per-child={{ celery_max_tasks_per_child }} --task-events --without-gossip --without-mingle --without-heartbeat',
+      instances: 1,
+      max_memory_restart: '1G',
+      env: {
+        DATABASE_URL: 'postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}',
+        REDIS_HOST: '{{ llm_redis_host }}',
+        REDIS_PORT: {{ llm_redis_port }},
+        REDIS_DB: {{ llm_redis_db }},
+        REDIS_PASSWORD: '{{ llm_redis_password }}',
+        LLM_WEBHOOK_SECRET: '{{ llm_webhook_secret }}',
+        LLAMA_API_TYPE: '{{ llama_api_type }}',
+        LLAMA_SERVER_URL: '{{ llama_server_url }}',
+        LLAMA_MODEL: '{{ llama_model }}',
+        VLLM_SERVER_URL: '{{ vllm_server_url }}',
+        VLLM_MODEL: '{{ vllm_model }}'
+      },
+      error_file: '{{ llm_service_path }}/logs/celery-worker-error.log',
+      out_file: '{{ llm_service_path }}/logs/celery-worker-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      autorestart: true,
+      watch: false,
+      max_restarts: 10,
+      min_uptime: '10s'
+    }{% if flower_enabled %},
+    {
+      name: 'llm-flower',
+      cwd: '{{ llm_service_path }}',
+      interpreter: '{{ llm_service_path }}/.venv/bin/python',
+      script: '{{ llm_service_path }}/.venv/bin/celery',
+      args: '-A celery_config flower --port={{ flower_port }} --persistent=True --db={{ llm_service_path }}/flower.db',
+      instances: 1,
+      max_memory_restart: '512M',
+      env: {
+        DATABASE_URL: 'postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}',
+        REDIS_HOST: '{{ llm_redis_host }}',
+        REDIS_PORT: {{ llm_redis_port }},
+        REDIS_DB: {{ llm_redis_db }},
+        REDIS_PASSWORD: '{{ llm_redis_password }}'
+      },
+      error_file: '{{ llm_service_path }}/logs/flower-error.log',
+      out_file: '{{ llm_service_path }}/logs/flower-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      autorestart: true,
+      watch: false,
+      max_restarts: 5,
+      min_uptime: '10s'
+    }{% endif %}
   ]
 };

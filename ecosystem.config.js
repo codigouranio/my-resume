@@ -32,9 +32,56 @@ module.exports = {
         DATABASE_URL:
           "postgresql://resume_user:secure_db_password_change_me@localhost:5432/resume_db?schema=public",
         ADMIN_TOKEN: "change_me_in_production",
+        LLM_WEBHOOK_SECRET: "change_me_32_chars_min",
+        REDIS_HOST: "localhost",
+        REDIS_PORT: 6379, // Shared Redis
+        REDIS_DB: 1, // Database 1 (API uses 0)
+        REDIS_PASSWORD: "",
       },
       error_file: "/opt/my-resume/apps/llm-service/llm-service-error.log",
       out_file: "/opt/my-resume/apps/llm-service/llm-service.log",
+    },
+    {
+      name: "llm-celery-worker",
+      script: "celery",
+      args: "-A celery_config worker --loglevel=info --concurrency=2 --max-tasks-per-child=50 --task-events --without-gossip --without-mingle --without-heartbeat",
+      interpreter: "/opt/my-resume/apps/llm-service/.venv/bin/python",
+      cwd: "/opt/my-resume/apps/llm-service",
+      instances: 1,
+      env: {
+        DATABASE_URL:
+          "postgresql://resume_user:secure_db_password_change_me@localhost:5432/resume_db?schema=public",
+        REDIS_HOST: "localhost",
+        REDIS_PORT: 6379, // Shared Redis
+        REDIS_DB: 1, // Database 1 (API uses 0)
+        REDIS_PASSWORD: "",
+        LLM_WEBHOOK_SECRET: "change_me_32_chars_min",
+        LLAMA_SERVER_URL: "http://localhost:11434",
+        LLAMA_API_TYPE: "ollama",
+      },
+      error_file:
+        "/opt/my-resume/apps/llm-service/logs/celery-worker-error.log",
+      out_file: "/opt/my-resume/apps/llm-service/logs/celery-worker.log",
+      max_memory_restart: "1G",
+    },
+    {
+      name: "llm-flower",
+      script: "celery",
+      args: "-A celery_config flower --port=5555 --persistent=True --db=flower.db",
+      interpreter: "/opt/my-resume/apps/llm-service/.venv/bin/python",
+      cwd: "/opt/my-resume/apps/llm-service",
+      instances: 1,
+      env: {
+        DATABASE_URL:
+          "postgresql://resume_user:secure_db_password_change_me@localhost:5432/resume_db?schema=public",
+        REDIS_HOST: "localhost",
+        REDIS_PORT: 6379, // Shared Redis
+        REDIS_DB: 2, // Database 2 (for Flower isolation)
+        REDIS_PASSWORD: "",
+      },
+      error_file: "/opt/my-resume/apps/llm-service/logs/flower-error.log",
+      out_file: "/opt/my-resume/apps/llm-service/logs/flower.log",
+      max_memory_restart: "512M",
     },
   ],
 };

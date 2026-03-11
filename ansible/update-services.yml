@@ -67,6 +67,14 @@
           ADMIN_TOKEN={{ llm_admin_token }}
           API_BASE_URL=http://localhost:{{ api_port }}/api
           RESUME_SLUG=jose-blanco-swe
+          LLM_WEBHOOK_SECRET={{ llm_webhook_secret }}
+          REDIS_HOST={{ llm_redis_host }}
+          REDIS_PORT={{ llm_redis_port }}
+          REDIS_DB={{ llm_redis_db }}
+          REDIS_PASSWORD={{ llm_redis_password }}
+          CELERY_BROKER_URL=redis://{{ llm_redis_host }}:{{ llm_redis_port }}/{{ llm_redis_db }}
+          CELERY_RESULT_BACKEND=redis://{{ llm_redis_host }}:{{ llm_redis_port }}/{{ llm_redis_db }}
+          FLOWER_PORT={{ flower_port }}
         owner: "{{ ansible_user }}"
         mode: '0600'
       register: llm_env_result
@@ -144,6 +152,16 @@
     - name: Restart LLM Service
       command: "/home/{{ ansible_user }}/.npm-global/bin/pm2 restart llm-service"
       when: git_result.changed or llm_env_result.changed
+    
+    - name: Restart Celery Worker
+      command: "/home/{{ ansible_user }}/.npm-global/bin/pm2 restart llm-celery-worker"
+      when: git_result.changed or llm_env_result.changed
+      ignore_errors: yes
+    
+    - name: Restart Flower Dashboard
+      command: "/home/{{ ansible_user }}/.npm-global/bin/pm2 restart llm-flower"
+      when: (git_result.changed or llm_env_result.changed) and flower_enabled | default(true)
+      ignore_errors: yes
 
     # Frontend
     - name: Clean frontend node_modules and lock file

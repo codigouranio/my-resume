@@ -60,6 +60,22 @@ llama_api_type: "openai"
 vllm_model: "Qwen/Qwen2.5-7B-Instruct"
 vllm_server_url: "http://localhost:9000"
 
+# Redis Configuration for LLM Service Celery
+# Shared Redis with different database for MVP simplicity
+llm_redis_host: "localhost"
+llm_redis_port: 6379  # Same as API Redis
+llm_redis_db: 1       # Different database (API uses 0)
+llm_redis_password: "" # Optional
+
+# Celery Configuration
+celery_worker_concurrency: 2
+celery_max_tasks_per_child: 50
+flower_port: 5555
+flower_enabled: true
+
+# Webhook Security
+llm_webhook_secret: "{{ vault_llm_webhook_secret | default('CHANGE_ME_IN_PRODUCTION_MIN_32_CHARS') }}"
+
 # PM2 Configuration
 pm2_instances_api: 2
 pm2_max_memory_restart: "512M"
