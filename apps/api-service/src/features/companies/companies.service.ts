@@ -24,13 +24,18 @@ export class CompaniesService {
   async enrichCompany(companyName: string) {
     this.logger.log(`Enriching company: ${companyName}`);
 
-    // Check if we have cached data
-    const cached = await this.prisma.companyInfo.findUnique({
-      where: { companyName },
+    // Check if we have cached data (case-insensitive)
+    const cached = await this.prisma.companyInfo.findFirst({
+      where: {
+        companyName: {
+          equals: companyName,
+          mode: 'insensitive',
+        },
+      },
     });
 
     if (cached && this.isCacheValid(cached.updatedAt)) {
-      this.logger.log(`Using cached data for: ${companyName}`);
+      this.logger.log(`Using cached data for: ${cached.companyName}`);
       return cached;
     }
 
@@ -38,17 +43,20 @@ export class CompaniesService {
     this.logger.log(`Fetching fresh data from LLM service for: ${companyName}`);
     const enrichedData = await this.fetchFromLLMService(companyName);
 
-    // Save or update in database
+    // Use official name from LLM, fallback to user input if not provided
+    const officialName = enrichedData.companyName || companyName;
+
+    // Save or update in database with official name
     const companyInfo = await this.prisma.companyInfo.upsert({
-      where: { companyName },
+      where: { companyName: officialName },
       create: {
-        companyName,
         ...enrichedData,
+        companyName: officialName, // Ensure official name is used
       },
       update: enrichedData,
     });
 
-    this.logger.log(`Company enrichment complete for: ${companyName}`);
+    this.logger.log(`Company enrichment complete: ${companyName} → ${officialName}`);
     return companyInfo;
   }
 
@@ -98,9 +106,14 @@ export class CompaniesService {
    */
   async linkToInterviews(companyName: string): Promise<number> {
     try {
-      // Find the company info
-      const companyInfo = await this.prisma.companyInfo.findUnique({
-        where: { companyName },
+      // Find the company info (case-insensitive to handle user input variations)
+      const companyInfo = await this.prisma.companyInfo.findFirst({
+        where: {
+          companyName: {
+            equals: companyName,
+            mode: 'insensitive',
+          },
+        },
       });
 
       if (!companyInfo) {
@@ -222,10 +235,8 @@ export class CompaniesService {
 
       const data = await response.json();
       
-      // Remove companyName from data as it's already in the where clause
-      const { companyName: _, ...cleanedData } = data;
-      
-      return cleanedData;
+      // Keep the official company name from LLM response
+      return data;
     } catch (error) {
       this.logger.error(
         `Failed to fetch from LLM service: ${error.message}`,
