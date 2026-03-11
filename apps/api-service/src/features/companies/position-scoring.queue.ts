@@ -23,6 +23,8 @@ export interface PositionScoringResult {
     summary: string;
   };
   error?: string;
+  message?: string; // For webhook mode status messages
+  llmJobId?: string; // Job ID from LLM service (webhook mode)
 }
 
 // Queue instance

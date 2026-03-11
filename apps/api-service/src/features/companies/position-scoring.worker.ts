@@ -132,32 +132,58 @@ export class PositionScoringWorkerService implements OnModuleInit, OnModuleDestr
       // Call LLM service to analyze fit
       this.logger.log(`Calling LLM service to analyze position fit for interview ${interviewId}`);
       
+      const useWebhooks = this.configService.get('USE_LLM_WEBHOOKS', 'true') === 'true';
+      const callbackUrl = `${this.configService.get('API_BASE_URL', 'http://localhost:3000')}/api/webhooks/llm-result`;
+      
+      const requestBody = {
+        company,
+        position,
+        jobUrl,
+        jobDescription,
+        resume: {
+          content: resume.content,
+          llmContext: resume.llmContext,
+        },
+        journalEntries: journalPosts.map(post => ({
+          title: '', // JournalPost doesn't have title
+          content: post.text,
+          tags: [], // JournalPost doesn't have tags
+          date: post.publishedAt.toISOString(),
+        })),
+        ...(useWebhooks ? {
+          callbackUrl,
+          metadata: {
+            userId,
+            interviewId,
+            jobId: job.id,
+          },
+        } : {}),
+      };
+      
       const response = await axios.post(
         `${this.llmServiceUrl}/api/positions/score`,
+        requestBody,
         {
-          company,
-          position,
-          jobUrl,
-          jobDescription,
-          resume: {
-            content: resume.content,
-            llmContext: resume.llmContext,
-          },
-          journalEntries: journalPosts.map(post => ({
-            title: '', // JournalPost doesn't have title
-            content: post.text,
-            tags: [], // JournalPost doesn't have tags
-            date: post.publishedAt.toISOString(),
-          })),
-        },
-        {
-          timeout: 180000, // 3 minute timeout
+          timeout: useWebhooks ? 10000 : 180000, // 10s for webhook, 3min for sync
           headers: {
             'Content-Type': 'application/json',
           },
         },
       );
 
+      if (useWebhooks) {
+        // Webhook mode - job completes immediately
+        this.logger.log(`Position scoring queued for interview ${interviewId}. Awaiting webhook callback.`);
+        
+        return {
+          success: true,
+          interviewId,
+          message: 'Position scoring queued, awaiting webhook callback',
+          llmJobId: response.data.jobId,
+        };
+      }
+
+      // Sync mode - process result immediately
       const scoringData = response.data;
 
       this.logger.log(`Position fit analysis complete for interview ${interviewId}: Score ${scoringData.fitScore}/10`);

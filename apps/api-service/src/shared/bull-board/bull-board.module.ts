@@ -35,15 +35,31 @@ import { Queue } from 'bullmq';
           connection: redisConfig,
         });
 
+        // LLM communication queues (event-driven architecture)
+        const llmCompanyResearchQueue = new Queue('llm-company-research', {
+          connection: redisConfig,
+        });
+
+        const llmPositionResearchQueue = new Queue('llm-position-research', {
+          connection: redisConfig,
+        });
+
+        const llmResultsQueue = new Queue('llm-research-results', {
+          connection: redisConfig,
+        });
+
         createBullBoard({
           queues: [
             new BullMQAdapter(companyQueue),
             new BullMQAdapter(positionScoringQueue),
+            new BullMQAdapter(llmCompanyResearchQueue),
+            new BullMQAdapter(llmPositionResearchQueue),
+            new BullMQAdapter(llmResultsQueue),
           ],
           serverAdapter,
         });
 
-        console.log('✅ Bull Board initialized with company-enrichment and position-scoring queues');
+        console.log('✅ Bull Board initialized with 5 queues: company-enrichment, position-scoring, llm-company-research, llm-position-research, llm-research-results');
 
         return serverAdapter;
       },

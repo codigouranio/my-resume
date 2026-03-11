@@ -215,9 +215,58 @@ export class CompaniesService {
   }
 
   /**
-   * Fetch company data from LLM service research agent.
+   * Fetch company data from LLM service (async webhook mode).
+   * Fire and forget - LLM will call webhook when complete.
+   */
+  async enrichCompanyAsync(companyName: string, userId: string, jobId: string): Promise<{ jobId: string }> {
+    const callbackUrl = `${this.configService.get('API_BASE_URL', 'http://localhost:3000')}/api/webhooks/llm-result`;
+    
+    this.logger.log(`Queueing async enrichment for: ${companyName} (webhook: ${callbackUrl})`);
+
+    try {
+      const response = await fetch(`${this.llmServiceUrl}/api/companies/enrich`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          companyName,
+          callbackUrl,
+          metadata: {
+            userId,
+            jobId,
+            companyName,
+          },
+        }),
+        signal: AbortSignal.timeout(10000), // 10 second timeout just for queueing
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `LLM service returned ${response.status}: ${response.statusText}`,
+        );
+      }
+
+      const result = await response.json();
+      this.logger.log(`LLM service accepted job for ${companyName}: ${result.jobId || jobId}`);
+      
+      return { jobId: result.jobId || jobId };
+    } catch (error) {
+      this.logger.error(
+        `Failed to queue LLM enrichment for ${companyName}: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch company data from LLM service research agent (sync mode - DEPRECATED).
+   * This is the old synchronous method - use enrichCompanyAsync instead.
    */
   private async fetchFromLLMService(companyName: string): Promise<any> {
+    this.logger.warn('Using deprecated synchronous LLM fetch - consider switching to webhook mode');
+    
     try {
       const response = await fetch(`${this.llmServiceUrl}/api/companies/enrich`, {
         method: 'POST',
@@ -225,6 +274,7 @@ export class CompaniesService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ companyName }),
+        signal: AbortSignal.timeout(60000), // 60 second timeout for sync
       });
 
       if (!response.ok) {

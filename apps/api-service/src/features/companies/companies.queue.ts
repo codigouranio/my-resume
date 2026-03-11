@@ -15,6 +15,8 @@ export interface CompanyEnrichmentResult {
   companyName: string;
   data?: any;
   error?: string;
+  message?: string;  // Status message for webhook mode
+  llmJobId?: string; // LLM service job ID for tracking
 }
 
 // Queue instance

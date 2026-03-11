@@ -64,46 +64,73 @@ export class CompaniesWorkerService implements OnModuleInit, OnModuleDestroy {
       `Processing enrichment job ${job.id} for company: ${companyName}`,
     );
 
+    const useWebhooks = this.configService.get('USE_LLM_WEBHOOKS', 'true') === 'true';
+
     try {
-      // Call the enrichment service
-      const enrichedData = await this.companiesService.enrichCompany(companyName);
+      if (useWebhooks) {
+        // NEW: Async webhook mode - fire and forget
+        this.logger.log(`Using webhook mode for ${companyName}`);
+        
+        const result = await this.companiesService.enrichCompanyAsync(
+          companyName,
+          userId,
+          job.id as string,
+        );
 
-      this.logger.log(`Successfully enriched company: ${companyName}`);
+        this.logger.log(
+          `Enrichment queued for ${companyName}. LLM will call webhook when complete.`,
+        );
 
-      // Link enriched data to existing interviews
-      const linkedCount = await this.companiesService.linkToInterviews(companyName);
-      if (linkedCount > 0) {
-        this.logger.log(`Auto-linked ${linkedCount} interview(s) to ${companyName}`);
-      }
+        // Job completes immediately - webhook will handle linking and email
+        return {
+          success: true,
+          companyName,
+          message: 'Enrichment queued, awaiting webhook callback',
+          llmJobId: result.jobId,
+        };
+      } else {
+        // OLD: Synchronous mode (deprecated, kept for backward compatibility)
+        this.logger.warn(`Using deprecated synchronous mode for ${companyName}`);
+        
+        const enrichedData = await this.companiesService.enrichCompany(companyName);
 
-      // Send email notification to user
-      try {
-        const user = await this.prisma.user.findUnique({
-          where: { id: userId },
-          select: { email: true, firstName: true },
-        });
+        this.logger.log(`Successfully enriched company: ${companyName}`);
 
-        if (user) {
-          this.logger.log(`Sending enrichment notification email to ${user.email}`);
-          await this.emailService.sendCompanyEnrichmentEmail(
-            user.email,
-            user.firstName || 'there',
-            companyName,
-            enrichedData,
-          );
-        } else {
-          this.logger.warn(`User ${userId} not found, skipping email notification`);
+        // Link enriched data to existing interviews
+        const linkedCount = await this.companiesService.linkToInterviews(companyName);
+        if (linkedCount > 0) {
+          this.logger.log(`Auto-linked ${linkedCount} interview(s) to ${companyName}`);
         }
-      } catch (emailError) {
-        // Don't fail the job if email fails
-        this.logger.error(`Failed to send email notification: ${emailError.message}`);
-      }
 
-      return {
-        success: true,
-        companyName,
-        data: enrichedData,
-      };
+        // Send email notification to user
+        try {
+          const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { email: true, firstName: true },
+          });
+
+          if (user) {
+            this.logger.log(`Sending enrichment notification email to ${user.email}`);
+            await this.emailService.sendCompanyEnrichmentEmail(
+              user.email,
+              user.firstName || 'there',
+              companyName,
+              enrichedData,
+            );
+          } else {
+            this.logger.warn(`User ${userId} not found, skipping email notification`);
+          }
+        } catch (emailError) {
+          // Don't fail the job if email fails
+          this.logger.error(`Failed to send email notification: ${emailError.message}`);
+        }
+
+        return {
+          success: true,
+          companyName,
+          data: enrichedData,
+        };
+      }
     } catch (error) {
       this.logger.error(
         `Failed to enrich company ${companyName}: ${error.message}`,
