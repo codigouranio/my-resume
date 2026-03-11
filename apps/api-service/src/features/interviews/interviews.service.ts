@@ -7,16 +7,27 @@ export class InterviewsService {
   constructor(private prisma: PrismaService) {}
 
   async create(userId: string, dto: CreateInterviewDto) {
+    // Try to find existing company info for auto-linking
+    const companyInfo = await this.prisma.companyInfo.findFirst({
+      where: {
+        companyName: {
+          equals: dto.company,
+          mode: 'insensitive',
+        },
+      },
+    });
+
     return this.prisma.interviewProcess.create({
       data: {
         userId,
-        company: dto.company,
+        company: companyInfo?.companyName || dto.company, // Use official name if available
         position: dto.position,
         jobUrl: dto.jobUrl,
         description: dto.description,
         status: dto.status || InterviewStatus.APPLIED,
         skillTags: dto.skillTags || [],
         resumeId: dto.resumeId,
+        companyInfoId: companyInfo?.id, // Auto-link if company info exists
         recruiterName: dto.recruiterName,
         recruiterEmail: dto.recruiterEmail,
         recruiterPhone: dto.recruiterPhone,
@@ -131,16 +142,39 @@ export class InterviewsService {
       throw new NotFoundException('Interview not found');
     }
 
+    // If company name changed, try to re-link company info and normalize name
+    let companyInfoId = interview.companyInfoId;
+    let normalizedCompanyName = dto.company;
+    
+    if (dto.company && dto.company !== interview.company) {
+      const companyInfo = await this.prisma.companyInfo.findFirst({
+        where: {
+          companyName: {
+            equals: dto.company,
+            mode: 'insensitive',
+          },
+        },
+      });
+      
+      if (companyInfo) {
+        companyInfoId = companyInfo.id;
+        normalizedCompanyName = companyInfo.companyName; // Use official name
+      } else {
+        companyInfoId = null;
+      }
+    }
+
     return this.prisma.interviewProcess.update({
       where: { id },
       data: {
-        company: dto.company,
+        company: normalizedCompanyName,
         position: dto.position,
         jobUrl: dto.jobUrl,
         description: dto.description,
         status: dto.status,
         skillTags: dto.skillTags,
         resumeId: dto.resumeId,
+        companyInfoId: companyInfoId,
         recruiterName: dto.recruiterName,
         recruiterEmail: dto.recruiterEmail,
         recruiterPhone: dto.recruiterPhone,

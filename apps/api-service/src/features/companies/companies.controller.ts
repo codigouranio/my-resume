@@ -173,5 +173,55 @@ export class CompaniesController {
       timestamp: job.timestamp,
     };
   }
+
+  @Post('link-all-interviews')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Re-link all interviews to company info',
+    description:
+      'Scans all interviews and links them to matching company info records. ' +
+      'Also normalizes company names to match official enriched names. ' +
+      'Use this to fix any interviews that were created before enrichment completed.',
+  })
+  async relinkAllInterviews() {
+    const companies = await this.companiesService.getAllCompanies();
+    let totalLinked = 0;
+
+    for (const company of companies) {
+      const linkedCount = await this.companiesService.linkToInterviews(company.companyName);
+      totalLinked += linkedCount;
+    }
+
+    // Also normalize any already-linked interviews
+    const normalizeResult = await this.companiesService.normalizeAllCompanyNames();
+
+    return {
+      message: 'Re-linking and normalization completed',
+      companiesProcessed: companies.length,
+      interviewsLinked: totalLinked,
+      interviewsNormalized: normalizeResult.updated,
+      companiesNormalized: normalizeResult.companies,
+    };
+  }
+
+  @Post('normalize-company-names')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Normalize all company names',
+    description:
+      'Updates all interview company names to match official enriched company names. ' +
+      'This only affects interviews that are already linked to company info.',
+  })
+  async normalizeCompanyNames() {
+    const result = await this.companiesService.normalizeAllCompanyNames();
+    
+    return {
+      message: 'Company name normalization completed',
+      interviewsUpdated: result.updated,
+      companies: result.companies,
+    };
+  }
 }
 

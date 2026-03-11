@@ -690,6 +690,18 @@ class ApiClient {
     return this.request('/companies');
   }
 
+  async relinkAllInterviews() {
+    return this.request('/companies/link-all-interviews', {
+      method: 'POST',
+    });
+  }
+
+  async normalizeCompanyNames() {
+    return this.request('/companies/normalize-company-names', {
+      method: 'POST',
+    });
+  }
+
   // Position Fit Scoring
   async queuePositionScoring(data: {
     interviewId: string;
