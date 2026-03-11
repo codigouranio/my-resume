@@ -53,6 +53,7 @@
           SES_FROM_EMAIL={{ ses_from_email | default('noreply@resumecast.ai') }}
           FRONTEND_URL={{ frontend_url | default('https://resumecast.ai') }}
           API_BASE_URL={{ api_base_url | default('https://resumecast.ai') }}
+          LLM_WEBHOOK_SECRET: '{{ llm_webhook_secret | default('default_key') }}'
         owner: "{{ ansible_user }}"
         mode: "0600"
 

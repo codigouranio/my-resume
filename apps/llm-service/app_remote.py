@@ -5,6 +5,12 @@ Use this if you already have LLAMA running (llama.cpp server, Ollama, etc.)
 """
 
 import re
+import threading
+import hmac
+import hashlib
+import json
+import uuid
+import time
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -533,6 +539,221 @@ def get_position_fit_agent():
     return position_fit_agent
 
 
+# Webhook helper functions
+def sign_webhook_payload(payload_dict: dict) -> str:
+    """
+    Generate HMAC-SHA256 signature for webhook payload.
+
+    Args:
+        payload_dict: Dictionary to sign
+
+    Returns:
+        Hex string of HMAC signature
+    """
+    webhook_secret = os.getenv("LLM_WEBHOOK_SECRET", "").encode("utf-8")
+    if not webhook_secret:
+        logger.warning(
+            "LLM_WEBHOOK_SECRET not set - webhook signatures will be insecure!"
+        )
+        webhook_secret = b"change-me-in-production"
+
+    # Serialize payload with consistent ordering
+    payload_json = json.dumps(payload_dict, sort_keys=True)
+
+    # Generate HMAC signature
+    signature = hmac.new(
+        webhook_secret, payload_json.encode("utf-8"), hashlib.sha256
+    ).hexdigest()
+
+    return signature
+
+
+def call_webhook(callback_url: str, payload: dict, max_retries: int = 3):
+    """
+    Call webhook endpoint with retry logic.
+
+    Args:
+        callback_url: URL to POST results to
+        payload: Dictionary containing webhook payload
+        max_retries: Maximum number of retry attempts
+    """
+    if not callback_url:
+        logger.warning("No callback URL provided, skipping webhook")
+        return
+
+    # Generate signature
+    signature = sign_webhook_payload(payload)
+    job_id = payload.get("jobId", "unknown")
+
+    headers = {
+        "Content-Type": "application/json",
+        "X-Webhook-Signature": signature,
+        "X-Job-Id": job_id,
+    }
+
+    for attempt in range(max_retries):
+        try:
+            logger.info(
+                f"Sending webhook to {callback_url} (attempt {attempt + 1}/{max_retries})"
+            )
+
+            response = requests.post(
+                callback_url, json=payload, headers=headers, timeout=10
+            )
+
+            if response.status_code == 200:
+                logger.info(f"Webhook delivered successfully for job {job_id}")
+                return
+            else:
+                logger.warning(
+                    f"Webhook returned status {response.status_code}: {response.text}"
+                )
+
+        except requests.exceptions.Timeout:
+            logger.error(f"Webhook timeout (attempt {attempt + 1})")
+        except requests.exceptions.ConnectionError as e:
+            logger.error(f"Webhook connection error (attempt {attempt + 1}): {e}")
+        except Exception as e:
+            logger.error(f"Webhook error (attempt {attempt + 1}): {e}")
+
+        # Exponential backoff
+        if attempt < max_retries - 1:
+            sleep_time = 2**attempt  # 1s, 2s, 4s
+            logger.info(f"Retrying webhook in {sleep_time}s...")
+            time.sleep(sleep_time)
+
+    logger.error(
+        f"Webhook failed permanently after {max_retries} attempts for job {job_id}"
+    )
+
+
+def research_company_async(
+    company_name: str, callback_url: str, metadata: dict, job_id: str
+):
+    """
+    Perform company research asynchronously and call webhook when complete.
+
+    Args:
+        company_name: Company name to research
+        callback_url: URL to POST results to
+        metadata: Metadata to include in webhook payload
+        job_id: Job ID for tracking
+    """
+    try:
+        logger.info(f"Starting async research for {company_name} (job: {job_id})")
+
+        # Get research agent
+        agent = get_research_agent()
+
+        # Perform research (this can take 10-30+ seconds)
+        company_info = agent.research_company(company_name)
+
+        logger.info(f"Research complete for {company_name} (job: {job_id})")
+
+        # Prepare success payload
+        payload = {
+            "jobId": metadata.get("jobId", job_id),
+            "type": "company",
+            "status": "completed",
+            "data": company_info,
+            "metadata": metadata,
+        }
+
+        # Call webhook
+        call_webhook(callback_url, payload)
+
+    except Exception as e:
+        logger.error(f"Research failed for {company_name} (job: {job_id}): {e}")
+
+        # Send failure webhook
+        failure_payload = {
+            "jobId": metadata.get("jobId", job_id),
+            "type": "company",
+            "status": "failed",
+            "error": str(e),
+            "metadata": metadata,
+        }
+
+        call_webhook(callback_url, failure_payload)
+
+
+def analyze_position_async(
+    company: str,
+    position: str,
+    job_url: str,
+    job_description: str,
+    resume: dict,
+    journal_entries: list,
+    callback_url: str,
+    metadata: dict,
+    job_id: str,
+):
+    """
+    Perform position fit analysis asynchronously and call webhook when complete.
+
+    Args:
+        company: Company name
+        position: Position title
+        job_url: Job posting URL
+        job_description: Job description text
+        resume: Resume dict with content and llmContext
+        journal_entries: List of journal entries
+        callback_url: URL to POST results to
+        metadata: Metadata to include in webhook payload
+        job_id: Job ID for tracking
+    """
+    try:
+        logger.info(
+            f"Starting async position analysis for {position} at {company} (job: {job_id})"
+        )
+
+        # Get position fit agent
+        agent = get_position_fit_agent()
+
+        # Analyze fit (this can take 10-30+ seconds)
+        result = agent.analyze_fit(
+            company=company,
+            position=position,
+            job_url=job_url,
+            job_description=job_description,
+            resume_content=resume.get("content", ""),
+            resume_llm_context=resume.get("llmContext", ""),
+            journal_entries=journal_entries,
+        )
+
+        logger.info(
+            f"Position analysis complete for {position} at {company} (job: {job_id})"
+        )
+
+        # Prepare success payload
+        payload = {
+            "jobId": metadata.get("jobId", job_id),
+            "type": "position",
+            "status": "completed",
+            "data": result,
+            "metadata": metadata,
+        }
+
+        # Call webhook
+        call_webhook(callback_url, payload)
+
+    except Exception as e:
+        logger.error(
+            f"Position analysis failed for {position} at {company} (job: {job_id}): {e}"
+        )
+
+        # Send failure webhook
+        failure_payload = {
+            "jobId": metadata.get("jobId", job_id),
+            "type": "position",
+            "status": "failed",
+            "error": str(e),
+            "metadata": metadata,
+        }
+
+        call_webhook(callback_url, failure_payload)
+
+
 def get_user_info(resume_slug: str = None):
     """Get user information from database by resume slug or get all users."""
     try:
@@ -1017,26 +1238,92 @@ def reload_resume():
 def enrich_company():
     """
     Company enrichment endpoint using ReAct research agent.
-    Expects JSON: {"companyName": "Company Name"}
-    Returns JSON: {structured company info}
+
+    Supports two modes:
+    1. Async (webhook): Provide callbackUrl - returns immediately, calls webhook when done
+    2. Sync: No callbackUrl - blocks and returns data directly (legacy mode)
+
+    Request (async mode):
+    {
+        "companyName": "Company Name",
+        "callbackUrl": "http://api-service:3000/api/webhooks/llm-result",
+        "metadata": {
+            "userId": "user_123",
+            "jobId": "job_abc",
+            "companyName": "google"
+        }
+    }
+
+    Response (async):
+    {
+        "jobId": "llm_job_uuid",
+        "status": "processing",
+        "estimatedTime": "30s"
+    }
+
+    Request (sync mode):
+    {
+        "companyName": "Company Name"
+    }
+
+    Response (sync):
+    {
+        "companyName": "...",
+        "description": "...",
+        ...
+    }
     """
     try:
         data = request.get_json()
         company_name = data.get("companyName", "").strip()
+        callback_url = data.get("callbackUrl")
+        metadata = data.get("metadata", {})
 
         if not company_name:
             return jsonify({"error": "companyName is required"}), 400
 
-        logger.info(f"Starting company enrichment for: {company_name}")
+        # ASYNC MODE: Webhook callback provided
+        if callback_url:
+            # Generate job ID
+            job_id = f"llm_job_{uuid.uuid4().hex[:12]}"
 
-        # Get research agent (lazy initialization)
-        agent = get_research_agent()
+            logger.info(
+                f"Queueing async enrichment for: {company_name} (job: {job_id}, callback: {callback_url})"
+            )
 
-        # Perform research
-        company_info = agent.research_company(company_name)
+            # Start research in background thread
+            thread = threading.Thread(
+                target=research_company_async,
+                args=(company_name, callback_url, metadata, job_id),
+                daemon=True,
+            )
+            thread.start()
 
-        logger.info(f"Company enrichment complete for: {company_name}")
-        return jsonify(company_info)
+            # Return immediately
+            return (
+                jsonify(
+                    {
+                        "jobId": job_id,
+                        "status": "processing",
+                        "estimatedTime": "30s",
+                        "message": f"Research queued for {company_name}",
+                    }
+                ),
+                202,
+            )
+
+        # SYNC MODE: No callback URL - block and return data (legacy)
+        else:
+            logger.info(f"Starting synchronous company enrichment for: {company_name}")
+
+            # Get research agent (lazy initialization)
+            agent = get_research_agent()
+
+            # Perform research (blocks!)
+            company_info = agent.research_company(company_name)
+
+            logger.info(f"Company enrichment complete for: {company_name}")
+            return jsonify(company_info)
 
     except Exception as e:
         logger.error(f"Error enriching company: {e}")
@@ -1047,18 +1334,39 @@ def enrich_company():
 def score_position():
     """
     Position fit scoring endpoint using AI analysis.
-    Expects JSON: {
+
+    Supports two modes:
+    1. Async (webhook): Provide callbackUrl - returns immediately, calls webhook when done
+    2. Sync: No callbackUrl - blocks and returns data directly (legacy mode)
+
+    Request (async mode):
+    {
         "company": "Company Name",
         "position": "Position Title",
-        "jobUrl": "https://...",  // optional
-        "jobDescription": "...",  // optional
+        "jobUrl": "https://...",
+        "jobDescription": "...",
         "resume": {
             "content": "...",
             "llmContext": "..."
         },
-        "journalEntries": [...]
+        "journalEntries": [...],
+        "callbackUrl": "http://api-service:3000/api/webhooks/llm-result",
+        "metadata": {
+            "userId": "user_123",
+            "interviewId": "interview_456",
+            "jobId": "job_xyz"
+        }
     }
-    Returns JSON: {
+
+    Response (async):
+    {
+        "jobId": "llm_job_uuid",
+        "status": "processing",
+        "estimatedTime": "30s"
+    }
+
+    Response (sync):
+    {
         "fitScore": 7.5,
         "analysis": {
             "summary": "...",
@@ -1073,6 +1381,8 @@ def score_position():
 
         company = data.get("company", "").strip()
         position = data.get("position", "").strip()
+        callback_url = data.get("callbackUrl")
+        metadata = data.get("metadata", {})
 
         if not company or not position:
             return jsonify({"error": "company and position are required"}), 400
@@ -1088,26 +1398,70 @@ def score_position():
         if not resume_content:
             return jsonify({"error": "resume.content is required"}), 400
 
-        logger.info(f"Starting position fit analysis for: {position} at {company}")
+        # ASYNC MODE: Webhook callback provided
+        if callback_url:
+            # Generate job ID
+            job_id = f"llm_job_{uuid.uuid4().hex[:12]}"
 
-        # Get position fit agent (lazy initialization)
-        agent = get_position_fit_agent()
+            logger.info(
+                f"Queueing async position analysis for: {position} at {company} (job: {job_id}, callback: {callback_url})"
+            )
 
-        # Analyze fit
-        result = agent.analyze_fit(
-            company=company,
-            position=position,
-            job_url=job_url,
-            job_description=job_description,
-            resume_content=resume_content,
-            resume_llm_context=resume_llm_context,
-            journal_entries=journal_entries,
-        )
+            # Start analysis in background thread
+            thread = threading.Thread(
+                target=analyze_position_async,
+                args=(
+                    company,
+                    position,
+                    job_url,
+                    job_description,
+                    resume,
+                    journal_entries,
+                    callback_url,
+                    metadata,
+                    job_id,
+                ),
+                daemon=True,
+            )
+            thread.start()
 
-        logger.info(
-            f"Position fit analysis complete. Score: {result.get('fitScore')}/10"
-        )
-        return jsonify(result)
+            # Return immediately
+            return (
+                jsonify(
+                    {
+                        "jobId": job_id,
+                        "status": "processing",
+                        "estimatedTime": "30s",
+                        "message": f"Position analysis queued for {position} at {company}",
+                    }
+                ),
+                202,
+            )
+
+        # SYNC MODE: No callback URL - block and return data (legacy)
+        else:
+            logger.info(
+                f"Starting synchronous position fit analysis for: {position} at {company}"
+            )
+
+            # Get position fit agent (lazy initialization)
+            agent = get_position_fit_agent()
+
+            # Analyze fit (blocks!)
+            result = agent.analyze_fit(
+                company=company,
+                position=position,
+                job_url=job_url,
+                job_description=job_description,
+                resume_content=resume_content,
+                resume_llm_context=resume_llm_context,
+                journal_entries=journal_entries,
+            )
+
+            logger.info(
+                f"Position fit analysis complete. Score: {result.get('fitScore')}/10"
+            )
+            return jsonify(result)
 
     except Exception as e:
         logger.error(f"Error analyzing position fit: {e}")

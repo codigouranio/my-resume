@@ -38,7 +38,8 @@ module.exports = {
         VLLM_MODEL: '{{ vllm_model }}',
         DATABASE_URL: 'postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}',
         RESUME_PATH: '../../data/resume.md',
-        ADMIN_TOKEN: '{{ llm_admin_token }}'
+        ADMIN_TOKEN: '{{ llm_admin_token }}',
+        LLM_WEBHOOK_SECRET: '{{ llm_webhook_secret }}'
       },
       error_file: '{{ llm_service_path }}/logs/llm-error.log',
       out_file: '{{ llm_service_path }}/logs/llm-out.log',
