@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '../../shared/api/client';
 
 interface UploadedDocument {
@@ -18,6 +19,7 @@ interface FileInsertModalProps {
 }
 
 export function FileInsertModal({ isOpen, onClose, onInsert }: FileInsertModalProps) {
+  const { t } = useTranslation();
   const [documents, setDocuments] = useState<UploadedDocument[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -68,7 +70,7 @@ export function FileInsertModal({ isOpen, onClose, onInsert }: FileInsertModalPr
       setDocuments(allAttachments);
     } catch (err: any) {
       console.error('[FileInsertModal] Error:', err);
-      setError(err.message || 'Failed to load documents');
+      setError(err.message || t('editor.file_modal.errors.load_failed'));
     } finally {
       setIsLoading(false);
     }
@@ -87,10 +89,10 @@ export function FileInsertModal({ isOpen, onClose, onInsert }: FileInsertModalPr
 
       // Validate file size (10MB max)
       if (file.size > 10 * 1024 * 1024) {
-        throw new Error('File size must be less than 10MB');
+        throw new Error(t('editor.file_modal.errors.file_size_limit'));
       }
 
-      setUploadProgress(`Uploading ${file.name}...`);
+      setUploadProgress(t('ai_context.status.uploading'));
 
       // Upload file to document storage
       const uploadResult = await apiClient.uploadDocument(file);
@@ -103,7 +105,7 @@ export function FileInsertModal({ isOpen, onClose, onInsert }: FileInsertModalPr
 
       setUploadProgress('');
     } catch (err: any) {
-      setError(err.message || 'Failed to upload file');
+      setError(err.message || t('editor.file_modal.errors.upload_failed'));
     } finally {
       setIsUploading(false);
       e.target.value = '';
@@ -138,7 +140,7 @@ export function FileInsertModal({ isOpen, onClose, onInsert }: FileInsertModalPr
     <div className="modal modal-open">
       <div className="modal-box max-w-3xl">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-lg">📎 Insert File</h3>
+          <h3 className="font-bold text-lg">{t('editor.file_modal.title')}</h3>
           <button className="btn btn-sm btn-circle btn-ghost" onClick={onClose}>
             ✕
           </button>
@@ -155,7 +157,7 @@ export function FileInsertModal({ isOpen, onClose, onInsert }: FileInsertModalPr
           <div className="card-body p-4">
             <div className="flex items-center gap-4">
               <label className="btn btn-primary btn-sm cursor-pointer">
-                📁 Upload New File
+                {t('editor.file_modal.actions.upload')}
                 <input
                   type="file"
                   className="hidden"
@@ -172,7 +174,7 @@ export function FileInsertModal({ isOpen, onClose, onInsert }: FileInsertModalPr
               )}
               {!isUploading && (
                 <span className="text-xs text-base-content/60">
-                  Max 10MB • Images, PDFs, Documents
+                  {t('editor.file_modal.labels.file_types')}
                 </span>
               )}
             </div>
@@ -183,7 +185,7 @@ export function FileInsertModal({ isOpen, onClose, onInsert }: FileInsertModalPr
         <div className="form-control mb-4">
           <input
             type="text"
-            placeholder="🔍 Search files..."
+            placeholder={t('editor.file_modal.placeholders.search')}
             className="input input-bordered"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -191,7 +193,7 @@ export function FileInsertModal({ isOpen, onClose, onInsert }: FileInsertModalPr
         </div>
 
         {/* Document List */}
-        <div className="divider">Your Uploaded Files</div>
+        <div className="divider">{t('editor.file_modal.sections.uploaded_files')}</div>
 
         {isLoading ? (
           <div className="flex justify-center py-8">
@@ -201,12 +203,12 @@ export function FileInsertModal({ isOpen, onClose, onInsert }: FileInsertModalPr
           <div className="text-center py-8 text-base-content/60">
             {searchQuery ? (
               <>
-                <p>No files found matching "{searchQuery}"</p>
+                <p>{t('editor.file_modal.empty.no_search_results', { query: searchQuery })}</p>
                 <button
                   className="btn btn-sm btn-ghost mt-2"
                   onClick={() => setSearchQuery('')}
                 >
-                  Clear search
+                  {t('editor.file_modal.actions.clear_search')}
                 </button>
               </>
             ) : (
@@ -214,8 +216,8 @@ export function FileInsertModal({ isOpen, onClose, onInsert }: FileInsertModalPr
                 <svg className="mx-auto h-12 w-12 text-base-content/20 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                 </svg>
-                <p>No files uploaded yet</p>
-                <p className="text-sm mt-1">Upload files through Journal AI Context or use the button above</p>
+                <p>{t('editor.file_modal.empty.no_files')}</p>
+                <p className="text-sm mt-1">{t('editor.file_modal.empty.instructions')}</p>
               </>
             )}
           </div>
@@ -269,7 +271,7 @@ export function FileInsertModal({ isOpen, onClose, onInsert }: FileInsertModalPr
 
         <div className="modal-action">
           <button className="btn btn-ghost" onClick={onClose}>
-            Close
+            {t('common.close')}
           </button>
         </div>
       </div>

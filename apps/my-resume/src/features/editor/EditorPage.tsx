@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { apiClient } from '../../shared/api/client';
 import { formatResumeDisplayPath } from '../../shared/utils/domain';
@@ -13,13 +14,14 @@ export function EditorPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const isNew = id === 'new';
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
-    content: '# My Resume\n\n## Experience\n\n### Company Name\nRole Title (2020-Present)\n- Achievement 1\n- Achievement 2\n\n## Skills\n\n- Skill 1\n- Skill 2',
+    content: t('editor.default_content'),
     llmContext: '',
     isPublic: false,
     isPublished: false,
@@ -93,7 +95,7 @@ export function EditorPage() {
         theme: data.theme || 'default',
       });
     } catch (err: any) {
-      setError(err.message || 'Failed to load resume');
+      setError(err.message || t('editor.errors.load_failed'));
     } finally {
       setIsLoading(false);
     }
@@ -119,7 +121,7 @@ export function EditorPage() {
 
   const handleSave = async () => {
     if (!formData.title || !formData.slug) {
-      setError('Title and slug are required');
+      setError(t('editor.errors.title_slug_required'));
       return;
     }
 
@@ -137,13 +139,13 @@ export function EditorPage() {
         setLastSaved(new Date());
         setHasUnsavedChanges(false);
       }
-      alert('Resume saved successfully!');
+      alert(t('editor.success.saved'));
     } catch (err: any) {
       // Show more helpful error message for slug conflicts
       if (err.message?.includes('Slug already exists') || err.message?.includes('slug')) {
-        setError(`The URL slug "${formData.slug}" is already taken. Please choose a different one.`);
+        setError(t('editor.errors.slug_taken', { slug: formData.slug }));
       } else {
-        setError(err.message || 'Failed to save resume');
+        setError(err.message || t('editor.errors.save_failed'));
       }
     } finally {
       setIsSaving(false);
@@ -177,7 +179,7 @@ export function EditorPage() {
       // Try to fetch a resume with this slug
       await apiClient.checkSlugAvailability(slug);
       // If we get here, the slug exists
-      setSlugError('This URL is already taken');
+      setSlugError(t('editor.errors.slug_unavailable'));
     } catch (err: any) {
       // 404 means slug is available
       if (err.message?.includes('404') || err.message?.includes('not found') || err.message?.includes('Resume not found')) {
@@ -263,7 +265,7 @@ export function EditorPage() {
       setShowImproveModal(true);
       setShowImproveButton(false);
     } catch (err: any) {
-      setError(err.message || 'Failed to improve text');
+      setError(err.message || t('editor.errors.improve_failed'));
     } finally {
       setIsImprovingText(false);
     }
@@ -290,7 +292,7 @@ export function EditorPage() {
 
     // Show success message briefly
     const originalError = error;
-    setError('✨ Text improved with AI!');
+    setError(t('editor.success.text_improved'));
     setTimeout(() => setError(originalError), 3000);
   };
 
@@ -332,14 +334,14 @@ export function EditorPage() {
     const now = new Date();
     const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-    if (seconds < 10) return 'just now';
-    if (seconds < 60) return `${seconds}s ago`;
+    if (seconds < 10) return t('editor.time.just_now');
+    if (seconds < 60) return t('editor.time.seconds_ago', { seconds });
 
     const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
+    if (minutes < 60) return t('editor.time.minutes_ago', { minutes });
 
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
+    if (hours < 24) return t('editor.time.hours_ago', { hours });
 
     return date.toLocaleTimeString();
   };
@@ -360,7 +362,7 @@ export function EditorPage() {
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
           </svg>
-          Back to Dashboard
+          {t('editor.nav.back_to_dashboard')}
         </button>
 
         <div className="flex items-center gap-2">
@@ -370,7 +372,7 @@ export function EditorPage() {
               {isAutoSaving && (
                 <span className="flex items-center gap-1">
                   <span className="loading loading-spinner loading-xs"></span>
-                  Auto-saving...
+                  {t('editor.status.auto_saving')}
                 </span>
               )}
               {!isAutoSaving && lastSaved && (
@@ -378,11 +380,11 @@ export function EditorPage() {
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-success" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  Saved {formatLastSaved(lastSaved)}
+                  {t('editor.status.saved')} {formatLastSaved(lastSaved)}
                 </span>
               )}
               {!isAutoSaving && !lastSaved && hasUnsavedChanges && (
-                <span className="text-warning">Unsaved changes</span>
+                <span className="text-warning">{t('editor.status.unsaved_changes')}</span>
               )}
             </div>
           )}
@@ -390,14 +392,14 @@ export function EditorPage() {
             className="btn btn-ghost gap-2"
             onClick={() => setShowPreview(!showPreview)}
           >
-            {showPreview ? '📝 Edit Only' : '👁️ Show Preview'}
+            {showPreview ? `${t('editor.view.edit_only')}` : `👁️ ${t('editor.view.show_preview')}`}
           </button>
           <button
             className={`btn btn-primary gap-2 ${isSaving ? 'loading' : ''}`}
             onClick={handleSave}
             disabled={isSaving || !!slugError || isCheckingSlug}
           >
-            {isSaving ? 'Saving...' : '💾 Save'}
+            {isSaving ? t('editor.status.saving') : `${t('editor.actions.save')}`}
           </button>
         </div>
       </div>
@@ -412,34 +414,34 @@ export function EditorPage() {
       <div className="editor-content">
         {/* Sidebar Settings */}
         <div className="editor-sidebar">
-          <h3 className="text-lg font-bold mb-4">Settings</h3>
+          <h3 className="text-lg font-bold mb-4">{t('editor.sections.settings')}</h3>
 
           <div className="form-control w-full mb-4">
             <label className="label">
-              <span className="label-text font-semibold">Title</span>
+              <span className="label-text font-semibold">{t('editor.fields.title')}</span>
             </label>
             <input
               type="text"
               className="input input-bordered w-full"
               value={formData.title}
               onChange={(e) => handleTitleChange(e.target.value)}
-              placeholder="My Professional Resume"
+              placeholder={t('editor.placeholders.title')}
             />
           </div>
 
           <div className="form-control w-full mb-4">
             <label className="label">
-              <span className="label-text font-semibold">URL Slug</span>
+              <span className="label-text font-semibold">{t('editor.fields.url_slug')}</span>
               {isCheckingSlug && (
                 <span className="label-text-alt">
-                  <span className="loading loading-spinner loading-xs"></span> Checking...
+                  <span className="loading loading-spinner loading-xs"></span> {t('editor.status.checking')}
                 </span>
               )}
               {!isCheckingSlug && slugError && (
                 <span className="label-text-alt text-error">❌ {slugError}</span>
               )}
               {!isCheckingSlug && !slugError && formData.slug && (
-                <span className="label-text-alt text-success">✓ Available</span>
+                <span className="label-text-alt text-success">✓ {t('editor.status.slug_available')}</span>
               )}
             </label>
             <input
@@ -447,7 +449,7 @@ export function EditorPage() {
               className={`input input-bordered w-full ${slugError ? 'input-error' : ''}`}
               value={formData.slug}
               onChange={(e) => handleSlugChange(e.target.value)}
-              placeholder="my-resume"
+              placeholder={t('editor.placeholders.slug')}
             />
             <label className="label">
               <span className="label-text-alt">
@@ -460,7 +462,7 @@ export function EditorPage() {
 
           <div className="form-control mb-4">
             <label className="label cursor-pointer">
-              <span className="label-text">Public</span>
+              <span className="label-text">{t('editor.fields.public')}</span>
               <input
                 type="checkbox"
                 className="toggle"
@@ -468,12 +470,12 @@ export function EditorPage() {
                 onChange={(e) => handleContentChange('isPublic', e.target.checked)}
               />
             </label>
-            <p className="text-xs text-base-content/60 mt-1">Anyone can view your resume</p>
+            <p className="text-xs text-base-content/60 mt-1">{t('editor.help.public')}</p>
           </div>
 
           <div className="form-control mb-4">
             <label className="label cursor-pointer">
-              <span className="label-text">Published</span>
+              <span className="label-text">{t('editor.fields.published')}</span>
               <input
                 type="checkbox"
                 className="toggle toggle-success"
@@ -481,26 +483,26 @@ export function EditorPage() {
                 onChange={(e) => handleContentChange('isPublished', e.target.checked)}
               />
             </label>
-            <p className="text-xs text-base-content/60 mt-1">Make resume visible in search</p>
+            <p className="text-xs text-base-content/60 mt-1">{t('editor.help.published')}</p>
           </div>
 
           <div className="divider"></div>
 
           <div className="form-control w-full mb-4">
             <label className="label">
-              <span className="label-text font-semibold">Template</span>
+              <span className="label-text font-semibold">{t('editor.fields.template')}</span>
             </label>
             <select
               className="select select-bordered w-full"
               value={formData.theme}
               onChange={(e) => handleContentChange('theme', e.target.value)}
             >
-              <option value="default">Classic - Traditional resume layout</option>
-              <option value="modern">Modern - Contemporary with gradients</option>
-              <option value="minimal">Minimal - Clean typography-focused</option>
-              <option value="professional">Professional - Clean gradient SaaS design</option>
-              <option value="corporate">Corporate - Dark theme with blue accents</option>
-              <option value="tech">Tech - Orange accents with modern design</option>
+              <option value="default">{t('editor.templates.classic')}</option>
+              <option value="modern">{t('editor.templates.modern')}</option>
+              <option value="minimal">{t('editor.templates.minimal')}</option>
+              <option value="professional">{t('editor.templates.professional')}</option>
+              <option value="corporate">{t('editor.templates.corporate')}</option>
+              <option value="tech">{t('editor.templates.tech')}</option>
             </select>
           </div>
 
@@ -510,7 +512,7 @@ export function EditorPage() {
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
-            <span className="text-xs">Use Markdown for formatting. HTML tags are supported.</span>
+            <span className="text-xs">{t('editor.info.markdown_support')}</span>
           </div>
         </div>
 
@@ -524,14 +526,14 @@ export function EditorPage() {
                   className={`tab ${activeTab === 'content' ? 'tab-active' : ''}`}
                   onClick={() => setActiveTab('content')}
                 >
-                  📝 Content
+                  {t('editor.tabs.content')}
                 </a>
                 <a
                   className={`tab ${activeTab === 'ai-context' ? 'tab-active' : ''}`}
                   onClick={() => setActiveTab('ai-context')}
                 >
-                  🤖 AI Context
-                  <span className="badge badge-secondary badge-sm ml-2">Private</span>
+                  {t('editor.tabs.ai_context')}
+                  <span className="badge badge-secondary badge-sm ml-2">{t('editor.labels.private')}</span>
                 </a>
               </div>
 
@@ -539,9 +541,9 @@ export function EditorPage() {
                 <button
                   className="btn btn-outline btn-sm gap-2"
                   onClick={() => setShowFileInsertModal(true)}
-                  title="Insert file from uploads"
+                  title={t('editor.tooltips.insert_file')}
                 >
-                  📎 Insert File
+                  {t('editor.actions.insert_file')}
                 </button>
               )}
             </div>
@@ -555,7 +557,7 @@ export function EditorPage() {
                   onChange={(e) => handleContentChange('content', e.target.value)}
                   onMouseUp={handleTextSelection}
                   onKeyUp={handleTextSelection}
-                  placeholder="Write your resume in Markdown...&#10;&#10;💡 Tip: Select text and use AI to improve it!"
+                  placeholder={t('editor.placeholders.content')}
                 ></textarea>
 
                 {/* AI Improve Button - Fixed position at bottom right */}
@@ -567,7 +569,7 @@ export function EditorPage() {
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-primary" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                           </svg>
-                          <strong>{selectedText.length}</strong> characters selected
+                          {t('editor.labels.characters_selected', { count: selectedText.length })}
                         </p>
                         <div className="flex gap-2">
                           <button
@@ -578,11 +580,11 @@ export function EditorPage() {
                             {isImprovingText ? (
                               <>
                                 <span className="loading loading-spinner loading-xs"></span>
-                                Improving...
+                                {t('editor.ai.improving')}
                               </>
                             ) : (
                               <>
-                                ✨ Improve with AI
+                                ✨ {t('editor.ai.improve_button')}
                               </>
                             )}
                           </button>
@@ -607,13 +609,13 @@ export function EditorPage() {
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                   </svg>
-                  <span className="text-xs">This content is only accessible to the AI chatbot. It's never shown publicly.</span>
+                  <span className="text-xs">{t('editor.info.ai_context_help')}</span>
                 </div>
                 <textarea
                   className="textarea textarea-bordered flex-1 font-mono text-sm"
                   value={formData.llmContext}
                   onChange={(e) => handleContentChange('llmContext', e.target.value)}
-                  placeholder="Add detailed career info, metrics, accomplishments for AI chatbot...&#10;&#10;Example:&#10;- Led team of 5 engineers, increased velocity 40%&#10;- Reduced AWS costs by $50k/year through optimization&#10;- Mentored 3 junior developers, all promoted within 6 months"
+                  placeholder={t('editor.placeholders.ai_context')}
                 ></textarea>
               </div>
             )}
@@ -622,7 +624,7 @@ export function EditorPage() {
           {/* Preview */}
           {showPreview && (
             <div className="preview-pane">
-              <h3 className="text-lg font-bold mb-4">Preview</h3>
+              <h3 className="text-lg font-bold mb-4">{t('editor.sections.preview')}</h3>
               <div className="preview-content">
                 <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                   {formData.content}
@@ -637,12 +639,12 @@ export function EditorPage() {
       {showImproveModal && (
         <div className="modal modal-open">
           <div className="modal-box max-w-4xl">
-            <h3 className="font-bold text-xl mb-4">✨ AI Text Improvement</h3>
+            <h3 className="font-bold text-xl mb-4">{t('editor.ai.modal_title')}</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               {/* Original Text */}
               <div>
-                <h4 className="font-semibold mb-2 text-sm text-base-content/70">Original:</h4>
+                <h4 className="font-semibold mb-2 text-sm text-base-content/70">{t('editor.ai.original_label')}</h4>
                 <div className="p-4 bg-base-200 rounded-lg border border-base-300">
                   <p className="whitespace-pre-wrap">{originalSelectedText}</p>
                 </div>
@@ -650,12 +652,12 @@ export function EditorPage() {
 
               {/* Improved Text - Editable */}
               <div>
-                <h4 className="font-semibold mb-2 text-sm text-primary">Improved (you can edit):</h4>
+                <h4 className="font-semibold mb-2 text-sm text-primary">{t('editor.ai.improved_label')}</h4>
                 <textarea
                   className="textarea textarea-bordered w-full h-32 font-mono text-sm"
                   value={improvedText}
                   onChange={(e) => setImprovedText(e.target.value)}
-                  placeholder="AI-improved text..."
+                  placeholder={t('editor.ai.improved_placeholder')}
                 />
               </div>
             </div>
@@ -664,7 +666,7 @@ export function EditorPage() {
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
-              <span className="text-sm">You can edit the improved text before accepting it.</span>
+              <span className="text-sm">{t('editor.ai.modal_info')}</span>
             </div>
 
             <div className="modal-action">
@@ -672,7 +674,7 @@ export function EditorPage() {
                 className="btn btn-ghost"
                 onClick={cancelImprovedText}
               >
-                Cancel
+                {t('editor.actions.cancel')}
               </button>
               <button
                 className="btn btn-primary gap-2"
@@ -681,7 +683,7 @@ export function EditorPage() {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                Accept & Replace
+                {t('editor.actions.accept_replace')}
               </button>
             </div>
           </div>

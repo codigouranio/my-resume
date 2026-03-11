@@ -219,3 +219,33 @@ body {
     --sidebar-ring: oklch(0.556 0 0);
   }
 }
+
+/* RTL Support for DaisyUI Dropdowns */
+/* Force dropdown positioning in RTL mode to prevent off-screen menus */
+[dir="rtl"] .user-menu-dropdown.dropdown-end > .dropdown-content,
+[dir="rtl"] .user-menu-dropdown.dropdown-end > ul {
+  left: 0 !important;
+  right: auto !important;
+  transform-origin: top left !important;
+}
+
+[dir="rtl"] .language-switcher-dropdown.dropdown-end > .dropdown-content,
+[dir="rtl"] .language-switcher-dropdown.dropdown-end > ul {
+  left: 0 !important;
+  right: auto !important;
+  transform-origin: top left !important;
+}
+
+[dir="ltr"] .user-menu-dropdown.dropdown-end > .dropdown-content,
+[dir="ltr"] .user-menu-dropdown.dropdown-end > ul {
+  right: 0 !important;
+  left: auto !important;
+  transform-origin: top right !important;
+}
+
+[dir="ltr"] .language-switcher-dropdown.dropdown-end > .dropdown-content,
+[dir="ltr"] .language-switcher-dropdown.dropdown-end > ul {
+  right: 0 !important;
+  left: auto !important;
+  transform-origin: top right !important;
+}

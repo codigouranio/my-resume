@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { apiClient } from '../../shared/api/client';
 import { AnalyticsDashboard, ChatAnalyticsDashboard } from '../analytics';
@@ -35,6 +36,7 @@ interface RecruiterInterest {
 }
 
 export function DashboardPage() {
+  const { t } = useTranslation();
   const { user, logout, refreshUser } = useAuth();
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [recruiterInterests, setRecruiterInterests] = useState<RecruiterInterest[]>([]);
@@ -130,7 +132,7 @@ export function DashboardPage() {
   };
 
   const handleDeleteInterest = async (id: string, name: string) => {
-    if (!confirm(`Delete recruiter interest from ${name}?`)) return;
+    if (!confirm(t('dashboard.confirm.delete_interest', { name }))) return;
 
     try {
       await apiClient.deleteRecruiterInterest(id);
@@ -154,13 +156,13 @@ export function DashboardPage() {
   };
 
   const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`Delete "${title}"?`)) return;
+    if (!confirm(t('dashboard.confirm.delete_resume', { title }))) return;
 
     try {
       await apiClient.deleteResume(id);
-      setResumes(resumes.filter(r => r.id !== id));
+      setResumes(prev => prev.filter(r => r.id !== id));
     } catch (err: any) {
-      alert(err.message || 'Failed to delete resume');
+      alert(err.message || t('dashboard.delete_resume'));
     }
   };
 
@@ -200,11 +202,11 @@ export function DashboardPage() {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
               </svg>
-              PRO Member
+              {t('dashboard.pro_member')}
             </div>
           ) : (
             <Link to="/settings" className="btn btn-primary btn-sm">
-              ⭐ Upgrade to PRO
+              ⭐ {t('dashboard.upgrade')}
             </Link>
           )}
 
@@ -224,8 +226,7 @@ export function DashboardPage() {
               </svg>
             )}
           </button>
-
-          <div className="dropdown dropdown-end">
+          <div className="user-menu-dropdown dropdown dropdown-end">
             <label tabIndex={0} className="btn btn-ghost btn-circle avatar placeholder">
               <div className="bg-neutral-focus text-neutral-content rounded-full w-10">
                 <span className="text-xl">
@@ -237,8 +238,8 @@ export function DashboardPage() {
               <li className="menu-title">
                 <span>{user?.email}</span>
               </li>
-              <li><Link to="/settings">⚙️ Settings</Link></li>
-              <li><a onClick={handleLogout}>🚪 Logout</a></li>
+              <li><Link to="/settings">⚙️ {t('nav.settings')}</Link></li>
+              <li><a onClick={handleLogout}>🚪 {t('auth.logout')}</a></li>
             </ul>
           </div>
         </div>
@@ -252,14 +253,14 @@ export function DashboardPage() {
             <div className="sticky top-4">
               <div className="card bg-base-200">
                 <div className="card-body p-4">
-                  <h3 className="font-bold text-lg mb-4">Navigation</h3>
+                  <h3 className="font-bold text-lg mb-4">{t('nav.dashboard')}</h3>
                   <ul className="menu menu-vertical w-full">
                     <li>
                       <a
                         className={activeTab === 'ai-context' ? 'active' : ''}
                         onClick={() => setActiveTab('ai-context')}
                       >
-                        🤖 Journal AI Context
+                        🤖 {t('dashboard.ai_context')}
                       </a>
                     </li>
                     <li>
@@ -267,7 +268,7 @@ export function DashboardPage() {
                         className={activeTab === 'resumes' ? 'active' : ''}
                         onClick={() => setActiveTab('resumes')}
                       >
-                        📄 My Resumes
+                        📄 {t('dashboard.my_resumes')}
                         <span className="badge badge-sm ml-auto">{resumes.length}</span>
                       </a>
                     </li>
@@ -276,7 +277,7 @@ export function DashboardPage() {
                         className={activeTab === 'interests' ? 'active' : ''}
                         onClick={() => setActiveTab('interests')}
                       >
-                        💼 Recruiter Interests
+                        💼 {t('dashboard.recruiter_interests')}
                         {recruiterInterests.filter(i => !i.isRead).length > 0 && (
                           <span className="badge badge-error badge-sm ml-auto">
                             {recruiterInterests.filter(i => !i.isRead).length}
@@ -289,7 +290,7 @@ export function DashboardPage() {
                         className={activeTab === 'interviews' ? 'active' : ''}
                         onClick={() => setActiveTab('interviews')}
                       >
-                        📋 Interview Tracker
+                        📋 {t('dashboard.interviews')}
                       </a>
                     </li>
                   </ul>
@@ -308,8 +309,8 @@ export function DashboardPage() {
               <>
                 <div className="dashboard-header">
                   <div>
-                    <h1 className="text-4xl font-bold">My Resumes</h1>
-                    <p className="text-base-content/60 mt-2">Manage and share your professional resumes</p>
+                    <h1 className="text-4xl font-bold">{t('dashboard.my_resumes')}</h1>
+                    <p className="text-base-content/60 mt-2">{t('dashboard.resumes_subtitle') || 'Manage and share your professional resumes'}</p>
                   </div>
                   {(() => {
                     const resumeLimits = { FREE: 3, PRO: 30, ENTERPRISE: 30 };
@@ -327,13 +328,13 @@ export function DashboardPage() {
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
                           </svg>
-                          Create Resume
+                          {t('dashboard.create_resume')}
                         </button>
                         <span className="text-xs text-base-content/60">
                           {resumes.length} / {limit} resumes
                           {hasReachedLimit && (
                             <span className="text-warning ml-2">
-                              - <Link to="/pricing" className="link link-warning">Upgrade to create more</Link>
+                              - <Link to="/pricing" className="link link-warning">{t('dashboard.labels.upgrade_link')}</Link>
                             </span>
                           )}
                         </span>
@@ -403,12 +404,12 @@ export function DashboardPage() {
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                 </svg>
-                                Published
+                                {t('dashboard.labels.published')}
                               </div>
                             ) : (
-                              <div className="badge badge-warning">Draft</div>
+                              <div className="badge badge-warning">{t('dashboard.labels.draft')}</div>
                             )}
-                            {resume.isPublic && <div className="badge badge-info">Public</div>}
+                            {resume.isPublic && <div className="badge badge-info">{t('dashboard.labels.public')}</div>}
                           </div>
 
                           <div className="flex items-center gap-2 mt-2 text-sm text-base-content/60">
@@ -416,7 +417,7 @@ export function DashboardPage() {
                               <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                               <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
                             </svg>
-                            {resume.viewCount} views
+                            {resume.viewCount} {t('dashboard.labels.views')}
                           </div>
 
                           <div className="card-actions justify-end mt-4">
@@ -441,19 +442,19 @@ export function DashboardPage() {
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                 <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
                               </svg>
-                              Analytics
+                              {t('dashboard.analytics')}
                             </button>
                             <button
                               className="btn btn-sm btn-primary"
                               onClick={() => navigate(`/editor/${resume.id}`)}
                             >
-                              Edit
+                              {t('common.edit')}
                             </button>
                             <button
                               className="btn btn-sm btn-error btn-outline"
                               onClick={() => handleDelete(resume.id, resume.title)}
                             >
-                              Delete
+                              {t('common.delete')}
                             </button>
                           </div>
                         </div>
@@ -472,8 +473,8 @@ export function DashboardPage() {
               <>
                 <div className="dashboard-header">
                   <div>
-                    <h1 className="text-4xl font-bold">Recruiter Interests</h1>
-                    <p className="text-base-content/60 mt-2">See who's interested in your resume</p>
+                    <h1 className="text-4xl font-bold">{t('recruiter_interests.title')}</h1>
+                    <p className="text-base-content/60 mt-2">{t('recruiter_interests.subtitle')}</p>
                   </div>
                 </div>
 
@@ -495,9 +496,9 @@ export function DashboardPage() {
                       <svg className="mx-auto h-24 w-24 text-base-content/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
-                      <h3 className="mt-4 text-lg font-medium">No recruiter interests yet</h3>
+                      <h3 className="mt-4 text-lg font-medium">{t('recruiter_interests.no_interests')}</h3>
                       <p className="mt-2 text-sm text-base-content/60">
-                        When recruiters express interest in your resume, they'll appear here
+                        {t('recruiter_interests.when_appear')}
                       </p>
                     </div>
                   </div>
@@ -514,7 +515,7 @@ export function DashboardPage() {
                               <div className="flex items-center gap-2">
                                 <h2 className="card-title">{interest.name}</h2>
                                 {!interest.isRead && (
-                                  <div className="badge badge-primary">New</div>
+                                  <div className="badge badge-primary">{t('recruiter_interests.new_badge')}</div>
                                 )}
                               </div>
                               <p className="text-sm text-base-content/60 mt-1">
@@ -524,7 +525,7 @@ export function DashboardPage() {
                                 {interest.company && ` • ${interest.company}`}
                               </p>
                               <div className="badge badge-ghost badge-sm mt-2">
-                                Resume: {interest.resume.title}
+                                {t('recruiter_interests.resume_label')}: {interest.resume.title}
                               </div>
                             </div>
                             <div className="text-sm text-base-content/60">
@@ -545,24 +546,24 @@ export function DashboardPage() {
                                 <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                                 <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
                               </svg>
-                              Reply
+                              {t('recruiter_interests.reply')}
                             </a>
                             <button
                               className={`btn btn-sm gap-1 ${interest.isFavorite ? 'btn-warning' : 'btn-ghost'}`}
                               onClick={() => handleToggleFavorite(interest.id)}
-                              title={interest.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                              title={interest.isFavorite ? t('recruiter_interests.remove_favorite') : t('recruiter_interests.add_favorite')}
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill={interest.isFavorite ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5">
                                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                               </svg>
-                              {interest.isFavorite ? 'Favorited' : 'Favorite'}
+                              {interest.isFavorite ? t('recruiter_interests.favorited') : t('recruiter_interests.favorite')}
                             </button>
                             {!interest.isRead && (
                               <button
                                 className="btn btn-sm btn-ghost"
                                 onClick={() => handleMarkAsRead(interest.id)}
                               >
-                                Mark as Read
+                                {t('recruiter_interests.mark_as_read')}
                               </button>
                             )}
                             <button
@@ -572,7 +573,7 @@ export function DashboardPage() {
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                               </svg>
-                              Delete
+                              {t('recruiter_interests.delete')}
                             </button>
                           </div>
                         </div>
@@ -590,26 +591,26 @@ export function DashboardPage() {
               {/* Quick Stats Card */}
               <div className="card bg-base-200">
                 <div className="card-body p-4">
-                  <h3 className="font-bold text-lg mb-4">Quick Stats</h3>
+                  <h3 className="font-bold text-lg mb-4">{t('dashboard.quick_stats')}</h3>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">Total Resumes</span>
+                      <span className="text-sm">{t('dashboard.total_resumes')}</span>
                       <span className="badge badge-primary badge-lg">{resumes.length}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">Published</span>
+                      <span className="text-sm">{t('dashboard.published_resumes')}</span>
                       <span className="badge badge-success badge-lg">
                         {resumes.filter(r => r.isPublished).length}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">Total Views</span>
+                      <span className="text-sm">{t('dashboard.total_views')}</span>
                       <span className="badge badge-info badge-lg">
                         {resumes.reduce((sum, r) => sum + r.viewCount, 0)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">New Interests</span>
+                      <span className="text-sm">{t('dashboard.new_interests')}</span>
                       <span className="badge badge-error badge-lg">
                         {recruiterInterests.filter(i => !i.isRead).length}
                       </span>
@@ -621,7 +622,7 @@ export function DashboardPage() {
               {/* Account Info Card */}
               <div className="card bg-base-200">
                 <div className="card-body p-4">
-                  <h3 className="font-bold text-lg mb-4">Account</h3>
+                  <h3 className="font-bold text-lg mb-4">{t('dashboard.account')}</h3>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <div className="avatar placeholder">
@@ -635,16 +636,16 @@ export function DashboardPage() {
                         <p className="text-sm font-medium truncate">{user?.email}</p>
                         <p className="text-xs text-base-content/60">
                           {user?.subscriptionTier === 'PRO' ? (
-                            <span className="text-primary font-semibold">⭐ PRO Member</span>
+                            <span className="text-primary font-semibold">⭐ {t('dashboard.pro_member')}</span>
                           ) : (
-                            'Free Plan'
+                            t('dashboard.free_plan')
                           )}
                         </p>
                       </div>
                     </div>
                     {user?.subscriptionTier !== 'PRO' && (
                       <Link to="/settings" className="btn btn-primary btn-sm btn-block mt-2">
-                        ⭐ Upgrade to PRO
+                        ⭐ {t('dashboard.upgrade')}
                       </Link>
                     )}
                   </div>
@@ -654,7 +655,7 @@ export function DashboardPage() {
               {/* Quick Actions Card */}
               <div className="card bg-base-200">
                 <div className="card-body p-4">
-                  <h3 className="font-bold text-lg mb-4">Quick Actions</h3>
+                  <h3 className="font-bold text-lg mb-4">{t('dashboard.quick_actions')}</h3>
                   <div className="space-y-2">
                     {(() => {
                       const resumeLimits = { FREE: 3, PRO: 30, ENTERPRISE: 30 };
@@ -667,20 +668,20 @@ export function DashboardPage() {
                           className="btn btn-primary btn-sm btn-block"
                           onClick={() => navigate('/editor/new')}
                           disabled={hasReachedLimit}
-                          title={hasReachedLimit ? `You've reached your ${currentTier} plan limit of ${limit} resumes` : 'Create a new resume'}
+                          title={hasReachedLimit ? t('dashboard.reached_limit', { tier: currentTier, limit }) : t('dashboard.create_resume_action')}
                         >
-                          ➕ Create Resume
+                          ➕ {t('dashboard.create_resume_action')}
                         </button>
                       );
                     })()}
                     <Link to="/settings" className="btn btn-ghost btn-sm btn-block">
-                      ⚙️ Settings
+                      ⚙️ {t('nav.settings')}
                     </Link>
                     <button
                       className="btn btn-ghost btn-sm btn-block"
                       onClick={handleLogout}
                     >
-                      🚪 Logout
+                      🚪 {t('auth.logout')}
                     </button>
                   </div>
                 </div>
@@ -708,7 +709,7 @@ export function DashboardPage() {
               </button>
 
               <h3 className="font-bold text-2xl mb-4">
-                Analytics: {resumes.find(r => r.id === selectedResumeForAnalytics)?.title}
+                {t('dashboard.analytics_title')} {resumes.find(r => r.id === selectedResumeForAnalytics)?.title}
               </h3>
 
               {/* Analytics Tabs */}
@@ -717,13 +718,13 @@ export function DashboardPage() {
                   className={`tab tab-lg ${analyticsView === 'views' ? 'tab-active' : ''}`}
                   onClick={() => setAnalyticsView('views')}
                 >
-                  👁️ Page Views
+                  {t('dashboard.analytics_page_views')}
                 </a>
                 <a
                   className={`tab tab-lg ${analyticsView === 'chat' ? 'tab-active' : ''}`}
                   onClick={() => setAnalyticsView('chat')}
                 >
-                  💬 Chat Analytics
+                  {t('dashboard.analytics_chat')}
                 </a>
               </div>
 
@@ -743,7 +744,7 @@ export function DashboardPage() {
                     setAnalyticsView('views');
                   }}
                 >
-                  Close
+                  {t('common.close')}
                 </button>
               </div>
             </div>

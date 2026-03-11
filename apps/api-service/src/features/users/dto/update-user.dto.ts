@@ -32,4 +32,10 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   defaultResumeId?: string;
+
+  @ApiProperty({ required: false, description: 'Preferred UI language (en, es, pt, ar, etc.)' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(10, { message: 'Language code must be 10 characters or less' })
+  preferredLanguage?: string;
 }

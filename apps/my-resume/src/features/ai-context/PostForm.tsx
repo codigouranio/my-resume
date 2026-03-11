@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '../../shared/api/client';
 
 interface PostFormProps {
@@ -17,6 +18,7 @@ interface AttachmentItem {
 }
 
 export function PostForm({ onPostCreated, onCancel, initialPost, postId }: PostFormProps) {
+  const { t } = useTranslation();
   const [text, setText] = useState(initialPost?.text || '');
   const [publishedAt, setPublishedAt] = useState(
     initialPost?.publishedAt ? new Date(initialPost.publishedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
@@ -66,7 +68,7 @@ export function PostForm({ onPostCreated, onCancel, initialPost, postId }: PostF
       setIsPublic(false);
       setAttachments([]);
     } catch (err: any) {
-      setError(err.message || 'Failed to save post');
+      setError(err.message || t('ai_context.errors.save_failed'));
     } finally {
       setIsLoading(false);
     }
@@ -85,10 +87,10 @@ export function PostForm({ onPostCreated, onCancel, initialPost, postId }: PostF
 
       // Validate file size (10MB max)
       if (file.size > 10 * 1024 * 1024) {
-        throw new Error('File size must be less than 10MB');
+        throw new Error(t('ai_context.errors.file_size_limit'));
       }
 
-      setUploadProgress(`Uploading ${file.name}...`);
+      setUploadProgress(t('ai_context.status.uploading'));
 
       // Upload file to document storage
       const uploadResult = await apiClient.uploadDocument(file);
@@ -117,7 +119,7 @@ export function PostForm({ onPostCreated, onCancel, initialPost, postId }: PostF
         onPostCreated(updatedPost);
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to upload file');
+      setError(err.message || t('ai_context.errors.upload_failed'));
     } finally {
       setIsUploading(false);
       // Reset file input
@@ -133,7 +135,7 @@ export function PostForm({ onPostCreated, onCancel, initialPost, postId }: PostF
         const updatedPost = await apiClient.getAIContextPost(postId);
         onPostCreated(updatedPost);
       } catch (err: any) {
-        setError(err.message || 'Failed to remove attachment');
+        setError(err.message || t('ai_context.errors.remove_failed'));
         return;
       }
     }
@@ -149,7 +151,7 @@ export function PostForm({ onPostCreated, onCancel, initialPost, postId }: PostF
     <form onSubmit={handleSubmit} className="card bg-base-100 shadow mb-6">
       <div className="card-body">
         <h3 className="card-title">
-          {postId ? '✏️ Edit Entry' : '✍️ New Journal Entry'}
+          {postId ? t('ai_context.form.edit_title') : t('ai_context.form.new_title')}
         </h3>
 
         {error && <div className="alert alert-error text-sm">{error}</div>}
@@ -158,21 +160,21 @@ export function PostForm({ onPostCreated, onCancel, initialPost, postId }: PostF
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="What would you like to remember? Share achievements, lessons learned, memories, or reflections..."
+          placeholder={t('ai_context.placeholders.text')}
           maxLength={2500}
           className="textarea textarea-bordered h-32"
           required
         />
 
         <div className="flex justify-between items-center text-xs text-base-content/60">
-          <span>{wordCount} / 500 words {isOverLimit && '(exceeds limit)'}</span>
-          <span>{text.length} / 2500 characters</span>
+          <span>{t('ai_context.labels.word_limit', { count: wordCount })} {isOverLimit && t('ai_context.labels.exceeds_limit')}</span>
+          <span>{t('ai_context.labels.char_limit', { count: text.length })}</span>
         </div>
 
         {/* Date Picker */}
         <div>
           <label className="label">
-            <span className="label-text">📅 Date (backdate if needed)</span>
+            <span className="label-text">{t('ai_context.fields.date')}</span>
           </label>
           <input
             type="date"
@@ -185,7 +187,7 @@ export function PostForm({ onPostCreated, onCancel, initialPost, postId }: PostF
         {/* AI Context Toggle */}
         <div className="form-control">
           <label className="label cursor-pointer">
-            <span className="label-text">🤖 Include in AI Context</span>
+            <span className="label-text">{t('ai_context.fields.include_in_ai')}</span>
             <input
               type="checkbox"
               checked={includeInAI}
@@ -194,14 +196,14 @@ export function PostForm({ onPostCreated, onCancel, initialPost, postId }: PostF
             />
           </label>
           <p className="text-xs text-base-content/60 ml-0">
-            When enabled, this post becomes available for the AI to use when generating or improving resumes, cover letters, and providing career coaching.
+            {t('ai_context.help.include_in_ai')}
           </p>
         </div>
 
         {/* Public Toggle */}
         <div className="form-control">
           <label className="label cursor-pointer">
-            <span className="label-text">🌐 Make Public</span>
+            <span className="label-text">{t('ai_context.fields.make_public')}</span>
             <input
               type="checkbox"
               checked={isPublic}
@@ -210,21 +212,21 @@ export function PostForm({ onPostCreated, onCancel, initialPost, postId }: PostF
             />
           </label>
           <p className="text-xs text-base-content/60 ml-0">
-            When enabled, this post will be visible on your public journal page that anyone can view.
+            {t('ai_context.help.make_public')}
           </p>
         </div>
 
         {/* File Attachments */}
         <div className="form-control">
           <label className="label">
-            <span className="label-text">📎 Attachments</span>
-            <span className="label-text-alt text-xs">Max 10MB per file</span>
+            <span className="label-text">{t('ai_context.fields.attachments')}</span>
+            <span className="label-text-alt text-xs">{t('ai_context.labels.file_size_hint')}</span>
           </label>
 
           {/* File Upload Button */}
           <div className="flex gap-2 items-center">
             <label className="btn btn-outline btn-sm cursor-pointer">
-              📁 Add File
+              {t('ai_context.actions.add_file')}
               <input
                 type="file"
                 className="hidden"
@@ -283,7 +285,7 @@ export function PostForm({ onPostCreated, onCancel, initialPost, postId }: PostF
             className="btn btn-ghost"
             disabled={isLoading}
           >
-            Cancel
+            {t('ai_context.actions.cancel')}
           </button>
           <button
             type="submit"
@@ -293,10 +295,10 @@ export function PostForm({ onPostCreated, onCancel, initialPost, postId }: PostF
             {isLoading ? (
               <>
                 <span className="loading loading-spinner loading-sm"></span>
-                Saving...
+                {t('ai_context.status.saving')}
               </>
             ) : (
-              postId ? 'Update Entry' : 'Save Entry'
+              postId ? t('ai_context.actions.update') : t('ai_context.actions.save')
             )}
           </button>
         </div>

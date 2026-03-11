@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '../../shared/api/client';
 import { PostReactions } from './PostReactions';
 import { PostReplies } from './PostReplies';
@@ -13,6 +14,7 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, onUpdated, onDeleted }: PostCardProps) {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [showReplies, setShowReplies] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -286,7 +288,7 @@ export function PostCard({ post, onUpdated, onDeleted }: PostCardProps) {
               className="btn btn-ghost btn-sm gap-1"
               onClick={() => setShowReplies(!showReplies)}
             >
-              💭 {replyCount} Reflections
+              💭 {replyCount} {t('ai_context.reflections')}
             </button>
             <button
               className={`btn btn-sm gap-1 ${post.includeInAI ? 'btn-ghost' : 'btn-warning'}`}
@@ -305,7 +307,7 @@ export function PostCard({ post, onUpdated, onDeleted }: PostCardProps) {
           </div>
           <div className="flex gap-1">
             <button className="btn btn-ghost btn-sm" onClick={() => setIsEditing(true)}>
-              ✏️ Edit
+              ✏️ {t('common.edit')}
             </button>
             <button
               className="btn btn-ghost btn-sm btn-error"

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '../../shared/api/client';
 import type { Interview, InterviewStatus, Template, CompanyInfo } from './types';
 import { INTERVIEW_STATUS } from './types';
@@ -11,6 +12,7 @@ interface InterviewFormProps {
 }
 
 export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProps) {
+  const { t } = useTranslation();
   const [company, setCompany] = useState(interview?.company || '');
   const [position, setPosition] = useState(interview?.position || '');
   const [jobUrl, setJobUrl] = useState(interview?.jobUrl || '');
@@ -101,7 +103,7 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
         setIsEnriching(false);
         setEnrichmentJobId(null);
       } else if (status.status === 'failed') {
-        setEnrichmentError('Company research failed. Data may be limited.');
+        setEnrichmentError(t('interviews.enrichment_failed'));
         setIsEnriching(false);
         setEnrichmentJobId(null);
       } else {
@@ -170,7 +172,7 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
 
       onSave(result);
     } catch (err: any) {
-      alert(err.message || 'Failed to save interview');
+      alert(err.message || t('interviews.failed_save'));
     } finally {
       setIsSaving(false);
     }
@@ -215,7 +217,7 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
 
   const handleSaveAsTemplate = async () => {
     if (!templateName.trim()) {
-      alert('Please enter a template name');
+      alert(t('interviews.enter_template_name'));
       return;
     }
 
@@ -238,10 +240,10 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
       setTemplateName('');
       setTemplateDescription('');
       await loadTemplates();
-      alert('Template saved successfully!');
+      alert(t('interviews.template_saved'));
     } catch (error) {
       console.error('Failed to save template:', error);
-      alert('Failed to save template');
+      alert(t('interviews.template_save_failed'));
     } finally {
       setIsSavingTemplate(false);
     }
@@ -266,14 +268,14 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
         <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
           <div className="p-6 overflow-y-auto flex-1 min-h-0">
             <h2 className="text-2xl font-bold mb-4 pr-8">
-              {interview ? 'Edit Interview' : 'New Interview'}
+              {interview ? t('interviews.edit_interview') : t('interviews.new_interview')}
             </h2>
 
             {/* Templates Section */}
             {!interview && templates.length > 0 && (
               <div className="mb-4 p-4 bg-base-200 rounded-lg">
                 <label className="label">
-                  <span className="label-text font-semibold">📋 Load from Template</span>
+                  <span className="label-text font-semibold">📋 {t('interviews.load_template')}</span>
                 </label>
                 <select
                   className="select select-bordered w-full"
@@ -281,7 +283,7 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
                   defaultValue=""
                 >
                   <option value="" disabled>
-                    Select a template...
+                    {t('interviews.select_template_placeholder')}
                   </option>
                   {templates.map((template) => (
                     <option key={template.id} value={template.id}>
@@ -296,7 +298,7 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text">Company *</span>
+                  <span className="label-text">{t('interviews.company')} *</span>
                 </label>
                 <input
                   type="text"
@@ -308,7 +310,7 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
               </div>
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text">Position *</span>
+                  <span className="label-text">{t('interviews.position')} *</span>
                 </label>
                 <input
                   type="text"
@@ -323,15 +325,15 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
             {/* Resume Selection */}
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Resume Used</span>
-                <span className="label-text-alt text-base-content/60">Optional</span>
+                <span className="label-text">{t('interviews.resume_used')}</span>
+                <span className="label-text-alt text-base-content/60">{t('common.optional')}</span>
               </label>
               <select
                 className="select select-bordered"
                 value={selectedResumeId}
                 onChange={(e) => setSelectedResumeId(e.target.value)}
               >
-                <option value="">No resume selected</option>
+                <option value="">{t('interviews.no_resume_selected')}</option>
                 {resumes.map((resume) => (
                   <option key={resume.id} value={resume.id}>
                     {resume.title}
@@ -341,7 +343,7 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
               {selectedResumeId && (
                 <label className="label">
                   <span className="label-text-alt text-success">
-                    ✓ This resume will be used for AI position fit analysis
+                    ✓ {t('interviews.resume_helper')}
                   </span>
                 </label>
               )}
@@ -352,9 +354,9 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
               <div className="alert alert-info mb-4">
                 <span className="loading loading-spinner loading-sm"></span>
                 <div>
-                  <span className="font-semibold">🔍 Researching company...</span>
+                  <span className="font-semibold">{t('interviews.enrichment_researching')}</span>
                   <p className="text-xs opacity-70">
-                    This may take 10-30 seconds. You'll receive an email when complete.
+                    {t('interviews.enrichment_wait_message')}
                   </p>
                 </div>
               </div>
@@ -365,7 +367,7 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
                 <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
-                <span>Could not fetch company info. You can continue without it.</span>
+                <span>{t('interviews.enrichment_warning')}</span>
               </div>
             )}
 
@@ -430,14 +432,14 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
             {/* Job URL */}
             <div className="form-control mb-4">
               <label className="label">
-                <span className="label-text">Job URL</span>
+                <span className="label-text">{t('interviews.job_url')}</span>
               </label>
               <input
                 type="url"
                 className="input input-bordered"
                 value={jobUrl}
                 onChange={(e) => setJobUrl(e.target.value)}
-                placeholder="https://..."
+                placeholder={t('interviews.job_url_placeholder')}
               />
             </div>
 
@@ -445,28 +447,28 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text">Status</span>
+                  <span className="label-text">{t('interviews.status')}</span>
                 </label>
                 <select
                   className="select select-bordered"
                   value={status}
                   onChange={(e) => setStatus(e.target.value as InterviewStatus)}
                 >
-                  <option value="APPLIED">Applied</option>
-                  <option value="SCREENING">Screening</option>
-                  <option value="TECHNICAL">Technical</option>
-                  <option value="ONSITE">Onsite</option>
-                  <option value="FINAL_ROUND">Final Round</option>
-                  <option value="OFFER">Offer</option>
-                  <option value="NEGOTIATING">Negotiating</option>
-                  <option value="ACCEPTED">Accepted</option>
-                  <option value="REJECTED">Rejected</option>
-                  <option value="WITHDRAWN">Withdrawn</option>
+                  <option value="APPLIED">{t('interviews.status_applied')}</option>
+                  <option value="SCREENING">{t('interviews.status_screening')}</option>
+                  <option value="TECHNICAL">{t('interviews.status_technical')}</option>
+                  <option value="ONSITE">{t('interviews.status_onsite')}</option>
+                  <option value="FINAL_ROUND">{t('interviews.status_final_round')}</option>
+                  <option value="OFFER">{t('interviews.status_offer')}</option>
+                  <option value="NEGOTIATING">{t('interviews.status_negotiating')}</option>
+                  <option value="ACCEPTED">{t('interviews.status_accepted')}</option>
+                  <option value="REJECTED">{t('interviews.status_rejected')}</option>
+                  <option value="WITHDRAWN">{t('interviews.status_withdrawn')}</option>
                 </select>
               </div>
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text">Applied Date</span>
+                  <span className="label-text">{t('interviews.applied_date')}</span>
                 </label>
                 <input
                   type="date"
@@ -480,20 +482,20 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
             {/* Description */}
             <div className="form-control mb-4">
               <label className="label">
-                <span className="label-text">Description / Notes</span>
+                <span className="label-text">{t('interviews.description_notes')}</span>
               </label>
               <textarea
                 className="textarea textarea-bordered h-24"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Role details, salary range, benefits, etc."
+                placeholder={t('interviews.description_placeholder')}
               />
             </div>
 
             {/* Skills Tags */}
             <div className="form-control mb-4">
               <label className="label">
-                <span className="label-text">Skills / Technologies</span>
+                <span className="label-text">{t('interviews.skills_technologies')}</span>
               </label>
               <div className="flex gap-2">
                 <input
@@ -502,14 +504,14 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
                   value={skillInput}
                   onChange={(e) => setSkillInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddSkill())}
-                  placeholder="e.g., Python, React, AWS..."
+                  placeholder={t('interviews.skills_placeholder')}
                 />
                 <button
                   type="button"
                   className="btn btn-outline"
                   onClick={handleAddSkill}
                 >
-                  Add
+                  {t('common.add')}
                 </button>
               </div>
               {skillTags.length > 0 && (
@@ -531,11 +533,11 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
             </div>
 
             {/* Recruiter Info */}
-            <div className="divider">Recruiter Contact (Optional)</div>
+            <div className="divider">{t('interviews.recruiter_contact_optional')}</div>
             <div className="grid grid-cols-3 gap-4 mb-4">
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text">Name</span>
+                  <span className="label-text">{t('common.name')}</span>
                 </label>
                 <input
                   type="text"
@@ -546,7 +548,7 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
               </div>
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text">Email</span>
+                  <span className="label-text">{t('common.email')}</span>
                 </label>
                 <input
                   type="email"
@@ -557,7 +559,7 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
               </div>
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text">Phone</span>
+                  <span className="label-text">{t('common.phone')}</span>
                 </label>
                 <input
                   type="tel"
@@ -577,7 +579,7 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
               onClick={() => setShowTemplateModal(true)}
               disabled={isSaving || !company || !position}
             >
-              💾 Save as Template
+              {t('interviews.save_as_template')}
             </button>
             <div className="flex gap-2">
               <button
@@ -586,7 +588,7 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
                 onClick={onCancel}
                 disabled={isSaving}
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 type="submit"
@@ -596,9 +598,9 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
                 {isSaving ? (
                   <span className="loading loading-spinner loading-sm"></span>
                 ) : interview ? (
-                  'Update'
+                  t('common.update')
                 ) : (
-                  'Create'
+                  t('common.create')
                 )}
               </button>
             </div>
@@ -625,16 +627,16 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
               ✕
             </button>
             <div className="p-6">
-              <h3 className="text-xl font-bold mb-4 pr-8">Save as Template</h3>
+              <h3 className="text-xl font-bold mb-4 pr-8">{t('interviews.save_template_title')}</h3>
 
               <div className="form-control mb-4">
                 <label className="label">
-                  <span className="label-text">Template Name *</span>
+                  <span className="label-text">{t('interviews.template_name_required')}</span>
                 </label>
                 <input
                   type="text"
                   className="input input-bordered"
-                  placeholder="e.g., Software Engineer - FAANG"
+                  placeholder={t('interviews.template_name_placeholder')}
                   value={templateName}
                   onChange={(e) => setTemplateName(e.target.value)}
                   disabled={isSavingTemplate}
@@ -643,11 +645,11 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
 
               <div className="form-control mb-4">
                 <label className="label">
-                  <span className="label-text">Description (optional)</span>
+                  <span className="label-text">{t('interviews.template_description_optional')}</span>
                 </label>
                 <textarea
                   className="textarea textarea-bordered"
-                  placeholder="Brief description of this template..."
+                  placeholder={t('interviews.template_description_placeholder')}
                   value={templateDescription}
                   onChange={(e) => setTemplateDescription(e.target.value)}
                   rows={2}
@@ -666,7 +668,7 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
                   }}
                   disabled={isSavingTemplate}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="button"
@@ -677,7 +679,7 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
                   {isSavingTemplate ? (
                     <span className="loading loading-spinner loading-sm"></span>
                   ) : (
-                    'Save Template'
+                    t('interviews.save_template_button')
                   )}
                 </button>
               </div>

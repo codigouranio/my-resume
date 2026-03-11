@@ -1,6 +1,7 @@
 import { Button } from "@shared/components/button";
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '../../shared/api/client';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { PostCard } from './PostCard';
@@ -27,6 +28,7 @@ const API_URL = import.meta.env.PUBLIC_API_URL || '';
 const POSTS_PER_PAGE = 20;
 
 export function AIContextFeed() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -157,9 +159,9 @@ export function AIContextFeed() {
       <div className="feed-header">
         <div className="flex justify-between items-start">
           <div>
-            <h2>Journal</h2>
+            <h2>{t('ai_context.journal')}</h2>
             <p className="feed-description">
-              Organize your personal life and achievements. All enabled posts become rich context for AI.
+              {t('ai_context.journal_description')}
             </p>
           </div>
           {user && (
@@ -169,7 +171,7 @@ export function AIContextFeed() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              🌐 View Public Journal
+              🌐 {t('ai_context.view_public_journal')}
             </Link>
           )}
         </div>
@@ -188,7 +190,7 @@ export function AIContextFeed() {
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
           </svg>
-          New Journal Entry
+          {t('ai_context.new_entry')}
         </Button>
       ) : (
         <PostForm
@@ -219,13 +221,13 @@ export function AIContextFeed() {
             <svg className="mx-auto h-24 w-24 text-base-content/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 19c-1.1 0-2-.9-2-2V7c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2v10c0 1.1-.9 2-2 2H7z" />
             </svg>
-            <h3 className="mt-4 text-lg font-medium">No entries yet</h3>
-            <p className="mt-2 text-sm text-base-content/60">Start capturing your life and achievements</p>
+            <h3 className="mt-4 text-lg font-medium">{t('ai_context.no_entries')}</h3>
+            <p className="mt-2 text-sm text-base-content/60">{t('ai_context.start_capturing')}</p>
             <Button
               className="btn btn-primary mt-6"
               onClick={() => setShowPostForm(true)}
             >
-              Create Your First Entry
+              {t('ai_context.create_first_entry')}
             </Button>
           </div>
         </div>
@@ -251,7 +253,7 @@ export function AIContextFeed() {
             )}
             {!hasMore && posts.length > 0 && (
               <p className="text-center text-base-content/60 text-sm">
-                🎉 You've reached the end
+                🎉 {t('ai_context.reached_end')}
               </p>
             )}
           </div>

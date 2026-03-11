@@ -171,6 +171,7 @@ class ApiClient {
     phone?: string | null;
     customDomain?: string | null;
     defaultResumeId?: string | null;
+    preferredLanguage?: string | null;
   }) {
     return this.request('/users/me', {
       method: 'PATCH',

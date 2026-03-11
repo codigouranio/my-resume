@@ -59,6 +59,7 @@ export class UsersService {
         subscriptionEndsAt: true,
         customDomain: true,
         defaultResumeId: true,
+        preferredLanguage: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -128,6 +129,7 @@ export class UsersService {
         subscriptionTier: true,
         customDomain: true,
         defaultResumeId: true,
+        preferredLanguage: true,
         updatedAt: true,
       },
     });

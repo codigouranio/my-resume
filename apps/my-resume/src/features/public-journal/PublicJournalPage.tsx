@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '../../shared/api/client';
 import { linkifyText } from '../ai-context/utils/linkify';
 
@@ -27,6 +28,7 @@ const POSTS_PER_PAGE = 20;
 
 export function PublicJournalPage() {
   const { userId } = useParams<{ userId: string }>();
+  const { t, i18n } = useTranslation();
   const [posts, setPosts] = useState<Post[]>([]);
   const [userName, setUserName] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
@@ -130,7 +132,7 @@ export function PublicJournalPage() {
         }
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to load public posts');
+      setError(err.message || t('public_journal.error_load_posts'));
     } finally {
       setIsLoading(false);
     }
@@ -152,7 +154,7 @@ export function PublicJournalPage() {
       setPage(prev => prev + 1);
       setHasMore((response.posts || []).length === POSTS_PER_PAGE);
     } catch (err: any) {
-      setError(err.message || 'Failed to load more posts');
+      setError(err.message || t('public_journal.error_load_more'));
     } finally {
       setIsLoadingMore(false);
     }
@@ -164,7 +166,7 @@ export function PublicJournalPage() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString(i18n.language, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -173,7 +175,7 @@ export function PublicJournalPage() {
 
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString(i18n.language, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -187,10 +189,10 @@ export function PublicJournalPage() {
     const date = new Date(dateString);
     const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-    if (seconds < 60) return 'just now';
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+    if (seconds < 60) return t('common.just_now');
+    if (seconds < 3600) return t('common.minutes_ago', { count: Math.floor(seconds / 60) });
+    if (seconds < 86400) return t('common.hours_ago', { count: Math.floor(seconds / 3600) });
+    if (seconds < 604800) return t('common.days_ago', { count: Math.floor(seconds / 86400) });
     return formatDateTime(dateString);
   };
 
@@ -232,7 +234,7 @@ export function PublicJournalPage() {
       <div className="min-h-screen bg-base-200 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <span className="loading loading-spinner loading-lg"></span>
-          <p>Loading public journal...</p>
+          <p>{t('public_journal.loading')}</p>
         </div>
       </div>
     );
@@ -253,9 +255,11 @@ export function PublicJournalPage() {
       {/* Header */}
       <div className="bg-base-100 shadow-sm border-b border-base-300">
         <div className="container mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold">📖 {userName ? `${userName}'s Journal` : 'Journal'}</h1>
+          <h1 className="text-3xl font-bold">
+            📖 {userName ? t('public_journal.users_journal', { name: userName }) : t('public_journal.journal_title')}
+          </h1>
           <p className="text-base-content/60 mt-2">
-            Public thoughts, achievements, and reflections
+            {t('public_journal.subtitle')}
           </p>
         </div>
       </div>
@@ -266,7 +270,7 @@ export function PublicJournalPage() {
           <div className="card bg-base-100 shadow">
             <div className="card-body text-center">
               <p className="text-base-content/60">
-                No public posts yet. Check back later!
+                {t('public_journal.no_posts')}
               </p>
             </div>
           </div>
@@ -286,7 +290,7 @@ export function PublicJournalPage() {
                     </p>
                     {post.updatedAt && post.publishedAt !== post.updatedAt && (
                       <p className="text-xs text-base-content/40 mt-0.5">
-                        edited {getRelativeTime(post.updatedAt)}
+                        {t('public_journal.edited')} {getRelativeTime(post.updatedAt)}
                       </p>
                     )}
 
@@ -303,7 +307,7 @@ export function PublicJournalPage() {
                           onClick={() => toggleExpanded(post.id)}
                           className="text-primary hover:underline text-sm mt-1 font-medium"
                         >
-                          {isExpanded ? '← Show less' : 'Show more →'}
+                          {isExpanded ? t('public_journal.show_less') : t('public_journal.show_more')}
                         </button>
                       )}
                     </div>
@@ -329,7 +333,7 @@ export function PublicJournalPage() {
                                     alt={attachment.fileName}
                                     className="max-h-64 rounded object-contain cursor-pointer hover:opacity-90 transition-opacity"
                                     onClick={() => setLightboxImage({ url: attachment.fileUrl, name: attachment.fileName })}
-                                    title="Click to view full size"
+                                    title={t('public_journal.click_to_view')}
                                   />
                                   <span className="text-xs text-base-content/60">{attachment.fileName}</span>
                                 </div>
@@ -394,7 +398,7 @@ export function PublicJournalPage() {
             )}
             {!hasMore && (
               <p className="text-center text-base-content/60 text-sm">
-                🎉 You've reached the end
+                {t('public_journal.reached_end')}
               </p>
             )}
           </div>
@@ -406,7 +410,7 @@ export function PublicJournalPage() {
         <button
           onClick={scrollToTop}
           className="fixed bottom-8 right-8 btn btn-circle btn-primary shadow-lg z-50 hover:scale-110 transition-transform"
-          title="Scroll to top"
+          title={t('public_journal.scroll_to_top')}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

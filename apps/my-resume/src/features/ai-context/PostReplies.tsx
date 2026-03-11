@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '../../shared/api/client';
 
 interface Reply {
@@ -14,6 +15,7 @@ interface PostRepliesProps {
 }
 
 export function PostReplies({ postId, onRepliesChanged }: PostRepliesProps) {
+  const { t } = useTranslation();
   const [replies, setReplies] = useState<Reply[]>([]);
   const [newReplyText, setNewReplyText] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -119,14 +121,14 @@ export function PostReplies({ postId, onRepliesChanged }: PostRepliesProps) {
 
   return (
     <div className="replies-section mt-4 pl-4 border-l-2 border-primary">
-      <h4 className="font-semibold mb-3">💭 Threaded Self-Reflections</h4>
+      <h4 className="font-semibold mb-3">💭 {t('ai_context.threaded_reflections')}</h4>
 
       {/* Add Reply Form */}
       <form onSubmit={handleAddReply} className="mb-4">
         <textarea
           value={newReplyText}
           onChange={(e) => setNewReplyText(e.target.value)}
-          placeholder="Add a reflection or follow-up thought..."
+          placeholder={t('ai_context.add_reflection_placeholder')}
           className="textarea textarea-bordered textarea-sm w-full mb-2"
           rows={2}
         />
@@ -136,7 +138,7 @@ export function PostReplies({ postId, onRepliesChanged }: PostRepliesProps) {
             className="btn btn-sm btn-primary"
             disabled={isSaving || !newReplyText.trim()}
           >
-            {isSaving ? '...' : 'Add Reflection'}
+            {isSaving ? '...' : t('ai_context.add_reflection')}
           </button>
         </div>
       </form>
@@ -144,9 +146,9 @@ export function PostReplies({ postId, onRepliesChanged }: PostRepliesProps) {
       {/* Replies List */}
       <div className="space-y-2">
         {isLoading ? (
-          <p className="text-sm text-base-content/60">Loading reflections...</p>
+          <p className="text-sm text-base-content/60">{t('ai_context.loading_reflections')}</p>
         ) : replies.length === 0 ? (
-          <p className="text-sm text-base-content/60">No reflections yet. Add your first one above!</p>
+          <p className="text-sm text-base-content/60">{t('ai_context.no_reflections')}</p>
         ) : (
           replies.map(reply => (
             <div key={reply.id} className="bg-base-200 p-3 rounded text-sm">

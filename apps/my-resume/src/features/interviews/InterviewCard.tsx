@@ -1,5 +1,6 @@
 import type { Interview } from './types';
 import { STATUS_LABELS, STATUS_COLORS } from './types';
+import { useTranslation } from 'react-i18next';
 
 interface InterviewCardProps {
   interview: Interview;
@@ -10,6 +11,7 @@ interface InterviewCardProps {
 }
 
 export function InterviewCard({ interview, onEdit, onDelete, onArchive, onView }: InterviewCardProps) {
+  const { t } = useTranslation();
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -83,10 +85,10 @@ export function InterviewCard({ interview, onEdit, onDelete, onArchive, onView }
             {interview.fitScore !== undefined && interview.fitScore !== null && (
               <div
                 className={`badge badge-lg font-bold ${interview.fitScore >= 8
-                    ? 'badge-success'
-                    : interview.fitScore >= 6
-                      ? 'badge-warning'
-                      : 'badge-error'
+                  ? 'badge-success'
+                  : interview.fitScore >= 6
+                    ? 'badge-warning'
+                    : 'badge-error'
                   }`}
                 title="AI Position Fit Score"
               >
@@ -104,7 +106,7 @@ export function InterviewCard({ interview, onEdit, onDelete, onArchive, onView }
             rel="noopener noreferrer"
             className="link link-primary text-sm mt-1"
           >
-            View Job Posting →
+            {t('interviews.job_posting')} →
           </a>
         )}
 
@@ -125,7 +127,7 @@ export function InterviewCard({ interview, onEdit, onDelete, onArchive, onView }
             ))}
             {interview.skillTags.length > 3 && (
               <span className="badge badge-ghost badge-sm">
-                +{interview.skillTags.length - 3} more
+                +{interview.skillTags.length - 3} {t('interviews.more_skills')}
               </span>
             )}
           </div>
@@ -152,7 +154,7 @@ export function InterviewCard({ interview, onEdit, onDelete, onArchive, onView }
 
         {/* Date */}
         <p className="text-xs text-base-content/50 mt-2">
-          Applied: {formatDate(interview.appliedAt)}
+          {t('interviews.applied')}: {formatDate(interview.appliedAt)}
         </p>
 
         {/* Actions */}
@@ -161,25 +163,25 @@ export function InterviewCard({ interview, onEdit, onDelete, onArchive, onView }
             className="btn btn-primary btn-sm"
             onClick={onView}
           >
-            👁️ View Details
+            👁️ {t('interviews.view_details')}
           </button>
           <button
             className="btn btn-ghost btn-sm"
             onClick={() => onEdit(interview)}
           >
-            ✏️ Edit
+            ✏️ {t('common.edit')}
           </button>
           <button
             className="btn btn-ghost btn-sm"
             onClick={() => onArchive(interview.id, !!interview.archivedAt)}
           >
-            {interview.archivedAt ? '📂 Unarchive' : '📦 Archive'}
+            {interview.archivedAt ? `📂 ${t('common.unarchive')}` : `📦 ${t('common.archive')}`}
           </button>
           <button
             className="btn btn-ghost btn-sm text-error"
             onClick={() => onDelete(interview.id)}
           >
-            🗑️ Delete
+            🗑️ {t('common.delete')}
           </button>
         </div>
       </div>

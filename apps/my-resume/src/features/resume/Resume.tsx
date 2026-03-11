@@ -542,7 +542,7 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
                 <div className="modal modal-open">
                   <div className="modal-box max-w-2xl">
                     <h3 className="font-bold text-2xl mb-4">
-                      Express Your Interest
+                      {t('resume.contact_modal_title')}
                     </h3>
 
                     {submitSuccess ? (
@@ -561,8 +561,7 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
                           />
                         </svg>
                         <span>
-                          Thank you! Your interest has been submitted
-                          successfully.
+                          {t('resume.contact_success_message')}
                         </span>
                       </div>
                     ) : (
@@ -572,11 +571,11 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
                       >
                         <div className="form-control">
                           <label className="label">
-                            <span className="label-text">Your Name *</span>
+                            <span className="label-text">{t('resume.contact_name_label')}</span>
                           </label>
                           <input
                             type="text"
-                            placeholder="John Doe"
+                            placeholder={t('resume.contact_name_placeholder')}
                             className="input input-bordered"
                             value={contactForm.name}
                             onChange={(e) =>
@@ -591,11 +590,11 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
 
                         <div className="form-control">
                           <label className="label">
-                            <span className="label-text">Email Address *</span>
+                            <span className="label-text">{t('resume.contact_email_label')}</span>
                           </label>
                           <input
                             type="email"
-                            placeholder="john@company.com"
+                            placeholder={t('resume.contact_email_placeholder')}
                             className="input input-bordered"
                             value={contactForm.email}
                             onChange={(e) =>
@@ -610,11 +609,11 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
 
                         <div className="form-control">
                           <label className="label">
-                            <span className="label-text">Company</span>
+                            <span className="label-text">{t('resume.contact_company_label')}</span>
                           </label>
                           <input
                             type="text"
-                            placeholder="Your Company"
+                            placeholder={t('resume.contact_company_placeholder')}
                             className="input input-bordered"
                             value={contactForm.company}
                             onChange={(e) =>
@@ -628,11 +627,11 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
 
                         <div className="form-control">
                           <label className="label">
-                            <span className="label-text">Message *</span>
+                            <span className="label-text">{t('resume.contact_message_label')}</span>
                           </label>
                           <textarea
                             className="textarea textarea-bordered h-32"
-                            placeholder="I'd like to discuss an opportunity with you..."
+                            placeholder={t('resume.contact_message_placeholder')}
                             value={contactForm.message}
                             onChange={(e) =>
                               setContactForm({
@@ -651,7 +650,7 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
                             onClick={() => setShowContactModal(false)}
                             disabled={isSubmitting}
                           >
-                            Cancel
+                            {t('common.cancel')}
                           </button>
                           <button
                             type="submit"
@@ -661,10 +660,10 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
                             {isSubmitting ? (
                               <>
                                 <span className="loading loading-spinner"></span>
-                                Sending...
+                                {t('common.sending')}
                               </>
                             ) : (
-                              'Send Message'
+                              t('resume.contact_send_button')
                             )}
                           </button>
                         </div>

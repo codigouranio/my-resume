@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { apiClient } from '../../shared/api/client';
 import {
@@ -7,9 +8,11 @@ import {
   formatCustomDomainUrl,
 } from '../../shared/utils/domain';
 import { ChangePasswordForm } from './ChangePasswordForm';
+import { LanguageSwitcher } from '@shared/components/LanguageSwitcher';
 import './SettingsPage.css';
 
 export function SettingsPage() {
+  const { t } = useTranslation();
   const { user, logout, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'profile' | 'subscription'>(
@@ -237,14 +240,14 @@ export function SettingsPage() {
         </div>
         <div className="flex-none gap-2">
           <Link to="/dashboard" className="btn btn-ghost">
-            ← Back to Dashboard
+            ← {t('common.back')} {t('nav.dashboard')}
           </Link>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <h1 className="text-4xl font-bold mb-8">Settings</h1>
+        <h1 className="text-4xl font-bold mb-8">{t('settings.title')}</h1>
 
         {/* Tabs */}
         <div className="tabs tabs-boxed mb-6 bg-base-200">
@@ -252,13 +255,13 @@ export function SettingsPage() {
             className={`tab tab-lg ${activeTab === 'profile' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('profile')}
           >
-            👤 Profile
+            👤 {t('settings.profile')}
           </a>
           <a
             className={`tab tab-lg ${activeTab === 'subscription' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('subscription')}
           >
-            ⭐ Subscription
+            ⭐ {t('settings.subscription')}
           </a>
         </div>
 
@@ -266,12 +269,12 @@ export function SettingsPage() {
         {activeTab === 'profile' && (
           <div className="card bg-base-200 shadow-xl">
             <div className="card-body">
-              <h2 className="card-title text-2xl mb-4">Profile Information</h2>
+              <h2 className="card-title text-2xl mb-4">{t('settings.profile')} {t('common.view')}</h2>
 
               <div className="space-y-4">
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text font-semibold">Email</span>
+                    <span className="label-text font-semibold">{t('auth.email')}</span>
                   </label>
                   <input
                     type="text"
@@ -285,7 +288,7 @@ export function SettingsPage() {
                   <div className="form-control">
                     <label className="label">
                       <span className="label-text font-semibold">
-                        First Name
+                        {t('auth.first_name')}
                       </span>
                     </label>
                     <input
@@ -299,7 +302,7 @@ export function SettingsPage() {
                   <div className="form-control">
                     <label className="label">
                       <span className="label-text font-semibold">
-                        Last Name
+                        {t('auth.last_name')}
                       </span>
                     </label>
                     <input
@@ -313,7 +316,7 @@ export function SettingsPage() {
 
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text font-semibold">Phone</span>
+                    <span className="label-text font-semibold">{t('settings.phone_number')}</span>
                   </label>
                   <div className="flex flex-col gap-2 md:flex-row md:items-center">
                     <input
@@ -331,10 +334,10 @@ export function SettingsPage() {
                       {isSavingPhone ? (
                         <>
                           <span className="loading loading-spinner loading-xs"></span>
-                          Saving...
+                          {t('common.loading')}
                         </>
                       ) : (
-                        'Save Phone'
+                        t('common.save')
                       )}
                     </button>
                   </div>
@@ -353,7 +356,7 @@ export function SettingsPage() {
                 <div className="form-control">
                   <label className="label">
                     <span className="label-text font-semibold">
-                      Account Type
+                      {t('settings.subscription_tier')}
                     </span>
                   </label>
                   <div className="flex items-center gap-2">
@@ -367,7 +370,7 @@ export function SettingsPage() {
                         className="btn btn-primary btn-sm"
                         onClick={() => setActiveTab('subscription')}
                       >
-                        Upgrade to PRO
+                        {t('settings.upgrade_to_pro')}
                       </button>
                     )}
                   </div>
@@ -378,7 +381,7 @@ export function SettingsPage() {
                 <div className="form-control">
                   <label className="label">
                     <span className="label-text font-semibold">
-                      Account Actions
+                      {t('settings.account')}
                     </span>
                   </label>
                   <div className="flex gap-2">
@@ -386,7 +389,7 @@ export function SettingsPage() {
                       className="btn btn-error btn-outline"
                       onClick={handleLogout}
                     >
-                      🚪 Logout
+                      🚪 {t('auth.logout')}
                     </button>
                   </div>
                 </div>
@@ -395,6 +398,15 @@ export function SettingsPage() {
 
                 <div>
                   <ChangePasswordForm />
+                </div>
+
+                <div className="divider"></div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-semibold">{t('settings.language') || 'Language'}</span>
+                  </label>
+                  <LanguageSwitcher variant="buttons" />
                 </div>
 
                 {/* Custom Subdomain - PRO Only */}

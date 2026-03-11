@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from 'react';
 import { apiClient } from '../api/client';
+import i18n from '../../i18n/config';
 
 interface User {
   id: string;
@@ -17,6 +18,7 @@ interface User {
   subscriptionTier: string;
   customDomain?: string | null;
   defaultResumeId?: string | null;
+  preferredLanguage?: string | null;
 }
 
 interface AuthContextType {
@@ -54,6 +56,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const userData = await apiClient.getCurrentUser();
       setUser(userData);
+
+      // Apply user's preferred language if available
+      if (userData.preferredLanguage && userData.preferredLanguage !== i18n.language) {
+        console.log('Loading user preferred language:', userData.preferredLanguage);
+        await i18n.changeLanguage(userData.preferredLanguage);
+
+        // Update HTML dir attribute for RTL languages
+        if (userData.preferredLanguage === 'ar') {
+          document.documentElement.setAttribute('dir', 'rtl');
+        } else {
+          document.documentElement.setAttribute('dir', 'ltr');
+        }
+
+        // Update localStorage to match
+        localStorage.setItem('language', userData.preferredLanguage);
+      }
     } catch (error) {
       // Token invalid or expired
       apiClient.setToken(null);

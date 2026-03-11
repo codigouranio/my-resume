@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '../../shared/api/client';
 import type { Interview, InterviewStats } from './types';
 import { InterviewCard } from './InterviewCard.tsx';
@@ -7,6 +8,7 @@ import { InterviewStats as StatsComponent } from './InterviewStats.tsx';
 import { InterviewDetail } from './InterviewDetail.tsx';
 
 export function InterviewBoard() {
+  const { t } = useTranslation();
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [stats, setStats] = useState<InterviewStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,7 +36,7 @@ export function InterviewBoard() {
       });
       setInterviews(data);
     } catch (err: any) {
-      setError(err.message || 'Failed to load interviews');
+      setError(err.message || t('interviews.failed_load'));
     } finally {
       setIsLoading(false);
     }
@@ -61,13 +63,13 @@ export function InterviewBoard() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this interview?')) return;
+    if (!confirm(t('interviews.delete_confirm'))) return;
     try {
       await apiClient.deleteInterview(id);
       setInterviews((prev) => prev.filter((i) => i.id !== id));
       await loadStats();
     } catch (err: any) {
-      alert(err.message || 'Failed to delete interview');
+      alert(err.message || t('interviews.failed_delete'));
     }
   };
 
@@ -81,7 +83,7 @@ export function InterviewBoard() {
       await loadInterviews();
       await loadStats();
     } catch (err: any) {
-      alert(err.message || `Failed to ${isArchived ? 'unarchive' : 'archive'} interview`);
+      alert(err.message || t(isArchived ? 'interviews.failed_unarchive' : 'interviews.failed_archive'));
     }
   };
 
@@ -95,9 +97,9 @@ export function InterviewBoard() {
       {/* Header */}
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h1 className="text-3xl font-bold">📋 Interview Tracker</h1>
+          <h1 className="text-3xl font-bold">📋 {t('interviews.title')}</h1>
           <p className="text-base-content/60 mt-1">
-            Track your job applications and interview processes
+            {t('interviews.subtitle')}
           </p>
         </div>
         <button
@@ -119,7 +121,7 @@ export function InterviewBoard() {
               clipRule="evenodd"
             />
           </svg>
-          New Interview
+          {t('interviews.new_interview')}
         </button>
       </div>
 
@@ -132,11 +134,11 @@ export function InterviewBoard() {
           <div className="flex flex-wrap gap-4 items-end">
             <div className="form-control flex-1 min-w-[200px]">
               <label className="label">
-                <span className="label-text">Company</span>
+                <span className="label-text">{t('interviews.company')}</span>
               </label>
               <input
                 type="text"
-                placeholder="Search by company..."
+                placeholder={t('interviews.search_company')}
                 className="input input-bordered"
                 value={filterCompany}
                 onChange={(e) => setFilterCompany(e.target.value)}
@@ -144,14 +146,14 @@ export function InterviewBoard() {
             </div>
             <div className="form-control flex-1 min-w-[200px]">
               <label className="label">
-                <span className="label-text">Status</span>
+                <span className="label-text">{t('interviews.status')}</span>
               </label>
               <select
                 className="select select-bordered"
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
               >
-                <option value="">All Statuses</option>
+                <option value="">{t('interviews.all_statuses')}</option>
                 <option value="APPLIED">Applied</option>
                 <option value="SCREENING">Screening</option>
                 <option value="TECHNICAL">Technical</option>
@@ -172,7 +174,7 @@ export function InterviewBoard() {
                   checked={showArchived}
                   onChange={(e) => setShowArchived(e.target.checked)}
                 />
-                <span className="label-text">Show Archived</span>
+                <span className="label-text">{t('interviews.show_archived')}</span>
               </label>
             </div>
           </div>
