@@ -36,17 +36,33 @@ import { CustomBullBoardModule } from './shared/bull-board/bull-board.module';
         level:
           process.env.LOG_LEVEL ??
           (process.env.NODE_ENV === 'development' ? 'debug' : 'info'),
-        transport: {
-          target: 'pino-pretty',
-          options: {
-            colorize: true,
-            singleLine: false,
-            translateTime: 'SYS:standard',
-            include: 'level,time',
-            ignore: 'pid,hostname',
-          },
-        },
+        // Use pino-pretty only in development, JSON in production for PM2
+        transport: process.env.NODE_ENV === 'production' 
+          ? undefined 
+          : {
+              target: 'pino-pretty',
+              options: {
+                colorize: true,
+                singleLine: false,
+                translateTime: 'SYS:standard',
+                include: 'level,time',
+                ignore: 'pid,hostname',
+              },
+            },
         timestamp: true,
+        // Auto-log HTTP requests
+        autoLogging: true,
+        // Custom serializers for better log output
+        serializers: {
+          req: (req) => ({
+            method: req.method,
+            url: req.url,
+            remoteAddress: req.remoteAddress,
+          }),
+          res: (res) => ({
+            statusCode: res.statusCode,
+          }),
+        },
       },
     }),
     BullModule.forRootAsync({
