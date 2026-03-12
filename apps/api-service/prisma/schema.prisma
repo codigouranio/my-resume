@@ -454,6 +454,13 @@ enum InterviewStatus {
   WITHDRAWN
 }
 
+enum EnrichmentStatus {
+  PENDING     // Queued, waiting to be processed
+  PROCESSING  // Currently being enriched by LLM
+  COMPLETED   // Successfully enriched
+  FAILED      // Enrichment failed
+}
+
 model InterviewProcess {
   id              String   @id @default(cuid())
   userId          String
@@ -604,9 +611,10 @@ model CompanyInfo {
   githubUrl       String?  @db.Text
   
   // Metadata
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  source          String?  // "langchain_research", "manual", etc.
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  source            String?           // "langchain_research", "manual", etc.
+  enrichmentStatus  EnrichmentStatus  @default(PENDING) // Track enrichment progress
   
   // Relations
   interviews      InterviewProcess[]

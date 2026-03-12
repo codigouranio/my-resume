@@ -21,7 +21,7 @@ export class InterviewCreatedHandler implements IEventHandler<InterviewCreatedEv
 
     try {
       // Check if company info already exists
-      const companyInfo = await this.prisma.companyInfo.findFirst({
+      const existingCompany = await this.prisma.companyInfo.findFirst({
         where: {
           companyName: {
             equals: event.company,
@@ -30,12 +30,34 @@ export class InterviewCreatedHandler implements IEventHandler<InterviewCreatedEv
         },
       });
 
-      // If company doesn't exist, trigger enrichment
-      if (!companyInfo) {
-        this.logger.log(`Company "${event.company}" not found, triggering enrichment`);
-        await this.triggerCompanyEnrichment(event.company, event.userId);
+      if (!existingCompany) {
+        this.logger.log(`Company "${event.company}" not found, creating placeholder and triggering enrichment`);
+        
+        // Create placeholder CompanyInfo with PENDING status
+        const placeholderCompany = await this.prisma.companyInfo.create({
+          data: {
+            companyName: event.company,
+            enrichmentStatus: 'PENDING',
+            source: 'interview_trigger',
+          },
+        });
+
+        // Link the interview to the placeholder
+        await this.prisma.interviewProcess.update({
+          where: { id: event.interviewId },
+          data: { companyInfoId: placeholderCompany.id },
+        });
+
+        this.logger.log(`Created placeholder CompanyInfo ${placeholderCompany.id} with PENDING status`);
+
+        // Trigger enrichment
+        await this.triggerCompanyEnrichment(event.company, event.userId, placeholderCompany.id);
+      } else if (existingCompany.enrichmentStatus === 'FAILED' || existingCompany.enrichmentStatus === 'PENDING') {
+        // Retry enrichment for failed or stuck pending entries
+        this.logger.log(`Company "${event.company}" exists but status is ${existingCompany.enrichmentStatus}, retrying enrichment`);
+        await this.triggerCompanyEnrichment(event.company, event.userId, existingCompany.id);
       } else {
-        this.logger.log(`Company "${event.company}" already exists, skipping enrichment`);
+        this.logger.log(`Company "${event.company}" already exists with status ${existingCompany.enrichmentStatus}, skipping enrichment`);
       }
     } catch (error) {
       this.logger.error(`Failed to handle InterviewCreatedEvent: ${error.message}`, error.stack);
@@ -46,11 +68,19 @@ export class InterviewCreatedHandler implements IEventHandler<InterviewCreatedEv
   /**
    * Trigger company enrichment via LLM service
    */
-  private async triggerCompanyEnrichment(companyName: string, userId: string): Promise<void> {
+  private async triggerCompanyEnrichment(companyName: string, userId: string, companyId?: string): Promise<void> {
     const LLM_SERVICE_URL = process.env.LLM_SERVICE_URL || 'http://localhost:5000';
     const API_URL = process.env.API_BASE_URL || 'http://localhost:3000';
 
     try {
+      // Update status to PROCESSING
+      if (companyId) {
+        await this.prisma.companyInfo.update({
+          where: { id: companyId },
+          data: { enrichmentStatus: 'PROCESSING' },
+        });
+      }
+
       const response = await fetch(`${LLM_SERVICE_URL}/api/companies/enrich`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -59,6 +89,7 @@ export class InterviewCreatedHandler implements IEventHandler<InterviewCreatedEv
           callbackUrl: `${API_URL}/api/webhooks/llm-result`,
           metadata: {
             userId,
+            companyId,
             type: 'company_research',
             source: 'interview_created',
           },
@@ -70,9 +101,17 @@ export class InterviewCreatedHandler implements IEventHandler<InterviewCreatedEv
       }
 
       const result = await response.json();
-      this.logger.log(`Company enrichment queued: ${result.jobId}`);
+      this.logger.log(`Company enrichment queued: ${result.jobId} for company ${companyId || companyName}`);
     } catch (error) {
       this.logger.error(`Failed to trigger company enrichment: ${error.message}`);
+      
+      // Mark as FAILED if we have a companyId
+      if (companyId) {
+        await this.prisma.companyInfo.update({
+          where: { id: companyId },
+          data: { enrichmentStatus: 'FAILED' },
+        }).catch(err => this.logger.error(`Failed to update status to FAILED: ${err.message}`));
+      }
     }
   }
 }

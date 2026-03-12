@@ -160,15 +160,17 @@ export class WebhooksController {
         companyName: officialName,
         ...dataForDb,
         source: 'llm_webhook',
+        enrichmentStatus: 'COMPLETED',
       },
       update: {
         ...dataForDb,
         source: 'llm_webhook',
+        enrichmentStatus: 'COMPLETED',
         updatedAt: new Date(),
       },
     });
 
-    this.logger.log(`Saved company info: ${officialName}`);
+    this.logger.log(`Saved company info: ${officialName} with status COMPLETED`);
 
     // Link and normalize interviews
     const linkedCount = await this.companiesService.linkToInterviews(officialName);
