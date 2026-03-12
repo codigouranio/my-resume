@@ -17,6 +17,11 @@ export class InterviewsService {
           mode: 'insensitive',
         },
       },
+      select: {
+        id: true,
+        companyName: true,
+        legalName: true,
+      },
     });
 
     // Trigger company enrichment if company info doesn't exist
@@ -27,7 +32,7 @@ export class InterviewsService {
     return this.prisma.interviewProcess.create({
       data: {
         userId,
-        company: companyInfo?.companyName || dto.company, // Use official name if available
+        company: companyInfo?.legalName || companyInfo?.companyName || dto.company, // Use legal name, fallback to company name or user input
         position: dto.position,
         jobUrl: dto.jobUrl,
         description: dto.description,
@@ -161,11 +166,16 @@ export class InterviewsService {
             mode: 'insensitive',
           },
         },
+        select: {
+          id: true,
+          companyName: true,
+          legalName: true,
+        },
       });
       
       if (companyInfo) {
         companyInfoId = companyInfo.id;
-        normalizedCompanyName = companyInfo.companyName; // Use official name
+        normalizedCompanyName = companyInfo.legalName || companyInfo.companyName; // Use legal name when available
       } else {
         companyInfoId = null;
         // Trigger company enrichment for new company name

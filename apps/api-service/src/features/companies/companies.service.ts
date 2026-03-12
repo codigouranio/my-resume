@@ -132,13 +132,13 @@ export class CompaniesService {
         },
         data: {
           companyInfoId: companyInfo.id,
-          company: companyInfo.companyName, // Normalize to official company name
+          company: companyInfo.legalName || companyInfo.companyName, // Use legal name when available
         },
       });
 
       if (result.count > 0) {
         this.logger.log(
-          `Linked company info for ${companyName} to ${result.count} interview(s) and normalized company names`,
+          `Linked company info for ${companyName} to ${result.count} interview(s) and normalized company names to ${companyInfo.legalName || companyInfo.companyName}`,
         );
       }
 
@@ -159,38 +159,39 @@ export class CompaniesService {
   async normalizeAllCompanyNames(): Promise<{ updated: number; companies: string[] }> {
     try {
       const companies = await this.prisma.companyInfo.findMany({
-        select: { id: true, companyName: true },
+        select: { id: true, companyName: true, legalName: true },
       });
 
       let totalUpdated = 0;
       const updatedCompanies: string[] = [];
 
       for (const company of companies) {
+        const officialName = company.legalName || company.companyName;
         // Find interviews linked to this company but with different name (case-insensitive)
         const interviews = await this.prisma.interviewProcess.findMany({
           where: {
             companyInfoId: company.id,
             NOT: {
-              company: company.companyName, // Exact match (case-sensitive)
+              company: officialName, // Exact match (case-sensitive)
             },
           },
         });
 
         if (interviews.length > 0) {
-          // Update all these interviews to use the official name
+          // Update all these interviews to use the official name (legal name when available)
           const result = await this.prisma.interviewProcess.updateMany({
             where: {
               id: { in: interviews.map(i => i.id) },
             },
             data: {
-              company: company.companyName,
+              company: officialName,
             },
           });
 
           totalUpdated += result.count;
-          updatedCompanies.push(company.companyName);
+          updatedCompanies.push(officialName);
           this.logger.log(
-            `Normalized ${result.count} interview(s) to official name: ${company.companyName}`,
+            `Normalized ${result.count} interview(s) to official name: ${officialName}`,
           );
         }
       }
