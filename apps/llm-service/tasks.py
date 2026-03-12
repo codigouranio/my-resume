@@ -83,19 +83,19 @@ def call_webhook(callback_url: str, payload: dict, max_retries: int = 3):
 
     # Generate sorted JSON once - use for both signature AND HTTP body
     payload_json = json.dumps(payload, sort_keys=True)
-    
+
     # Generate signature from the sorted JSON string
     webhook_secret = os.getenv("LLM_WEBHOOK_SECRET", "").encode("utf-8")
     if not webhook_secret:
         logger.warning("LLM_WEBHOOK_SECRET not set - using default (insecure!)")
         webhook_secret = b"change-me-in-production"
-    
+
     signature = hmac.new(
         webhook_secret, payload_json.encode("utf-8"), hashlib.sha256
     ).hexdigest()
-    
+
     job_id = payload.get("jobId", "unknown")
-    
+
     logger.info(f"Generated webhook signature:")
     logger.info(f"  Secret: {webhook_secret[:10].decode('utf-8', errors='ignore')}...")
     logger.info(f"  Payload: {payload_json[:200]}...")

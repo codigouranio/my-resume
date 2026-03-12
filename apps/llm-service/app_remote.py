@@ -600,14 +600,14 @@ def call_webhook(callback_url: str, payload: dict, max_retries: int = 3):
 
     # Generate sorted JSON once - use for both signature AND HTTP body
     payload_json = json.dumps(payload, sort_keys=True)
-    
+
     # Generate signature from the sorted JSON string
     signature = hmac.new(
         WEBHOOK_SECRET, payload_json.encode("utf-8"), hashlib.sha256
     ).hexdigest()
-    
+
     job_id = payload.get("jobId", "unknown")
-    
+
     logger.debug(f"Generated webhook signature:")
     logger.debug(f"  Secret: {WEBHOOK_SECRET[:10].decode('utf-8')}...")
     logger.debug(f"  Payload: {payload_json[:200]}...")
