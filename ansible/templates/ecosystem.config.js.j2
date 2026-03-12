@@ -18,7 +18,7 @@ module.exports = {
         LLM_SERVICE_URL: 'http://localhost:{{ llm_port }}',
         API_BASE_URL: '{{ api_base_url | default('http://localhost:' ~ api_port) }}',
         FRONTEND_URL: '{{ frontend_url | default('http://localhost:' ~ frontend_port) }}',
-        CORS_ORIGINS: '{{ cors_origins | default('http://localhost:3001') }}',
+        CORS_ORIGINS: '{{ cors_origins | join(',') if cors_origins is iterable and cors_origins is not string else cors_origins | default('http://localhost:3001') }}',
         LLM_WEBHOOK_SECRET: '{{ llm_webhook_secret }}',
         STRIPE_SECRET_KEY: '{{ stripe_secret_key | default('sk_test_placeholder_not_configured') }}',
         STRIPE_WEBHOOK_SECRET: '{{ stripe_webhook_secret | default('whsec_placeholder_not_configured') }}',
