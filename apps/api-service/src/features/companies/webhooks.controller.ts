@@ -112,7 +112,9 @@ export class WebhooksController {
       return false;
     }
 
-    const payloadString = JSON.stringify(payload);
+    // Sort keys to match Python's json.dumps(sort_keys=True)
+    const sortedPayload = this.sortObjectKeys(payload);
+    const payloadString = JSON.stringify(sortedPayload);
     const expectedSignature = crypto
       .createHmac('sha256', this.webhookSecret)
       .update(payloadString)
@@ -123,6 +125,28 @@ export class WebhooksController {
       Buffer.from(signature),
       Buffer.from(expectedSignature),
     );
+  }
+
+  /**
+   * Recursively sort object keys (to match Python's json.dumps(sort_keys=True))
+   */
+  private sortObjectKeys(obj: any): any {
+    if (obj === null || typeof obj !== 'object') {
+      return obj;
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.sortObjectKeys(item));
+    }
+
+    const sortedObj: any = {};
+    Object.keys(obj)
+      .sort()
+      .forEach(key => {
+        sortedObj[key] = this.sortObjectKeys(obj[key]);
+      });
+
+    return sortedObj;
   }
 
   /**
