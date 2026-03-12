@@ -134,7 +134,9 @@ def call_webhook(callback_url: str, payload: dict, max_retries: int = 3):
 
             # Accept any 2xx status code as success (200, 201, 204, etc.)
             if 200 <= response.status_code < 300:
-                logger.info(f"Webhook delivered successfully for job {job_id} (status: {response.status_code})")
+                logger.info(
+                    f"Webhook delivered successfully for job {job_id} (status: {response.status_code})"
+                )
                 return True
             else:
                 logger.warning(
