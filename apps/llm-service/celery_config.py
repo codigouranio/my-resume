@@ -74,4 +74,5 @@ try:
     import tasks  # noqa: F401
 except ImportError as e:
     import logging
+
     logging.warning(f"Could not import tasks module: {e}")

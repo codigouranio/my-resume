@@ -1,9 +1,11 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '@shared/database/prisma.service';
 import { CreateInterviewDto, UpdateInterviewDto, CreateTimelineEntryDto, InterviewStatus } from './dto/interview.dto';
 
 @Injectable()
 export class InterviewsService {
+  private readonly logger = new Logger(InterviewsService.name);
+
   constructor(private prisma: PrismaService) {}
 
   async create(userId: string, dto: CreateInterviewDto) {
@@ -16,6 +18,11 @@ export class InterviewsService {
         },
       },
     });
+
+    // Trigger company enrichment if company info doesn't exist
+    if (dto.company && !companyInfo) {
+      this.triggerCompanyEnrichment(dto.company, userId);
+    }
 
     return this.prisma.interviewProcess.create({
       data: {
@@ -161,6 +168,8 @@ export class InterviewsService {
         normalizedCompanyName = companyInfo.companyName; // Use official name
       } else {
         companyInfoId = null;
+        // Trigger company enrichment for new company name
+        this.triggerCompanyEnrichment(dto.company, userId);
       }
     }
 
@@ -442,5 +451,48 @@ export class InterviewsService {
     return this.prisma.interviewTemplate.delete({
       where: { id: templateId },
     });
+  }
+
+  /**
+   * Trigger background company enrichment via Celery task queue
+   * @private
+   */
+  private async triggerCompanyEnrichment(companyName: string, userId: string) {
+    const LLM_SERVICE_URL =
+      process.env.LLM_SERVICE_URL || "http://localhost:5000";
+    
+    try {
+      const response = await fetch(`${LLM_SERVICE_URL}/api/companies/enrich`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          companyName: companyName,
+          callbackUrl: `${process.env.API_URL || 'http://localhost:3000'}/api/webhooks/llm-result`,
+          metadata: { 
+            userId: userId,
+            type: 'company_research',
+            source: 'interview'
+          },
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        this.logger.log(
+          `Company enrichment task queued: ${result.jobId} for ${companyName}`,
+        );
+      } else {
+        this.logger.warn(
+          `Failed to queue company enrichment for ${companyName}: ${response.statusText}`,
+        );
+      }
+    } catch (error) {
+      this.logger.error(
+        `Error triggering company enrichment for ${companyName}: ${error.message}`,
+      );
+      // Don't throw - interview was created/updated successfully
+    }
   }
 }
