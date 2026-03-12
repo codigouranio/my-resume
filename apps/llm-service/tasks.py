@@ -96,8 +96,11 @@ def call_webhook(callback_url: str, payload: dict, max_retries: int = 3):
                 f"Sending webhook to {callback_url} (attempt {attempt + 1}/{max_retries})"
             )
 
+            # Send the sorted JSON string to match the signature
+            # (requests.post json= parameter doesn't preserve key order)
+            payload_json = json.dumps(payload, sort_keys=True)
             response = requests.post(
-                callback_url, json=payload, headers=headers, timeout=10
+                callback_url, data=payload_json, headers=headers, timeout=10
             )
 
             if response.status_code == 200:
