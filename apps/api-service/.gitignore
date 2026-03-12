@@ -40,5 +40,6 @@ lerna-debug.log*
 .env.*.local
 
 # Prisma
-prisma/migrations/*
-!prisma/migrations/.gitkeep
+# Note: migrations are version controlled for deployment consistency
+# prisma/migrations/*
+# !prisma/migrations/.gitkeep
