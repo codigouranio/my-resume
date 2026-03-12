@@ -250,10 +250,10 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
   };
 
   return createPortal(
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 100000 }}>
       <div
         className="bg-base-100 rounded-lg shadow-xl max-w-2xl w-full flex flex-col overflow-hidden"
-        style={{ position: 'relative', zIndex: 10000, maxHeight: 'calc(100vh - 4rem)', height: 'auto' }}
+        style={{ position: 'relative', zIndex: 100001, maxHeight: 'calc(100vh - 4rem)', height: 'auto' }}
       >
         {/* Close button */}
         <button
@@ -610,8 +610,8 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
 
       {/* Template Save Modal */}
       {showTemplateModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4" style={{ zIndex: 10001 }}>
-          <div className="bg-base-100 rounded-lg shadow-xl max-w-md w-full overflow-y-auto" style={{ position: 'relative', zIndex: 10002, maxHeight: 'calc(100vh - 4rem)' }}>
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4" style={{ zIndex: 100002 }}>
+          <div className="bg-base-100 rounded-lg shadow-xl max-w-md w-full overflow-y-auto" style={{ position: 'relative', zIndex: 100003, maxHeight: 'calc(100vh - 4rem)' }}>
             {/* Close button */}
             <button
               type="button"
