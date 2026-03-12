@@ -27,22 +27,6 @@ export function InterviewDetail({ interviewId, onClose, onUpdate }: InterviewDet
     loadInterview();
   }, [interviewId]);
 
-  // Poll for enrichment status updates
-  useEffect(() => {
-    const shouldPoll =
-      interview?.companyInfo?.enrichmentStatus === 'PENDING' ||
-      interview?.companyInfo?.enrichmentStatus === 'PROCESSING';
-
-    if (!shouldPoll) return;
-
-    // Poll every 3 seconds for status updates
-    const pollInterval = setInterval(() => {
-      loadInterview();
-    }, 3000);
-
-    return () => clearInterval(pollInterval);
-  }, [interview?.companyInfo?.enrichmentStatus]);
-
   // Prevent body scroll when modal is open
   useEffect(() => {
     document.body.style.overflow = 'hidden';

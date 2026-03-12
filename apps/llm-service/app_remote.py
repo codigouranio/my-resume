@@ -578,6 +578,11 @@ def sign_webhook_payload(payload_dict: dict) -> str:
         webhook_secret, payload_json.encode("utf-8"), hashlib.sha256
     ).hexdigest()
 
+    logger.debug(f"Generated webhook signature:")
+    logger.debug(f"  Secret: {webhook_secret[:10].decode('utf-8')}...")
+    logger.debug(f"  Payload: {payload_json[:200]}...")
+    logger.debug(f"  Signature: {signature}")
+
     return signature
 
 

@@ -50,6 +50,8 @@ export class WebhooksController {
     
     if (this.webhookSecret === 'change-me-in-production') {
       this.logger.warn('⚠️  LLM_WEBHOOK_SECRET not set! Using default (INSECURE)');
+    } else {
+      this.logger.log(`✅ LLM_WEBHOOK_SECRET configured (${this.webhookSecret.substring(0, 10)}...)`);
     }
   }
 
@@ -112,19 +114,44 @@ export class WebhooksController {
       return false;
     }
 
-    // Sort keys to match Python's json.dumps(sort_keys=True)
-    const sortedPayload = this.sortObjectKeys(payload);
-    const payloadString = JSON.stringify(sortedPayload);
-    const expectedSignature = crypto
-      .createHmac('sha256', this.webhookSecret)
-      .update(payloadString)
-      .digest('hex');
+    try {
+      // Sort keys to match Python's json.dumps(sort_keys=True)
+      const sortedPayload = this.sortObjectKeys(payload);
+      const payloadString = JSON.stringify(sortedPayload);
+      const expectedSignature = crypto
+        .createHmac('sha256', this.webhookSecret)
+        .update(payloadString)
+        .digest('hex');
 
-    // Use timing-safe comparison to prevent timing attacks
-    return crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature),
-    );
+      this.logger.debug(`Webhook signature validation:`);
+      this.logger.debug(`  Received: ${signature}`);
+      this.logger.debug(`  Expected: ${expectedSignature}`);
+      this.logger.debug(`  Secret: ${this.webhookSecret.substring(0, 10)}...`);
+      this.logger.debug(`  Payload: ${payloadString.substring(0, 200)}...`);
+
+      // Check if lengths match before timing-safe comparison
+      if (signature.length !== expectedSignature.length) {
+        this.logger.warn(
+          `Signature length mismatch: received ${signature.length}, expected ${expectedSignature.length}`,
+        );
+        return false;
+      }
+
+      // Use timing-safe comparison to prevent timing attacks
+      const isValid = crypto.timingSafeEqual(
+        Buffer.from(signature),
+        Buffer.from(expectedSignature),
+      );
+
+      if (!isValid) {
+        this.logger.warn('Webhook signature validation failed');
+      }
+
+      return isValid;
+    } catch (error) {
+      this.logger.error(`Error verifying webhook signature: ${error.message}`);
+      return false;
+    }
   }
 
   /**
