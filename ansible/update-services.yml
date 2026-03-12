@@ -176,6 +176,24 @@
         executable: /bin/bash
       when: git_result.changed
 
+    - name: Run Prisma Migrations
+      shell: |
+        if [ -d "{{ api_service_path }}/conda-env" ]; then
+          source /opt/miniconda3/etc/profile.d/conda.sh
+          conda activate {{ api_service_path }}/conda-env
+        fi
+        npx prisma migrate deploy
+      args:
+        chdir: "{{ api_service_path }}"
+        executable: /bin/bash
+      when: git_result.changed
+      register: prisma_migrate_result
+
+    - name: Display Prisma migration status
+      debug:
+        msg: "{{ prisma_migrate_result.stdout_lines }}"
+      when: prisma_migrate_result is defined and prisma_migrate_result.stdout_lines is defined
+
     - name: Build API Service
       shell: |
         if [ -d "{{ api_service_path }}/conda-env" ]; then
