@@ -96,10 +96,22 @@ def call_webhook(callback_url: str, payload: dict, max_retries: int = 3):
 
     job_id = payload.get("jobId", "unknown")
 
-    logger.info(f"Generated webhook signature:")
-    logger.info(f"  Secret: {webhook_secret[:10].decode('utf-8', errors='ignore')}...")
-    logger.info(f"  Payload: {payload_json[:200]}...")
-    logger.info(f"  Signature: {signature}")
+    # Detailed debugging logs
+    payload_bytes = payload_json.encode("utf-8")
+    payload_hash = hashlib.sha256(payload_bytes).hexdigest()
+
+    logger.info(f"=== WEBHOOK SIGNATURE DEBUG (Celery) ===")
+    logger.info(f"  Job ID: {job_id}")
+    logger.info(
+        f"  Secret (first 10): {webhook_secret[:10].decode('utf-8', errors='ignore')}..."
+    )
+    logger.info(
+        f"  Payload length: {len(payload_json)} chars, {len(payload_bytes)} bytes"
+    )
+    logger.info(f"  Payload SHA256: {payload_hash}")
+    logger.info(f"  FULL Payload JSON:\n{payload_json}")
+    logger.info(f"  Generated Signature: {signature}")
+    logger.info(f"========================================")
 
     headers = {
         "Content-Type": "application/json",

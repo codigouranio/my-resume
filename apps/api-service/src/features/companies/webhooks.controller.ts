@@ -68,6 +68,13 @@ export class WebhooksController {
     @Headers('x-job-id') jobId: string,
   ): Promise<{ success: boolean; message: string }> {
     this.logger.log(`Received webhook for job ${payload.jobId} (${payload.type}): ${payload.status}`);
+    
+    // Log what we received BEFORE any processing
+    this.logger.log(`=== RECEIVED WEBHOOK (API) ===`);
+    this.logger.log(`  Job ID: ${payload.jobId}`);
+    this.logger.log(`  Signature Header: ${signature}`);
+    this.logger.log(`  Received Payload (as parsed by NestJS):\n${JSON.stringify(payload, null, 2)}`);
+    this.logger.log(`===============================`);
 
     // Verify webhook signature
     if (!this.verifyWebhookSignature(payload, signature)) {
@@ -123,11 +130,20 @@ export class WebhooksController {
         .update(payloadString)
         .digest('hex');
 
-      this.logger.debug(`Webhook signature validation:`);
-      this.logger.debug(`  Received: ${signature}`);
-      this.logger.debug(`  Expected: ${expectedSignature}`);
-      this.logger.debug(`  Secret: ${this.webhookSecret.substring(0, 10)}...`);
-      this.logger.debug(`  Payload: ${payloadString.substring(0, 200)}...`);
+      // Detailed debugging logs
+      const payloadBytes = Buffer.from(payloadString, 'utf-8');
+      const payloadHash = crypto.createHash('sha256').update(payloadBytes).digest('hex');
+      
+      this.logger.log(`=== WEBHOOK SIGNATURE DEBUG (API) ===`);
+      this.logger.log(`  Job ID: ${payload.jobId}`);
+      this.logger.log(`  Secret (first 10): ${this.webhookSecret.substring(0, 10)}...`);
+      this.logger.log(`  Payload length: ${payloadString.length} chars, ${payloadBytes.length} bytes`);
+      this.logger.log(`  Payload SHA256: ${payloadHash}`);
+      this.logger.log(`  FULL Payload JSON:\n${payloadString}`);
+      this.logger.log(`  Received Signature: ${signature}`);
+      this.logger.log(`  Expected Signature: ${expectedSignature}`);
+      this.logger.log(`  Signatures Match: ${signature === expectedSignature}`);
+      this.logger.log(`======================================`);
 
       // Check if lengths match before timing-safe comparison
       if (signature.length !== expectedSignature.length) {
