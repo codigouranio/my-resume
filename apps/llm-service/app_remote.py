@@ -598,9 +598,20 @@ def call_webhook(callback_url: str, payload: dict, max_retries: int = 3):
         logger.warning("No callback URL provided, skipping webhook")
         return
 
-    # Generate signature
-    signature = sign_webhook_payload(payload)
+    # Generate sorted JSON once - use for both signature AND HTTP body
+    payload_json = json.dumps(payload, sort_keys=True)
+    
+    # Generate signature from the sorted JSON string
+    signature = hmac.new(
+        WEBHOOK_SECRET, payload_json.encode("utf-8"), hashlib.sha256
+    ).hexdigest()
+    
     job_id = payload.get("jobId", "unknown")
+    
+    logger.debug(f"Generated webhook signature:")
+    logger.debug(f"  Secret: {WEBHOOK_SECRET[:10].decode('utf-8')}...")
+    logger.debug(f"  Payload: {payload_json[:200]}...")
+    logger.debug(f"  Signature: {signature}")
 
     headers = {
         "Content-Type": "application/json",
@@ -614,9 +625,7 @@ def call_webhook(callback_url: str, payload: dict, max_retries: int = 3):
                 f"Sending webhook to {callback_url} (attempt {attempt + 1}/{max_retries})"
             )
 
-            # Send the sorted JSON string to match the signature
-            # (requests.post json= parameter doesn't preserve key order)
-            payload_json = json.dumps(payload, sort_keys=True)
+            # Send the EXACT same sorted JSON string used for signature
             response = requests.post(
                 callback_url, data=payload_json, headers=headers, timeout=10
             )
