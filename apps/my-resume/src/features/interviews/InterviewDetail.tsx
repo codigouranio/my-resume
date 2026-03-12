@@ -27,6 +27,22 @@ export function InterviewDetail({ interviewId, onClose, onUpdate }: InterviewDet
     loadInterview();
   }, [interviewId]);
 
+  // Poll for enrichment status updates
+  useEffect(() => {
+    const shouldPoll =
+      interview?.companyInfo?.enrichmentStatus === 'PENDING' ||
+      interview?.companyInfo?.enrichmentStatus === 'PROCESSING';
+
+    if (!shouldPoll) return;
+
+    // Poll every 3 seconds for status updates
+    const pollInterval = setInterval(() => {
+      loadInterview();
+    }, 3000);
+
+    return () => clearInterval(pollInterval);
+  }, [interview?.companyInfo?.enrichmentStatus]);
+
   // Prevent body scroll when modal is open
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -366,6 +382,40 @@ export function InterviewDetail({ interviewId, onClose, onUpdate }: InterviewDet
         {interview.companyInfo && (
           <>
             <div className="divider">Company Information</div>
+            
+            {/* Enrichment Status Indicators */}
+            {interview.companyInfo.enrichmentStatus === 'PENDING' && (
+              <div className="alert alert-info mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="loading loading-spinner loading-sm"></div>
+                  <span>🔄 Researching {interview.company} information...</span>
+                </div>
+              </div>
+            )}
+
+            {interview.companyInfo.enrichmentStatus === 'PROCESSING' && (
+              <div className="alert alert-warning mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="loading loading-dots loading-sm"></div>
+                  <span>⏳ Processing company data from AI...</span>
+                </div>
+              </div>
+            )}
+
+            {interview.companyInfo.enrichmentStatus === 'FAILED' && (
+              <div className="alert alert-error mb-4">
+                <div className="flex items-center justify-between w-full">
+                  <span>❌ Failed to load company information</span>
+                  <button 
+                    className="btn btn-sm btn-outline"
+                    onClick={() => window.location.reload()}
+                  >
+                    🔄 Retry
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="bg-base-200 rounded-lg p-6 mb-6">
               <div className="flex items-start gap-4 mb-4">
                 {interview.companyInfo.logoUrl && (
@@ -381,6 +431,9 @@ export function InterviewDetail({ interviewId, onClose, onUpdate }: InterviewDet
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h4 className="text-xl font-bold">{interview.company}</h4>
+                    {interview.companyInfo.enrichmentStatus === 'COMPLETED' && (
+                      <span className="badge badge-success badge-sm">✓ Enriched</span>
+                    )}
                     {interview.companyInfo.website && (
                       <a
                         href={interview.companyInfo.website}

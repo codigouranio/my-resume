@@ -110,9 +110,12 @@ export interface Template {
   updatedAt: string;
 }
 
+export type EnrichmentStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+
 export interface CompanyInfo {
   id: string;
   companyName: string;
+  enrichmentStatus?: EnrichmentStatus;
   description?: string;
   industry?: string;
   founded?: number;

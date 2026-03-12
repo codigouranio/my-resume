@@ -58,6 +58,27 @@ export function InterviewCard({ interview, onEdit, onDelete, onArchive, onView }
               {/* Company Info Badges */}
               {interview.companyInfo && (
                 <div className="flex flex-wrap gap-1 mt-1">
+                  {/* Enrichment Status Badges */}
+                  {interview.companyInfo.enrichmentStatus === 'PENDING' && (
+                    <span className="badge badge-xs badge-info">
+                      🔄 Researching...
+                    </span>
+                  )}
+                  {interview.companyInfo.enrichmentStatus === 'PROCESSING' && (
+                    <span className="badge badge-xs badge-warning">
+                      ⏳ Processing...
+                    </span>
+                  )}
+                  {interview.companyInfo.enrichmentStatus === 'COMPLETED' && (
+                    <span className="badge badge-xs badge-success">
+                      ✓ Enriched
+                    </span>
+                  )}
+                  {interview.companyInfo.enrichmentStatus === 'FAILED' && (
+                    <span className="badge badge-xs badge-error">
+                      ❌ Failed
+                    </span>
+                  )}
                   {interview.companyInfo.companySize && (
                     <span className="badge badge-xs badge-primary">
                       {interview.companyInfo.companySize}
