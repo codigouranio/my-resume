@@ -218,10 +218,10 @@ export function InterviewDetail({ interviewId, onClose, onUpdate }: InterviewDet
               {interview.fitScore !== undefined && interview.fitScore !== null && (
                 <span
                   className={`badge badge-lg font-bold ${interview.fitScore >= 8
-                      ? 'badge-success'
-                      : interview.fitScore >= 6
-                        ? 'badge-warning'
-                        : 'badge-error'
+                    ? 'badge-success'
+                    : interview.fitScore >= 6
+                      ? 'badge-warning'
+                      : 'badge-error'
                     }`}
                   title="AI Position Fit Score"
                 >
@@ -382,7 +382,7 @@ export function InterviewDetail({ interviewId, onClose, onUpdate }: InterviewDet
         {interview.companyInfo && (
           <>
             <div className="divider">Company Information</div>
-            
+
             {/* Enrichment Status Indicators */}
             {interview.companyInfo.enrichmentStatus === 'PENDING' && (
               <div className="alert alert-info mb-4">
@@ -406,7 +406,7 @@ export function InterviewDetail({ interviewId, onClose, onUpdate }: InterviewDet
               <div className="alert alert-error mb-4">
                 <div className="flex items-center justify-between w-full">
                   <span>❌ Failed to load company information</span>
-                  <button 
+                  <button
                     className="btn btn-sm btn-outline"
                     onClick={() => window.location.reload()}
                   >
