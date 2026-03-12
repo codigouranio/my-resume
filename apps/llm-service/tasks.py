@@ -18,7 +18,20 @@ from company_research_agent import CompanyResearchAgent
 from position_fit_agent import PositionFitAgent
 from app_remote import RemoteLLMWrapper
 
+# Configure logging for Celery tasks
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    force=True  # Override any existing configuration
+)
 logger = logging.getLogger(__name__)
+
+# Log webhook secret on startup
+webhook_secret = os.getenv("LLM_WEBHOOK_SECRET", "")
+if webhook_secret:
+    logger.info(f"✅ Celery worker loaded with LLM_WEBHOOK_SECRET: {webhook_secret[:10]}...")
+else:
+    logger.warning("⚠️  Celery worker: LLM_WEBHOOK_SECRET not set!")
 
 
 class CallbackTask(Task):
@@ -46,6 +59,11 @@ def sign_webhook_payload(payload_dict: dict) -> str:
         payload_json.encode("utf-8"),
         hashlib.sha256
     ).hexdigest()
+    
+    logger.info(f"Generated webhook signature:")
+    logger.info(f"  Secret: {webhook_secret[:10].decode('utf-8', errors='ignore')}...")
+    logger.info(f"  Payload: {payload_json[:200]}...")
+    logger.info(f"  Signature: {signature}")
     
     return signature
 
