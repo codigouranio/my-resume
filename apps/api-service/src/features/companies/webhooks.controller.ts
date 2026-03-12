@@ -3,6 +3,7 @@ import {
   Post,
   Body,
   Headers,
+  Req,
   BadRequestException,
   UnauthorizedException,
   Logger,
@@ -13,6 +14,7 @@ import { PrismaService } from '@shared/database/prisma.service';
 import { EmailService } from '@shared/email/email.service';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
+import type { Request } from 'express';
 
 /**
  * Webhook payload from LLM service
@@ -63,6 +65,7 @@ export class WebhooksController {
       'Request must include X-Webhook-Signature header for security.',
   })
   async handleLLMResult(
+    @Req() req: Request & { rawBody?: Buffer },
     @Body() payload: LLMWebhookPayload,
     @Headers('x-webhook-signature') signature: string,
     @Headers('x-job-id') jobId: string,
@@ -76,8 +79,8 @@ export class WebhooksController {
     this.logger.log(`  Received Payload (as parsed by NestJS):\n${JSON.stringify(payload, null, 2)}`);
     this.logger.log(`===============================`);
 
-    // Verify webhook signature
-    if (!this.verifyWebhookSignature(payload, signature)) {
+    // Verify webhook signature against RAW body (before parsing)
+    if (!this.verifyWebhookSignature(req.rawBody, signature)) {
       this.logger.error(`Invalid webhook signature for job ${payload.jobId}`);
       throw new UnauthorizedException('Invalid webhook signature');
     }
@@ -113,33 +116,36 @@ export class WebhooksController {
   }
 
   /**
-   * Verify webhook signature using HMAC-SHA256
+   * Verify webhook signature using HMAC-SHA256 against RAW request body
    */
-  private verifyWebhookSignature(payload: any, signature: string): boolean {
+  private verifyWebhookSignature(rawBody: Buffer | undefined, signature: string): boolean {
     if (!signature) {
       this.logger.warn('No webhook signature provided');
       return false;
     }
 
+    if (!rawBody) {
+      this.logger.error('No raw body available for signature verification');
+      this.logger.error('Make sure rawBody: true is set in NestFactory.create()');
+      return false;
+    }
+
     try {
-      // Sort keys to match Python's json.dumps(sort_keys=True)
-      const sortedPayload = this.sortObjectKeys(payload);
-      const payloadString = JSON.stringify(sortedPayload);
+      // Compute expected signature from RAW body (before any parsing)
       const expectedSignature = crypto
         .createHmac('sha256', this.webhookSecret)
-        .update(payloadString)
+        .update(rawBody)
         .digest('hex');
 
       // Detailed debugging logs
-      const payloadBytes = Buffer.from(payloadString, 'utf-8');
-      const payloadHash = crypto.createHash('sha256').update(payloadBytes).digest('hex');
+      const payloadString = rawBody.toString('utf-8');
+      const payloadHash = crypto.createHash('sha256').update(rawBody).digest('hex');
       
       this.logger.log(`=== WEBHOOK SIGNATURE DEBUG (API) ===`);
-      this.logger.log(`  Job ID: ${payload.jobId}`);
       this.logger.log(`  Secret (first 10): ${this.webhookSecret.substring(0, 10)}...`);
-      this.logger.log(`  Payload length: ${payloadString.length} chars, ${payloadBytes.length} bytes`);
+      this.logger.log(`  Raw Body length: ${rawBody.length} bytes`);
       this.logger.log(`  Payload SHA256: ${payloadHash}`);
-      this.logger.log(`  FULL Payload JSON:\n${payloadString}`);
+      this.logger.log(`  FULL Raw Body:\n${payloadString}`);
       this.logger.log(`  Received Signature: ${signature}`);
       this.logger.log(`  Expected Signature: ${expectedSignature}`);
       this.logger.log(`  Signatures Match: ${signature === expectedSignature}`);
@@ -168,28 +174,6 @@ export class WebhooksController {
       this.logger.error(`Error verifying webhook signature: ${error.message}`);
       return false;
     }
-  }
-
-  /**
-   * Recursively sort object keys (to match Python's json.dumps(sort_keys=True))
-   */
-  private sortObjectKeys(obj: any): any {
-    if (obj === null || typeof obj !== 'object') {
-      return obj;
-    }
-
-    if (Array.isArray(obj)) {
-      return obj.map(item => this.sortObjectKeys(item));
-    }
-
-    const sortedObj: any = {};
-    Object.keys(obj)
-      .sort()
-      .forEach(key => {
-        sortedObj[key] = this.sortObjectKeys(obj[key]);
-      });
-
-    return sortedObj;
   }
 
   /**

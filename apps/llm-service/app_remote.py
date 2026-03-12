@@ -571,7 +571,9 @@ def sign_webhook_payload(payload_dict: dict) -> str:
 
     # Serialize payload with consistent ordering AND compact format (no spaces)
     # Match JavaScript's JSON.stringify() behavior
-    payload_json = json.dumps(payload_dict, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    payload_json = json.dumps(
+        payload_dict, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    )
 
     # Generate HMAC signature
     signature = hmac.new(
@@ -603,7 +605,9 @@ def call_webhook(callback_url: str, payload: dict, max_retries: int = 3):
     # CRITICAL: Match JavaScript's JSON.stringify() behavior:
     # - separators=(',', ':') for compact format (no spaces)
     # - ensure_ascii=False to preserve unicode characters (José not Jos\u00e9)
-    payload_json = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    payload_json = json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    )
 
     # Generate signature from the sorted JSON string
     signature = hmac.new(
