@@ -11,7 +11,22 @@ module.exports = {
       env: {
         NODE_ENV: '{{ node_env }}',
         PORT: {{ api_port }},
-        LOG_LEVEL: '{{ enable_debug_logging | ternary('debug', 'info') }}'
+        LOG_LEVEL: '{{ enable_debug_logging | ternary('debug', 'info') }}',
+        DATABASE_URL: 'postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}?schema=public',
+        JWT_SECRET: '{{ jwt_secret }}',
+        JWT_EXPIRES_IN: '7d',
+        LLM_SERVICE_URL: 'http://localhost:{{ llm_port }}',
+        API_BASE_URL: '{{ api_base_url | default('http://localhost:' ~ api_port) }}',
+        FRONTEND_URL: '{{ frontend_url | default('http://localhost:' ~ frontend_port) }}',
+        CORS_ORIGINS: '{{ cors_origins | default('http://localhost:3001') }}',
+        LLM_WEBHOOK_SECRET: '{{ llm_webhook_secret }}',
+        STRIPE_SECRET_KEY: '{{ stripe_secret_key | default('sk_test_placeholder_not_configured') }}',
+        STRIPE_WEBHOOK_SECRET: '{{ stripe_webhook_secret | default('whsec_placeholder_not_configured') }}',
+        STRIPE_PRICE_ID: '{{ stripe_price_id | default('price_placeholder_not_configured') }}',
+        AWS_REGION: '{{ aws_region | default('us-east-1') }}',
+        AWS_ACCESS_KEY_ID: '{{ aws_access_key_id | default('') }}',
+        AWS_SECRET_ACCESS_KEY: '{{ aws_secret_access_key | default('') }}',
+        SES_FROM_EMAIL: '{{ ses_from_email | default('noreply@example.com') }}'
       },
       error_file: '{{ api_service_path }}/logs/api-error.log',
       out_file: '{{ api_service_path }}/logs/api-out.log',

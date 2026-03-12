@@ -290,6 +290,7 @@ Search Results:
 Extract the following information and return ONLY valid JSON (no markdown, no explanations):
 
 {{
+  "legalName": "Official legal/registered company name (e.g., 'Google LLC', 'Meta Platforms, Inc.', 'Amazon.com, Inc.')",
   "description": "Brief 2-3 sentence company description",
   "industry": "Primary industry (e.g., Technology, Healthcare, Finance)",
   "founded": year as integer or null,
@@ -311,6 +312,7 @@ Extract the following information and return ONLY valid JSON (no markdown, no ex
 }}
 
 Rules:
+- legalName should be the official registered name including suffixes like LLC, Inc., Ltd., Corp., etc.
 - Use null for unknown fields, not "Unknown" or empty strings
 - For arrays, use [] if no data found
 - Be precise with numbers (use null if uncertain)

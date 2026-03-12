@@ -571,6 +571,7 @@ model InterviewTemplate {
 model CompanyInfo {
   id              String   @id @default(cuid())
   companyName     String   @unique
+  legalName       String?  // Official legal/registered name (e.g., "Google LLC", "Meta Platforms, Inc.")
   
   // Basic Info
   description     String?  @db.Text

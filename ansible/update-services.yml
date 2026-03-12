@@ -93,6 +93,7 @@
           PORT={{ api_port }}
           NODE_ENV={{ node_env }}
           LLM_SERVICE_URL="http://localhost:{{ llm_port }}"
+          LLM_WEBHOOK_SECRET="{{ llm_webhook_secret }}"
           CORS_ORIGINS="{{ cors_origins | join(',') }}"
           STRIPE_SECRET_KEY={{ stripe_secret_key | default('sk_test_placeholder_not_configured') }}
           STRIPE_WEBHOOK_SECRET={{ stripe_webhook_secret | default('whsec_placeholder_not_configured') }}

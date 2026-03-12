@@ -139,7 +139,7 @@ export class WebhooksController {
     const { companyName, ...enrichedData } = data;
     const officialName = companyName;
 
-    this.logger.log(`Processing company enrichment: ${officialName}`);
+    this.logger.log(`Processing company enrichment: ${officialName}${enrichedData.legalName ? ` (Legal: ${enrichedData.legalName})` : ''}`);
 
     // Convert data types for Prisma
     const dataForDb: any = { ...enrichedData };
