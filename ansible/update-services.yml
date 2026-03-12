@@ -10,6 +10,50 @@
     - group_vars/all.yml
   
   tasks:
+    - name: Pre-flight check - Verify app directory exists
+      stat:
+        path: "{{ app_root }}"
+      register: app_root_check
+      failed_when: not app_root_check.stat.exists
+
+    - name: Pre-flight check - Find PM2 location
+      shell: |
+        # Try common PM2 locations
+        if [ -f "/home/{{ ansible_user }}/.npm-global/bin/pm2" ]; then
+          echo "/home/{{ ansible_user }}/.npm-global/bin/pm2"
+          exit 0
+        fi
+        
+        if command -v pm2 >/dev/null 2>&1; then
+          which pm2
+          exit 0
+        fi
+        
+        # PM2 not found
+        echo "NOT_FOUND"
+        exit 0
+      register: pm2_location
+      changed_when: false
+      failed_when: false
+
+    - name: Set PM2 path variable
+      set_fact:
+        pm2_cmd: "{{ (pm2_location.stdout | trim) if (pm2_location.stdout and pm2_location.stdout | trim != '' and pm2_location.stdout != 'NOT_FOUND') else 'NOT_FOUND' }}"
+
+    - name: Debug PM2 location
+      debug:
+        msg: "PM2 command: '{{ pm2_cmd }}' (stdout was: '{{ pm2_location.stdout }}')"
+
+    - name: Display PM2 status
+      debug:
+        msg: "PM2 found at: {{ pm2_cmd }}"
+      when: pm2_cmd != "NOT_FOUND"
+
+    - name: Warning if PM2 not found
+      debug:
+        msg: "WARNING: PM2 not found. Services will not be restarted. Run full deployment first."
+      when: pm2_cmd == "NOT_FOUND"
+
     - name: Check API conda environment
       stat:
         path: "{{ api_service_path }}/conda-env"
@@ -19,6 +63,14 @@
       stat:
         path: "{{ frontend_path }}/conda-env"
       register: frontend_conda_env
+
+    - name: Stash any local changes before git pull
+      shell: |
+        cd {{ app_root }}
+        git stash || true
+      args:
+        executable: /bin/bash
+      ignore_errors: yes
 
     - name: Pull latest code from git
       git:
@@ -136,13 +188,28 @@
       when: git_result.changed
 
     - name: Restart API Service
-      command: "/home/{{ ansible_user }}/.npm-global/bin/pm2 restart api-service"
-      when: git_result.changed or api_env_result.changed
+      shell: |
+        if {{ pm2_cmd }} list | grep -q "api-service"; then
+          {{ pm2_cmd }} restart api-service
+        else
+          echo "api-service not running in PM2, skipping restart"
+        fi
+      args:
+        executable: /bin/bash
+      when: 
+        - pm2_cmd != "NOT_FOUND"
+        - git_result.changed or api_env_result.changed
 
     # LLM Service (no build needed, Python)
     - name: Update LLM Service dependencies with Poetry
       shell: |
         export PATH="$HOME/.local/bin:$PATH"
+        # Check if poetry is installed
+        if ! command -v poetry &> /dev/null; then
+          echo "Poetry not found in PATH: $PATH"
+          curl -sSL https://install.python-poetry.org | python3 -
+          export PATH="$HOME/.local/bin:$PATH"
+        fi
         cd {{ llm_service_path }}
         poetry install --no-root
       args:
@@ -150,18 +217,43 @@
       when: git_result.changed
     
     - name: Restart LLM Service
-      command: "/home/{{ ansible_user }}/.npm-global/bin/pm2 restart llm-service"
-      when: git_result.changed or llm_env_result.changed
+      shell: |
+        if {{ pm2_cmd }} list | grep -q "llm-service"; then
+          {{ pm2_cmd }} restart llm-service
+        else
+          echo "llm-service not running in PM2, skipping restart"
+        fi
+      args:
+        executable: /bin/bash
+      when:
+        - pm2_cmd != "NOT_FOUND"
+        - git_result.changed or llm_env_result.changed
     
     - name: Restart Celery Worker
-      command: "/home/{{ ansible_user }}/.npm-global/bin/pm2 restart llm-celery-worker"
-      when: git_result.changed or llm_env_result.changed
-      ignore_errors: yes
+      shell: |
+        if {{ pm2_cmd }} list | grep -q "llm-celery-worker"; then
+          {{ pm2_cmd }} restart llm-celery-worker
+        else
+          echo "llm-celery-worker not running in PM2, skipping restart"
+        fi
+      args:
+        executable: /bin/bash
+      when:
+        - pm2_cmd != "NOT_FOUND"
+        - git_result.changed or llm_env_result.changed
     
     - name: Restart Flower Dashboard
-      command: "/home/{{ ansible_user }}/.npm-global/bin/pm2 restart llm-flower"
-      when: (git_result.changed or llm_env_result.changed) and flower_enabled | default(true)
-      ignore_errors: yes
+      shell: |
+        if {{ pm2_cmd }} list | grep -q "llm-flower"; then
+          {{ pm2_cmd }} restart llm-flower
+        else
+          echo "llm-flower not running in PM2, skipping restart"
+        fi
+      args:
+        executable: /bin/bash
+      when:
+        - pm2_cmd != "NOT_FOUND"
+        - (git_result.changed or llm_env_result.changed) and flower_enabled | default(true)
 
     # Frontend
     - name: Clean frontend node_modules and lock file
@@ -197,10 +289,40 @@
         executable: /bin/bash
       when: git_result.changed or frontend_env_result.changed
 
+    - name: Get PM2 status after update
+      shell: "{{ pm2_cmd }} list"
+      register: pm2_final_status
+      changed_when: false
+      when: pm2_cmd != "NOT_FOUND"
+      failed_when: false
+
     - name: Display completion message
       debug:
         msg: |
           ✅ Services updated successfully!
           
-          Check status: pm2 status
-          View logs: pm2 logs
+          Git changes: {{ git_result.changed }}
+          API env updated: {{ api_env_result.changed }}
+          LLM env updated: {{ llm_env_result.changed }}
+          Frontend env updated: {{ frontend_env_result.changed }}
+          
+          {% if pm2_cmd != "NOT_FOUND" %}
+          PM2 Status:
+          {{ pm2_final_status.stdout }}
+          
+          Next steps:
+          - Check status: ssh {{ ansible_user }}@{{ ansible_host }} '{{ pm2_cmd }} status'
+          - View logs: ssh {{ ansible_user }}@{{ ansible_host }} '{{ pm2_cmd }} logs'
+          - Test API: curl http://{{ ansible_host }}:{{ api_port }}/api/health
+          - Access Flower: ssh -L 5555:localhost:5555 {{ ansible_user }}@{{ ansible_host }}
+          {% else %}
+          ⚠️  WARNING: PM2 not found on server!
+          
+          Services were NOT restarted. To complete setup:
+          1. Run full deployment: ansible-playbook playbooks/03-application-deploy.yml --ask-become-pass --ask-vault-pass
+          2. Or manually start services:
+             ssh {{ ansible_user }}@{{ ansible_host }}
+             cd {{ app_root }}
+             pm2 start ecosystem.config.js
+             pm2 save
+          {% endif %}

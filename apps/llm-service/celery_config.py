@@ -68,5 +68,10 @@ celery_app.conf.update(
     task_send_sent_event=True,
 )
 
-# Import tasks (this registers them with Celery)
-celery_app.autodiscover_tasks(["llm_service"], force=True)
+# Import tasks module to register tasks with Celery
+# This must be done after celery_app is configured to avoid circular imports
+try:
+    import tasks  # noqa: F401
+except ImportError as e:
+    import logging
+    logging.warning(f"Could not import tasks module: {e}")
