@@ -132,13 +132,13 @@ export class CompaniesService {
         },
         data: {
           companyInfoId: companyInfo.id,
-          company: companyInfo.legalName || companyInfo.companyName, // Use legal name when available
+          // Don't change company name - keep user input as-is
         },
       });
 
       if (result.count > 0) {
         this.logger.log(
-          `Linked company info for ${companyName} to ${result.count} interview(s) and normalized company names to ${companyInfo.legalName || companyInfo.companyName}`,
+          `Linked company info for ${companyName} to ${result.count} interview(s)`,
         );
       }
 

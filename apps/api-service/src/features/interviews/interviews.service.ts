@@ -1,12 +1,17 @@
 import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { EventBus } from '@nestjs/cqrs';
 import { PrismaService } from '@shared/database/prisma.service';
 import { CreateInterviewDto, UpdateInterviewDto, CreateTimelineEntryDto, InterviewStatus } from './dto/interview.dto';
+import { InterviewCreatedEvent, InterviewCompanyChangedEvent } from './events';
 
 @Injectable()
 export class InterviewsService {
   private readonly logger = new Logger(InterviewsService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventBus: EventBus,
+  ) {}
 
   async create(userId: string, dto: CreateInterviewDto) {
     // Try to find existing company info for auto-linking
@@ -19,20 +24,13 @@ export class InterviewsService {
       },
       select: {
         id: true,
-        companyName: true,
-        legalName: true,
       },
     });
 
-    // Trigger company enrichment if company info doesn't exist
-    if (dto.company && !companyInfo) {
-      this.triggerCompanyEnrichment(dto.company, userId);
-    }
-
-    return this.prisma.interviewProcess.create({
+    const interview = await this.prisma.interviewProcess.create({
       data: {
         userId,
-        company: companyInfo?.legalName || companyInfo?.companyName || dto.company, // Use legal name, fallback to company name or user input
+        company: dto.company, // Keep user input as-is
         position: dto.position,
         jobUrl: dto.jobUrl,
         description: dto.description,
@@ -57,6 +55,13 @@ export class InterviewsService {
         companyInfo: true,
       },
     });
+
+    // Publish domain event for side effects (company enrichment)
+    this.eventBus.publish(
+      new InterviewCreatedEvent(interview.id, userId, dto.company, dto.position),
+    );
+
+    return interview;
   }
 
   async findAll(userId: string, filters?: {
@@ -154,9 +159,8 @@ export class InterviewsService {
       throw new NotFoundException('Interview not found');
     }
 
-    // If company name changed, try to re-link company info and normalize name
+    // If company name changed, try to re-link company info
     let companyInfoId = interview.companyInfoId;
-    let normalizedCompanyName = dto.company;
     
     if (dto.company && dto.company !== interview.company) {
       const companyInfo = await this.prisma.companyInfo.findFirst({
@@ -168,25 +172,24 @@ export class InterviewsService {
         },
         select: {
           id: true,
-          companyName: true,
-          legalName: true,
         },
       });
       
       if (companyInfo) {
         companyInfoId = companyInfo.id;
-        normalizedCompanyName = companyInfo.legalName || companyInfo.companyName; // Use legal name when available
       } else {
         companyInfoId = null;
-        // Trigger company enrichment for new company name
-        this.triggerCompanyEnrichment(dto.company, userId);
+        // Publish event for company enrichment side effect
+        this.eventBus.publish(
+          new InterviewCompanyChangedEvent(id, userId, interview.company, dto.company),
+        );
       }
     }
 
     return this.prisma.interviewProcess.update({
       where: { id },
       data: {
-        company: normalizedCompanyName,
+        company: dto.company || interview.company, // Keep user input as-is
         position: dto.position,
         jobUrl: dto.jobUrl,
         description: dto.description,
@@ -461,48 +464,5 @@ export class InterviewsService {
     return this.prisma.interviewTemplate.delete({
       where: { id: templateId },
     });
-  }
-
-  /**
-   * Trigger background company enrichment via Celery task queue
-   * @private
-   */
-  private async triggerCompanyEnrichment(companyName: string, userId: string) {
-    const LLM_SERVICE_URL =
-      process.env.LLM_SERVICE_URL || "http://localhost:5000";
-    
-    try {
-      const response = await fetch(`${LLM_SERVICE_URL}/api/companies/enrich`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          companyName: companyName,
-          callbackUrl: `${process.env.API_URL || 'http://localhost:3000'}/api/webhooks/llm-result`,
-          metadata: { 
-            userId: userId,
-            type: 'company_research',
-            source: 'interview'
-          },
-        }),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        this.logger.log(
-          `Company enrichment task queued: ${result.jobId} for ${companyName}`,
-        );
-      } else {
-        this.logger.warn(
-          `Failed to queue company enrichment for ${companyName}: ${response.statusText}`,
-        );
-      }
-    } catch (error) {
-      this.logger.error(
-        `Error triggering company enrichment for ${companyName}: ${error.message}`,
-      );
-      // Don't throw - interview was created/updated successfully
-    }
   }
 }
