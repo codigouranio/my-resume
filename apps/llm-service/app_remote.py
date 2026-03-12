@@ -78,6 +78,11 @@ DATABASE_URL = os.getenv(
     "DATABASE_URL", "postgresql://resume_user:resume_password@localhost:5432/resume_db"
 )
 
+WEBHOOK_SECRET = os.getenv("LLM_WEBHOOK_SECRET", "").encode("utf-8")
+if not WEBHOOK_SECRET:
+    logger.warning("LLM_WEBHOOK_SECRET not set - webhook signatures will be insecure!")
+    WEBHOOK_SECRET = b"change-me-in-production"
+
 
 def get_db_connection():
     """Create a database connection."""
@@ -563,23 +568,17 @@ def sign_webhook_payload(payload_dict: dict) -> str:
     Returns:
         Hex string of HMAC signature
     """
-    webhook_secret = os.getenv("LLM_WEBHOOK_SECRET", "").encode("utf-8")
-    if not webhook_secret:
-        logger.warning(
-            "LLM_WEBHOOK_SECRET not set - webhook signatures will be insecure!"
-        )
-        webhook_secret = b"change-me-in-production"
 
     # Serialize payload with consistent ordering
     payload_json = json.dumps(payload_dict, sort_keys=True)
 
     # Generate HMAC signature
     signature = hmac.new(
-        webhook_secret, payload_json.encode("utf-8"), hashlib.sha256
+        WEBHOOK_SECRET, payload_json.encode("utf-8"), hashlib.sha256
     ).hexdigest()
 
     logger.debug(f"Generated webhook signature:")
-    logger.debug(f"  Secret: {webhook_secret[:10].decode('utf-8')}...")
+    logger.debug(f"  Secret: {WEBHOOK_SECRET[:10].decode('utf-8')}...")
     logger.debug(f"  Payload: {payload_json[:200]}...")
     logger.debug(f"  Signature: {signature}")
 
