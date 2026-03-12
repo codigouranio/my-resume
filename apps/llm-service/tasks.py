@@ -55,7 +55,8 @@ def sign_webhook_payload(payload_dict: dict) -> str:
         logger.warning("LLM_WEBHOOK_SECRET not set - using default (insecure!)")
         webhook_secret = b"change-me-in-production"
 
-    payload_json = json.dumps(payload_dict, sort_keys=True)
+    # Use separators=(',', ':') to match JavaScript's compact JSON format
+    payload_json = json.dumps(payload_dict, sort_keys=True, separators=(",", ":"))
     signature = hmac.new(
         webhook_secret, payload_json.encode("utf-8"), hashlib.sha256
     ).hexdigest()
@@ -82,7 +83,8 @@ def call_webhook(callback_url: str, payload: dict, max_retries: int = 3):
         return
 
     # Generate sorted JSON once - use for both signature AND HTTP body
-    payload_json = json.dumps(payload, sort_keys=True)
+    # CRITICAL: Use separators=(',', ':') to match JavaScript's JSON.stringify() compact format
+    payload_json = json.dumps(payload, sort_keys=True, separators=(",", ":"))
 
     # Generate signature from the sorted JSON string
     webhook_secret = os.getenv("LLM_WEBHOOK_SECRET", "").encode("utf-8")
