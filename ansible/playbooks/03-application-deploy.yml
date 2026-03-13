@@ -156,7 +156,11 @@
       become: yes # Needed if /opt/my-resume requires root to create/write
 
     - name: Check if Poetry is installed
-      command: which poetry
+      shell: |
+        export PATH="$HOME/.local/bin:$PATH"
+        which poetry || echo "not_found"
+      args:
+        executable: /bin/bash
       register: poetry_check
       ignore_errors: yes
       changed_when: false
@@ -169,20 +173,66 @@
       args:
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
-      when: poetry_check.rc != 0
+      when: '"not_found" in poetry_check.stdout'
 
     - name: Configure Poetry to use in-project virtualenvs
-      command: ~/.local/bin/poetry config virtualenvs.in-project true
+      shell: |
+        export PATH="$HOME/.local/bin:$PATH"
+        poetry config virtualenvs.in-project true
+      args:
+        executable: /bin/bash
       become_user: "{{ ansible_user }}"
+      become_user: "{{ ansible_user }}"
+
+    - name: Debug - Check Poetry and Python versions
+      shell: |
+        export PATH="$HOME/.local/bin:$PATH"
+        echo "Poetry version:"
+        poetry --version || echo "Poetry not found"
+        echo "Python version:"
+        python3 --version
+        echo "pyproject.toml exists:"
+        ls -la {{ llm_service_path }}/pyproject.toml
+      args:
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+      register: poetry_debug
+      ignore_errors: yes
+
+    - name: Display Poetry debug info
+      debug:
+        var: poetry_debug.stdout_lines
 
     - name: Install LLM service Python dependencies with Poetry
       shell: |
         export PATH="$HOME/.local/bin:$PATH"
         cd {{ llm_service_path }}
-        poetry install --no-root
+        poetry install --no-root --verbose
       args:
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
+      register: poetry_install
+      failed_when: false
+
+    - name: Display Poetry install output
+      debug:
+        var: poetry_install
+
+    - name: Fail if Poetry install failed
+      fail:
+        msg: "Poetry installation failed. See output above for details."
+      when: poetry_install.rc != 0
+
+    - name: Retry Poetry install with cleared cache (if first attempt failed)
+      shell: |
+        export PATH="$HOME/.local/bin:$PATH"
+        cd {{ llm_service_path }}
+        poetry cache clear pypi --all -n || true
+        poetry install --no-root --verbose
+      args:
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+      when: poetry_install.rc != 0
 
     - name: Install CUDA-enabled llama-cpp-python
       shell: |
