@@ -2,6 +2,24 @@
 
 Full-stack resume website with AI chatbot powered by LLAMA.
 
+## 🔐 Service Authentication
+
+The platform uses **dual authentication** for secure service-to-service communication:
+
+- **API → LLM:** API Key Authentication (X-API-Key header)
+- **LLM → API:** JWT Authentication (Bearer token)
+
+📖 **[Read the Complete Service Interactions Guide →](SERVICE_INTERACTIONS.md)**
+
+Quick setup:
+```bash
+# Generate credentials
+openssl rand -hex 32        # API key
+openssl rand -base64 32     # JWT password
+
+# Configure .env files (see SERVICE_INTERACTIONS.md for details)
+```
+
 ## Project Structure
 
 ```
@@ -38,7 +56,7 @@ Flask API service that uses LLAMA running on RTX 3090 GPU to answer questions ab
 
 **Tech Stack:** Python 3.10+, Flask, llama-cpp-python, CUDA
 
-**Authentication:** JWT-based service-to-service authentication (see [JWT_AUTH_GUIDE.md](JWT_AUTH_GUIDE.md))
+**Authentication:** Dual authentication (API Key + JWT) - see [SERVICE_INTERACTIONS.md](SERVICE_INTERACTIONS.md)
 
 **Quick Start:**
 ```bash
@@ -47,7 +65,7 @@ cd apps/llm-service
 # 1. Setup environment and dependencies
 ./setup_poetry.sh
 
-# 2. Configure JWT authentication
+# 2. Configure authentication (API keys + JWT)
 cp .env.example .env
 # Edit .env and set LLM_SERVICE_USERNAME and LLM_SERVICE_PASSWORD
 # (must match credentials in API service)
@@ -60,7 +78,7 @@ USE_POETRY=true ./run.sh
 ```
 
 See [apps/llm-service/README.md](apps/llm-service/README.md) for detailed setup.  
-See [JWT_AUTH_GUIDE.md](JWT_AUTH_GUIDE.md) for authentication configuration.
+See [SERVICE_INTERACTIONS.md](SERVICE_INTERACTIONS.md) for complete authentication setup (API keys + JWT).
 
 ## Infrastructure
 
@@ -135,9 +153,11 @@ cp .env.example .env
 #   OLLAMA_MODEL=llama3.1:latest
 ```
 
-**⚠️ Important:** The `LLM_SERVICE_PASSWORD` must be identical in both API service and LLM service `.env` files.
+**⚠️ Important:** 
+- The `LLM_SERVICE_PASSWORD` must be identical in both API service and LLM service `.env` files
+- The `LLM_API_KEY` must exist in the LLM service's `LLM_API_KEYS` JSON
 
-See [JWT_AUTH_GUIDE.md](JWT_AUTH_GUIDE.md) for detailed authentication setup.
+See [SERVICE_INTERACTIONS.md](SERVICE_INTERACTIONS.md) for complete authentication setup including API keys.
 
 ## Development Workflow
 

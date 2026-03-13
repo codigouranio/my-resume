@@ -26,7 +26,7 @@ module.exports = {
         AWS_REGION: '{{ aws_region | default('us-east-1') }}',
         AWS_ACCESS_KEY_ID: '{{ aws_access_key_id | default('') }}',
         AWS_SECRET_ACCESS_KEY: '{{ aws_secret_access_key | default('') }}',
-        SES_FROM_EMAIL: '{{ ses_from_email | default('noreply@example.com') }}'
+        SES_FROM_EMAIL: '{{ ses_from_email | default('noreply@example.com') }}',
         LLM_API_KEY: '{{ llm_api_key }}',
         LLM_SERVICE_USERNAME: '{{ llm_service_username }}',
         LLM_SERVICE_PASSWORD: '{{ llm_service_password }}'
