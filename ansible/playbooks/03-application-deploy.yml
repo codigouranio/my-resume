@@ -203,6 +203,17 @@
       debug:
         var: poetry_debug.stdout_lines
 
+    - name: Update Poetry lock file
+      shell: |
+        export PATH="$HOME/.local/bin:$PATH"
+        cd {{ llm_service_path }}
+        poetry lock --no-update
+      args:
+        executable: /bin/bash
+      become_user: "{{ ansible_user }}"
+      register: poetry_lock
+      ignore_errors: yes
+
     - name: Install LLM service Python dependencies with Poetry
       shell: |
         export PATH="$HOME/.local/bin:$PATH"
