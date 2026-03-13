@@ -1,0 +1,198 @@
+name: Deploy to Google Cloud Platform
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/**'
+      - 'infra/gcp/**'
+      - '.github/workflows/deploy-gcp.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'infra/gcp/**'
+  workflow_dispatch:
+
+env:
+  GCP_PROJECT_ID: resume-cast-ai-prod
+  GCP_REGION: us-central1
+  ARTIFACT_REGISTRY: us-central1-docker.pkg.dev
+  REPOSITORY: resumecast-images
+
+jobs:
+  terraform:
+    name: Terraform Plan/Apply
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    defaults:
+      run:
+        working-directory: ./infra/gcp
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.0
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Format Check
+        run: terraform fmt -check
+        continue-on-error: true
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -out=tfplan
+        continue-on-error: true
+        env:
+          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          TF_VAR_database_password: ${{ secrets.DB_PASSWORD }}
+          TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
+          TF_VAR_redis_url: ${{ secrets.REDIS_URL }}
+          TF_VAR_llm_service_url: ${{ secrets.LLM_SERVICE_URL }}
+          TF_VAR_llm_webhook_secret: ${{ secrets.LLM_WEBHOOK_SECRET }}
+          TF_VAR_home_network_ip: ${{ secrets.HOME_NETWORK_IP }}
+          TF_VAR_frontend_url: ${{ secrets.FRONTEND_URL }}
+
+      - name: Comment PR with Plan
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `#### Terraform Plan 📖
+            \`\`\`
+            ${{ steps.plan.outputs.stdout }}
+            \`\`\`
+            `;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve tfplan
+        env:
+          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          TF_VAR_database_password: ${{ secrets.DB_PASSWORD }}
+          TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
+          TF_VAR_redis_url: ${{ secrets.REDIS_URL }}
+          TF_VAR_llm_service_url: ${{ secrets.LLM_SERVICE_URL }}
+          TF_VAR_llm_webhook_secret: ${{ secrets.LLM_WEBHOOK_SECRET }}
+          TF_VAR_home_network_ip: ${{ secrets.HOME_NETWORK_IP }}
+          TF_VAR_frontend_url: ${{ secrets.FRONTEND_URL }}
+
+  build-and-deploy:
+    name: Build and Deploy Applications
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: terraform
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.ARTIFACT_REGISTRY }}
+
+      - name: Build API Service Image
+        run: |
+          docker build \
+            -t ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/api-service:${{ github.sha }} \
+            -t ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/api-service:latest \
+            -f apps/api-service/Dockerfile \
+            .
+
+      - name: Push API Service Image
+        run: |
+          docker push ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/api-service:${{ github.sha }}
+          docker push ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/api-service:latest
+
+      - name: Build Frontend Image
+        run: |
+          docker build \
+            -t ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/frontend:${{ github.sha }} \
+            -t ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/frontend:latest \
+            --build-arg PUBLIC_API_URL=${{ secrets.FRONTEND_URL }}/api \
+            --build-arg PUBLIC_LLM_API_URL=${{ secrets.LLM_SERVICE_URL }} \
+            -f apps/my-resume/Dockerfile \
+            .
+
+      - name: Push Frontend Image
+        run: |
+          docker push ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/frontend:${{ github.sha }}
+          docker push ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/frontend:latest
+
+      - name: Deploy API Service to Cloud Run
+        run: |
+          gcloud run services update api-service \
+            --image=${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/api-service:${{ github.sha }} \
+            --region=${{ env.GCP_REGION }} \
+            --platform=managed
+
+      - name: Deploy Frontend to Cloud Run
+        run: |
+          gcloud run services update frontend \
+            --image=${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/frontend:${{ github.sha }} \
+            --region=${{ env.GCP_REGION }} \
+            --platform=managed
+
+      - name: Run Database Migrations
+        run: |
+          # Install Cloud SQL Proxy
+          wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
+          chmod +x cloud_sql_proxy
+          
+          # Get Cloud SQL instance name from terraform output
+          cd infra/gcp
+          INSTANCE_NAME=$(terraform output -raw database_connection_name)
+          cd ../..
+          
+          # Start proxy in background
+          ./cloud_sql_proxy -instances=$INSTANCE_NAME=tcp:5432 &
+          PROXY_PID=$!
+          
+          # Wait for proxy to be ready
+          sleep 5
+          
+          # Run migrations
+          cd apps/api-service
+          npm install
+          DATABASE_URL="postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@localhost:5432/${{ secrets.DB_NAME }}" npx prisma migrate deploy
+          
+          # Stop proxy
+          kill $PROXY_PID
+
+      - name: Deployment Summary
+        run: |
+          echo "✅ Deployment completed successfully!"
+          echo ""
+          echo "Services deployed:"
+          echo "- API Service: https://api-service-${{ env.GCP_PROJECT_ID }}.a.run.app"
+          echo "- Frontend: https://frontend-${{ env.GCP_PROJECT_ID }}.a.run.app"
+          echo ""
+          echo "Image tags:"
+          echo "- api-service: ${{ github.sha }}"
+          echo "- frontend: ${{ github.sha }}"

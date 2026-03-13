@@ -52,7 +52,7 @@ server {
 # LLM Service - llm.resumecast.ai
 server {
     listen 80;
-    server_name llm.{{ domain }};
+    server_name llm.{{ domain }} llm-service.{{ domain_paskot }};
     
     # LLM Service proxy
     location / {

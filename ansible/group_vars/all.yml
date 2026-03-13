@@ -91,6 +91,7 @@ pm2_max_memory_restart: "512M"
 # Nginx Configuration
 enable_ssl: false # Set to true for Let's Encrypt SSL
 domain: "{{ ansible_host }}" # Override with your domain
+domain_paskot: "{{ paskot.com }}"
 
 # CloudFlare Configuration (optional)
 enable_cloudflare: false

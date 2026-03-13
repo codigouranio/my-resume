@@ -1,0 +1,43 @@
+# Example Terraform variables file
+# Copy this to terraform.tfvars and fill in your actual values
+# WARNING: Never commit terraform.tfvars to git!
+
+# Project Configuration
+project_id = "resume-cast-ai-prod"  # Your GCP project ID
+region     = "us-central1"          # GCP region
+
+# Database Configuration
+database_tier              = "db-f1-micro"  # Sandbox tier (upgrade to db-custom-4-32768 for production)
+database_disk_size         = 10             # GB
+database_availability_type = "ZONAL"        # ZONAL for cost savings, REGIONAL for 99.99% SLA
+database_name              = "resume_db"
+database_user              = "resumecast"
+database_password          = "CHANGE_ME_STRONG_PASSWORD_HERE"  # Generate strong password
+
+deletion_protection = true  # Set to false if you want to easily destroy resources during testing
+
+# Home Network (for LLM service access to Cloud SQL)
+home_network_ip = "1.2.3.4/32"  # Your home public IP in CIDR format (get from whatismyip.com)
+
+# Redis (Use Upstash or Redis Cloud)
+redis_url = "rediss://default:xxxxx@us1-xxxxx.upstash.io:6379"  # Get from Upstash dashboard
+
+# LLM Service (Your home GPU server)
+llm_service_url     = "https://llm.yourdomain.com"  # Cloudflare Tunnel or DuckDNS URL
+llm_webhook_secret  = "CHANGE_ME_RANDOM_32_CHAR_STRING"  # Generate with: openssl rand -base64 32
+
+# Application Secrets
+jwt_secret = "CHANGE_ME_RANDOM_32_CHAR_STRING"  # Generate with: openssl rand -base64 32
+
+# Frontend Configuration
+frontend_url = "https://resumecast.ai"  # Your domain
+frontend_urls = [
+  "https://resumecast.ai",
+  "https://www.resumecast.ai"
+]
+
+# Cloud Run Scaling
+api_min_instances      = 0   # 0 = scale to zero (cost savings)
+api_max_instances      = 10  # Maximum concurrent instances
+frontend_min_instances = 0
+frontend_max_instances = 10
