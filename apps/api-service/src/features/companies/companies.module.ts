@@ -5,6 +5,7 @@ import { CompaniesService } from './companies.service';
 import { CompaniesWorkerService } from './companies.worker';
 import { PositionScoringWorkerService } from './position-scoring.worker';
 import { LLMResultsWorkerService } from './llm-results.worker';
+import { EnrichmentCleanupService } from './enrichment-cleanup.service';
 import { PrismaModule } from '@shared/database/prisma.module';
 import { EmailModule } from '@shared/email/email.module';
 
@@ -19,6 +20,7 @@ import { EmailModule } from '@shared/email/email.module';
     CompaniesWorkerService,
     PositionScoringWorkerService,
     LLMResultsWorkerService, // Kept for reference, can be removed later
+    EnrichmentCleanupService, // NEW: Auto-cleanup stuck enrichments
   ],
   exports: [CompaniesService],
 })
