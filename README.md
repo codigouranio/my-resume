@@ -9,7 +9,8 @@ The platform uses **dual authentication** for secure service-to-service communic
 - **API → LLM:** API Key Authentication (X-API-Key header)
 - **LLM → API:** JWT Authentication (Bearer token)
 
-📖 **[Read the Complete Service Interactions Guide →](SERVICE_INTERACTIONS.md)**
+📖 **[Read the Complete Service Interactions Guide →](docs/guides/SERVICE_INTERACTIONS.md)**
+📚 **[Browse All Documentation →](docs/README.md)**
 
 Quick setup:
 ```bash
@@ -17,7 +18,7 @@ Quick setup:
 openssl rand -hex 32        # API key
 openssl rand -base64 32     # JWT password
 
-# Configure .env files (see SERVICE_INTERACTIONS.md for details)
+# Configure .env files (see docs/guides/SERVICE_INTERACTIONS.md for details)
 ```
 
 ## Project Structure
@@ -25,10 +26,27 @@ openssl rand -base64 32     # JWT password
 ```
 apps/
   my-resume/          # React frontend application
+  api-service/        # NestJS backend with GraphQL/REST
   llm-service/        # Flask API with LLAMA integration
+docs/                 # 📚 All project documentation (organized by category)
 infra/                # AWS CDK infrastructure code
+ansible/              # Deployment automation
 data/                 # Resume data files
 ```
+
+## 📚 Documentation
+
+All documentation is organized in the [`docs/`](docs/) directory:
+
+- **[Architecture](docs/architecture/)** - System design and technical decisions
+- **[Deployment](docs/deployment/)** - Infrastructure and deployment guides
+- **[Features](docs/features/)** - Feature-specific documentation
+- **[Guides](docs/guides/)** - How-to guides and tutorials ⭐
+- **[Setup](docs/setup/)** - Initial configuration
+- **[Implementation](docs/implementation/)** - Implementation details and changelogs
+- **[Testing](docs/testing/)** - Test reports and QA documentation
+
+**Start here:** [Documentation Index](docs/README.md)
 
 ## Applications
 
@@ -56,7 +74,7 @@ Flask API service that uses LLAMA running on RTX 3090 GPU to answer questions ab
 
 **Tech Stack:** Python 3.10+, Flask, llama-cpp-python, CUDA
 
-**Authentication:** Dual authentication (API Key + JWT) - see [SERVICE_INTERACTIONS.md](SERVICE_INTERACTIONS.md)
+**Authentication:** Dual authentication (API Key + JWT) - see [SERVICE_INTERACTIONS.md](docs/guides/SERVICE_INTERACTIONS.md)
 
 **Quick Start:**
 ```bash
@@ -78,7 +96,7 @@ USE_POETRY=true ./run.sh
 ```
 
 See [apps/llm-service/README.md](apps/llm-service/README.md) for detailed setup.  
-See [SERVICE_INTERACTIONS.md](SERVICE_INTERACTIONS.md) for complete authentication setup (API keys + JWT).
+See [SERVICE_INTERACTIONS.md](docs/guides/SERVICE_INTERACTIONS.md) for complete authentication setup (API keys + JWT).
 
 ## Infrastructure
 
@@ -157,7 +175,7 @@ cp .env.example .env
 - The `LLM_SERVICE_PASSWORD` must be identical in both API service and LLM service `.env` files
 - The `LLM_API_KEY` must exist in the LLM service's `LLM_API_KEYS` JSON
 
-See [SERVICE_INTERACTIONS.md](SERVICE_INTERACTIONS.md) for complete authentication setup including API keys.
+See [SERVICE_INTERACTIONS.md](docs/guides/SERVICE_INTERACTIONS.md) for complete authentication setup including API keys.
 
 ## Development Workflow
 

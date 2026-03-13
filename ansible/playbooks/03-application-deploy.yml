@@ -47,16 +47,16 @@
           LLM_SERVICE_USERNAME="{{ llm_service_username }}"
           LLM_SERVICE_PASSWORD="{{ llm_service_password }}"
           CORS_ORIGINS="{{ cors_origins | join(',') }}"
-          STRIPE_SECRET_KEY={{ stripe_secret_key | default('sk_test_placeholder_not_configured') }}
-          STRIPE_WEBHOOK_SECRET={{ stripe_webhook_secret | default('whsec_placeholder_not_configured') }}
-          STRIPE_PRICE_ID={{ stripe_price_id | default('price_placeholder_not_configured') }}
-          AWS_REGION={{ aws_region | default('us-east-1') }}
-          AWS_ACCESS_KEY_ID={{ aws_access_key_id | default('') }}
-          AWS_SECRET_ACCESS_KEY={{ aws_secret_access_key | default('') }}
-          SES_FROM_EMAIL={{ ses_from_email | default('noreply@resumecast.ai') }}
-          FRONTEND_URL={{ frontend_url | default('https://resumecast.ai') }}
-          API_BASE_URL={{ api_base_url | default('https://resumecast.ai') }}
-          LLM_WEBHOOK_SECRET={{ llm_webhook_secret | default('default_key') }}
+          STRIPE_SECRET_KEY="{{ stripe_secret_key | default('sk_test_placeholder_not_configured') }}"
+          STRIPE_WEBHOOK_SECRET="{{ stripe_webhook_secret | default('whsec_placeholder_not_configured') }}"
+          STRIPE_PRICE_ID="{{ stripe_price_id | default('price_placeholder_not_configured') }}"
+          AWS_REGION="{{ aws_region | default('us-east-1') }}"
+          AWS_ACCESS_KEY_ID="{{ aws_access_key_id | default('') }}"
+          AWS_SECRET_ACCESS_KEY="{{ aws_secret_access_key | default('') }}"
+          SES_FROM_EMAIL="{{ ses_from_email | default('noreply@resumecast.ai') }}"
+          FRONTEND_URL="{{ frontend_url | default('https://resumecast.ai') }}"
+          API_BASE_URL="{{ api_base_url | default('https://resumecast.ai') }}"
+          LLM_WEBHOOK_SECRET="{{ llm_webhook_secret | default('default_key') }}"
         owner: "{{ ansible_user }}"
         mode: "0600"
 
@@ -264,19 +264,19 @@
       copy:
         dest: "{{ llm_service_path }}/.env"
         content: |
-          PORT={{ llm_port }}
-          LLAMA_SERVER_URL={{ llama_server_url }}
-          LLAMA_API_TYPE={{ llama_api_type }}
-          LLAMA_MODEL={{ llama_model }}
-          VLLM_SERVER_URL={{ vllm_server_url }}
-          VLLM_MODEL={{ vllm_model }}
+          PORT="{{ llm_port }}"
+          LLAMA_SERVER_URL="{{ llama_server_url }}"
+          LLAMA_API_TYPE="{{ llama_api_type }}"
+          LLAMA_MODEL="{{ llama_model }}"
+          VLLM_SERVER_URL="{{ vllm_server_url }}"
+          VLLM_MODEL="{{ vllm_model }}"
           RESUME_PATH=../../data/resume.md
-          DATABASE_URL=postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}
-          ADMIN_TOKEN={{ llm_admin_token }}
-          API_BASE_URL=http://localhost:{{ api_port }}/api
-          API_SERVICE_URL=http://localhost:{{ api_port }}
-          LLM_SERVICE_USERNAME={{ llm_service_username }}
-          LLM_SERVICE_PASSWORD={{ llm_service_password }}
+          DATABASE_URL="postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}"
+          ADMIN_TOKEN="{{ llm_admin_token }}"
+          API_BASE_URL="http://localhost:{{ api_port }}/api"
+          API_SERVICE_URL="http://localhost:{{ api_port }}"
+          LLM_SERVICE_USERNAME="{{ llm_service_username }}"
+          LLM_SERVICE_PASSWORD="{{ llm_service_password }}"
           CORS_ORIGINS="{{ cors_origins | join(',') }}"
           LLM_API_KEYS='{{ llm_authorized_api_keys }}'
         owner: "{{ ansible_user }}"

@@ -162,7 +162,7 @@ When recruiter submits interest:
 
 ## 🎓 Getting Started
 
-1. **Read** → [RECRUITER_INTEREST_README.md](RECRUITER_INTEREST_README.md)
+1. **Read** → [RECRUITER_INTEREST_README.md](../features/RECRUITER_INTEREST_README.md)
 2. **Test** → Run `npm test -- resumes.recruiter-interest.spec.ts`
 3. **Learn** → Check individual documentation files as needed
 4. **Deploy** → Feature is production ready

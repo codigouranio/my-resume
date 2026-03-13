@@ -112,7 +112,7 @@ OLLAMA_MODEL=llama3.1:latest
 # LLAMA_MODEL_PATH=./models/llama-2-7b-chat.Q4_K_M.gguf
 ```
 
-**See [../../JWT_AUTH_GUIDE.md](../../JWT_AUTH_GUIDE.md) for detailed authentication setup and troubleshooting.**
+**See [../../docs/guides/JWT_AUTH_GUIDE.md](../../docs/guides/JWT_AUTH_GUIDE.md) for detailed authentication setup and troubleshooting.**
 
 ### 4. Run the Service
 

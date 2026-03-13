@@ -600,9 +600,9 @@ No changes needed for LLM service backups (just code/config).
 ## Questions?
 
 See also:
-- [apps/api-service/GRAPHQL_CQRS.md](apps/api-service/GRAPHQL_CQRS.md) - GraphQL API docs
-- [apps/llm-service/OPERATIONS.md](apps/llm-service/OPERATIONS.md) - LLM operations guide
-- [ansible/DEPLOYMENT.md](ansible/DEPLOYMENT.md) - Deployment procedures
-- [LLM_SERVICE_REFACTORING.md](LLM_SERVICE_REFACTORING.md) - Detailed changes log
+- [apps/api-service/GRAPHQL_CQRS.md](../../apps/api-service/GRAPHQL_CQRS.md) - GraphQL API docs
+- [apps/llm-service/OPERATIONS.md](../../apps/llm-service/OPERATIONS.md) - LLM operations guide
+- [ansible/DEPLOYMENT.md](../../ansible/DEPLOYMENT.md) - Deployment procedures
+- [LLM_SERVICE_REFACTORING.md](../implementation/LLM_SERVICE_REFACTORING.md) - Detailed changes log
 
 **Ready to deploy!** 🚀

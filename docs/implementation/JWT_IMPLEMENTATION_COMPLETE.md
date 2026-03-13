@@ -333,7 +333,7 @@ cd apps/llm-service
 python3 test-jwt-final.py
 ```
 
-**📖 See [JWT_AUTH_GUIDE.md](JWT_AUTH_GUIDE.md) for detailed instructions.**
+**📖 See [JWT_AUTH_GUIDE.md](../guides/JWT_AUTH_GUIDE.md) for detailed instructions.**
 
 ## Monitoring in Production
 
@@ -499,7 +499,7 @@ Ready for:
 
 ## 📚 Primary Documentation
 
-**Start here:** [JWT_AUTH_GUIDE.md](JWT_AUTH_GUIDE.md)
+**Start here:** [JWT_AUTH_GUIDE.md](../guides/JWT_AUTH_GUIDE.md)
 
 ## 🚀 Status
 
