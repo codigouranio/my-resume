@@ -43,7 +43,9 @@
           PORT={{ api_port }}
           NODE_ENV={{ node_env }}
           LLM_SERVICE_URL="http://localhost:{{ llm_port }}"
-          LLM_API_KEY="{{ vault_llm_api_key }}"
+          LLM_API_KEY="{{ llm_api_key }}"
+          LLM_SERVICE_USERNAME="{{ llm_service_username }}"
+          LLM_SERVICE_PASSWORD="{{ llm_service_password }}"
           CORS_ORIGINS="{{ cors_origins | join(',') }}"
           STRIPE_SECRET_KEY={{ stripe_secret_key | default('sk_test_placeholder_not_configured') }}
           STRIPE_WEBHOOK_SECRET={{ stripe_webhook_secret | default('whsec_placeholder_not_configured') }}
@@ -207,6 +209,9 @@
           DATABASE_URL=postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}
           ADMIN_TOKEN={{ llm_admin_token }}
           API_BASE_URL=http://localhost:{{ api_port }}/api
+          API_SERVICE_URL=http://localhost:{{ api_port }}
+          LLM_SERVICE_USERNAME={{ llm_service_username }}
+          LLM_SERVICE_PASSWORD={{ llm_service_password }}
           CORS_ORIGINS="{{ cors_origins | join(',') }}"
           LLM_API_KEYS='{{ llm_authorized_api_keys }}'
         owner: "{{ ansible_user }}"

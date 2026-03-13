@@ -27,7 +27,9 @@ module.exports = {
         AWS_ACCESS_KEY_ID: '{{ aws_access_key_id | default('') }}',
         AWS_SECRET_ACCESS_KEY: '{{ aws_secret_access_key | default('') }}',
         SES_FROM_EMAIL: '{{ ses_from_email | default('noreply@example.com') }}'
-        LLM_API_KEY: '{{ llm_api_key }}'
+        LLM_API_KEY: '{{ llm_api_key }}',
+        LLM_SERVICE_USERNAME: '{{ llm_service_username }}',
+        LLM_SERVICE_PASSWORD: '{{ llm_service_password }}'
       },
       error_file: '{{ api_service_path }}/logs/api-error.log',
       out_file: '{{ api_service_path }}/logs/api-out.log',
@@ -56,6 +58,9 @@ module.exports = {
         RESUME_PATH: '../../data/resume.md',
         ADMIN_TOKEN: '{{ llm_admin_token }}',
         LLM_WEBHOOK_SECRET: '{{ llm_webhook_secret }}',
+        API_SERVICE_URL: 'http://localhost:{{ api_port }}',
+        LLM_SERVICE_USERNAME: '{{ llm_service_username }}',
+        LLM_SERVICE_PASSWORD: '{{ llm_service_password }}',
         REDIS_HOST: '{{ llm_redis_host }}',
         REDIS_PORT: {{ llm_redis_port }},
         REDIS_DB: {{ llm_redis_db }},

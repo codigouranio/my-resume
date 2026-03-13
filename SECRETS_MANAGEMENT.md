@@ -49,6 +49,10 @@ ansible-vault encrypt_string 'generated-32-char-key...' --name 'vault_llm_api_ke
 
 # LLM API Keys JSON (for LLM service - multiple service support)
 ansible-vault encrypt_string '{"api-service": "key1", "admin-dashboard": "key2"}' --name 'vault_llm_authorized_api_keys'
+
+# JWT Service-to-Service Authentication (LLM ↔ API)
+ansible-vault encrypt_string 'llm-service' --name 'vault_llm_service_username'
+ansible-vault encrypt_string 'generated-secure-password' --name 'vault_llm_service_password'
 ```
 
 Each command outputs:

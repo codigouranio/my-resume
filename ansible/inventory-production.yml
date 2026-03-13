@@ -64,3 +64,10 @@ all:
     vault_llm_api_key: "change_me_in_production"  # Key API service uses to call LLM
     # Encrypt with: ansible-vault encrypt_string '{"api-service": "key1", "admin": "key2"}' --name 'vault_llm_authorized_api_keys'
     vault_llm_authorized_api_keys: '{"api-service": "change_me_in_production"}'  # Keys authorized to call LLM service
+    
+    # JWT Service-to-Service Authentication (LLM ↔ API)
+    # Encrypt with: ansible-vault encrypt_string 'llm-service' --name 'vault_llm_service_username'
+    vault_llm_service_username: "llm-service"  # Username for JWT auth
+    # Generate with: openssl rand -hex 32, then encrypt
+    # Encrypt with: ansible-vault encrypt_string 'generated-password' --name 'vault_llm_service_password'
+    vault_llm_service_password: "change_me_in_production"  # Password for JWT auth
