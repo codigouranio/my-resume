@@ -16,12 +16,17 @@ from flask_cors import CORS
 import requests
 import os
 import logging
-import psycopg2
-from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 from prompt_manager import get_prompt_manager
 from company_research_agent import CompanyResearchAgent
 from position_fit_agent import PositionFitAgent
+from api_client import (
+    load_resume_from_api,
+    get_user_info_from_api,
+    log_chat_interaction_to_api,
+    load_conversation_history_from_api,
+)
+from api_key_auth import require_api_key, get_api_key_manager
 
 # Import Celery app and tasks  (optional - graceful fallback if not available)
 try:
@@ -73,20 +78,56 @@ LLAMA_MODEL = os.getenv("LLAMA_MODEL", "llama3.1")
 
 LLAMA_API_TYPE = os.getenv("LLAMA_API_TYPE", "llama-cpp")  # or "ollama", "openai"
 
-# Database configuration
-DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql://resume_user:resume_password@localhost:5432/resume_db"
-)
+# API service configuration (replaces direct database access)
+API_SERVICE_URL = os.getenv("API_SERVICE_URL", "http://localhost:3000")
+
+# JWT authentication (preferred - Phase 2)
+LLM_SERVICE_USERNAME = os.getenv("LLM_SERVICE_USERNAME", "llm-service")
+LLM_SERVICE_PASSWORD = os.getenv("LLM_SERVICE_PASSWORD", "")
+
+# Static token (legacy, backward compatible)
+LLM_SERVICE_TOKEN = os.getenv("LLM_SERVICE_TOKEN", "")
+
+# Initialize JWT token manager if credentials are provided
+if LLM_SERVICE_PASSWORD:
+    try:
+        from token_manager import init_token_manager
+
+        logger.info("Initializing JWT token manager...")
+        init_token_manager(
+            api_url=API_SERVICE_URL,
+            username=LLM_SERVICE_USERNAME,
+            password=LLM_SERVICE_PASSWORD,
+            start_background=True,
+        )
+        logger.info("✅ JWT token manager initialized successfully")
+    except Exception as e:
+        logger.error(f"❌ Failed to initialize JWT token manager: {e}")
+        logger.warning("Falling back to static token authentication")
+        if not LLM_SERVICE_TOKEN:
+            logger.error("No valid authentication method available!")
+elif LLM_SERVICE_TOKEN:
+    logger.warning(
+        "Using legacy static token authentication (consider upgrading to JWT)"
+    )
+else:
+    logger.error(
+        "No authentication configured! Set LLM_SERVICE_PASSWORD or LLM_SERVICE_TOKEN"
+    )
 
 WEBHOOK_SECRET = os.getenv("LLM_WEBHOOK_SECRET", "").encode("utf-8")
 if not WEBHOOK_SECRET:
     logger.warning("LLM_WEBHOOK_SECRET not set - webhook signatures will be insecure!")
     WEBHOOK_SECRET = b"change-me-in-production"
 
-
-def get_db_connection():
-    """Create a database connection."""
-    return psycopg2.connect(DATABASE_URL)
+# Initialize API key manager and log status
+api_key_manager = get_api_key_manager()
+if api_key_manager.get_service_count() > 0:
+    logger.info(
+        f"✅ API key authentication enabled for {api_key_manager.get_service_count()} services"
+    )
+else:
+    logger.warning("⚠️  API key authentication disabled (no keys configured)")
 
 
 def extract_topics_from_question(question: str) -> list:
@@ -147,25 +188,8 @@ def log_chat_interaction(
     request_obj,
     session_id: str | None,
 ):
-    """Log chat interaction to database for analytics."""
+    """Log chat interaction via API for analytics."""
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        # Get resume ID from slug
-        cursor.execute('SELECT id FROM "Resume" WHERE slug = %s', (resume_slug,))
-        result = cursor.fetchone()
-
-        if not result:
-            logger.warning(
-                f"Resume not found for slug: {resume_slug}, skipping analytics"
-            )
-            cursor.close()
-            conn.close()
-            return
-
-        resume_id = result[0]
-
         # Extract visitor info
         ip_address = (
             request_obj.headers.get("X-Real-IP")
@@ -199,117 +223,49 @@ def log_chat_interaction(
         # Extract topics from question
         topics = extract_topics_from_question(question)
 
-        # Insert chat interaction
-        cursor.execute(
-            """
-            INSERT INTO "ChatInteraction" 
-            ("id", "resumeId", "sessionId", "question", "answer", "sentiment", "wasAnsweredWell", 
-             "topics", "ipAddress", "userAgent", "referrer", "responseTime", "createdAt")
-            VALUES (gen_random_uuid()::text, %s, %s, %s, %s, %s::\"ChatSentiment\", %s, %s, %s, %s, %s, %s, NOW())
-        """,
-            (
-                resume_id,
-                session_id,
-                question,
-                answer,
-                sentiment,
-                was_answered_well,
-                topics,
-                ip_address,
-                user_agent,
-                referrer,
-                response_time,
-            ),
+        # Log via API
+        success = log_chat_interaction_to_api(
+            resume_slug=resume_slug,
+            session_id=session_id,
+            question=question,
+            answer=answer,
+            sentiment=sentiment,
+            was_answered_well=was_answered_well,
+            topics=topics,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            referrer=referrer,
+            response_time=response_time,
         )
 
-        conn.commit()
-        logger.info(
-            f"Logged chat interaction for resume {resume_slug} (sentiment: {sentiment})"
-        )
+        if success:
+            logger.info(
+                f"Logged chat interaction for resume {resume_slug} (sentiment: {sentiment})"
+            )
+        else:
+            logger.warning(f"Failed to log chat interaction via API for {resume_slug}")
 
     except Exception as e:
         logger.error(f"Error logging chat interaction: {e}")
         import traceback
 
         logger.error(traceback.format_exc())
-    finally:
-        if "cursor" in locals():
-            cursor.close()
-        if "conn" in locals():
-            conn.close()
 
 
 def load_resume_from_db(slug: str):
-    """Load resume context and resume ID from database by slug."""
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-
-        # Query for published resume by slug
-        cursor.execute(
-            """
-            SELECT id, content, "llmContext" 
-            FROM "Resume" 
-            WHERE slug = %s AND "isPublic" = true AND "isPublished" = true
-        """,
-            (slug,),
-        )
-
-        result = cursor.fetchone()
-        cursor.close()
-        conn.close()
-
-        if result:
-            # Combine content (public resume) with llmContext (additional details for answering questions)
-            # Content is always used, llmContext provides additional details if available
-            context = result["content"]
-
-            if result["llmContext"] and result["llmContext"].strip():
-                # Append llmContext as additional information
-                context = f"{context}\n\n{result['llmContext']}"
-                logger.info(
-                    f"Loaded resume from database for slug '{slug}': "
-                    f"{len(result['content'])} chars content + {len(result['llmContext'])} chars additional context"
-                )
-            else:
-                logger.info(
-                    f"Loaded resume from database for slug '{slug}': {len(context)} chars (content only)"
-                )
-
-            return context, result["id"]
-        else:
-            logger.warning(f"No published resume found for slug '{slug}'")
-            return None, None
-    except Exception as e:
-        logger.error(f"Database error loading resume for slug '{slug}': {e}")
-        return None, None
+    """Load resume context and resume ID via API by slug.
+    Note: Function name kept for backward compatibility but now uses API.
+    """
+    return load_resume_from_api(slug)
 
 
-def load_conversation_history(session_id: str, resume_id: str, limit: int = 6) -> list:
-    """Load recent conversation history for a given session and resume."""
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        cursor.execute(
-            """
-            SELECT question, answer
-            FROM "ChatInteraction"
-            WHERE "resumeId" = %s AND "sessionId" = %s
-            ORDER BY "createdAt" DESC
-            LIMIT %s
-        """,
-            (resume_id, session_id, limit),
-        )
-
-        rows = cursor.fetchall()
-        cursor.close()
-        conn.close()
-
-        # Reverse to chronological order
-        return list(reversed(rows))
-    except Exception as e:
-        logger.error(f"Error loading conversation history: {e}")
-        return []
+def load_conversation_history(
+    session_id: str, resume_slug: str, limit: int = 6
+) -> list:
+    """Load recent conversation history via API.
+    Note: Now takes resume_slug instead of resume_id to use API.
+    """
+    return load_conversation_history_from_api(resume_slug, session_id, limit)
 
 
 def _get_system_instructions(user_info: dict) -> str:
@@ -805,40 +761,18 @@ def analyze_position_async(
 
 
 def get_user_info(resume_slug: str = None):
-    """Get user information from database by resume slug or get all users."""
+    """Get user information via API by resume slug.
+    Note: 'Get all users' functionality removed (was admin-only, migrate separately if needed).
+    """
+    if not resume_slug:
+        logger.warning(
+            "get_user_info called without resume_slug - this is no longer supported"
+        )
+        return []
+
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-
-        if resume_slug:
-            # Get user info for a specific resume
-            cursor.execute(
-                """
-                SELECT u.id, u.email, u."firstName", u."lastName", u.role, u."subscriptionTier",
-                       r.id as "resumeId", r.slug, r.title
-                FROM "User" u
-                LEFT JOIN "Resume" r ON u.id = r."userId"
-                WHERE r.slug = %s
-            """,
-                (resume_slug,),
-            )
-        else:
-            # Get all users with their resumes
-            cursor.execute(
-                """
-                SELECT u.id, u.email, u."firstName", u."lastName", u.role, u."subscriptionTier",
-                       COUNT(r.id) as "resumeCount"
-                FROM "User" u
-                LEFT JOIN "Resume" r ON u.id = r."userId"
-                GROUP BY u.id
-            """
-            )
-
-        results = cursor.fetchall()
-        cursor.close()
-        conn.close()
-
-        return results if results else []
+        user_data = get_user_info_from_api(resume_slug)
+        return [user_data] if user_data else []
     except Exception as e:
         logger.error(f"Error fetching user information: {e}")
         return []
@@ -881,6 +815,7 @@ def health_check():
 
 
 @app.route("/api/chat", methods=["POST"])
+@require_api_key
 def chat():
     """
     Chat endpoint for resume questions.
@@ -1000,6 +935,7 @@ def chat():
 
 
 @app.route("/api/resume", methods=["GET"])
+@require_api_key
 def get_resume():
     """Get resume context. Note: Resume is loaded dynamically from database per request."""
     return jsonify(
@@ -1011,6 +947,7 @@ def get_resume():
 
 
 @app.route("/api/improve-text", methods=["POST"])
+@require_api_key
 def improve_text():
     """Improve selected text using AI for resume enhancement."""
     try:
@@ -1124,6 +1061,7 @@ def improve_text():
 
 
 @app.route("/api/embed", methods=["POST"])
+@require_api_key
 def generate_embedding():
     """
     Generate embeddings using nomic-embed-text model.
@@ -1189,6 +1127,7 @@ def generate_embedding():
 
 
 @app.route("/api/embed/batch", methods=["POST"])
+@require_api_key
 def generate_embeddings_batch():
     """
     Generate embeddings for multiple texts in batch.
@@ -1263,6 +1202,7 @@ def generate_embeddings_batch():
 
 
 @app.route("/api/reload-resume", methods=["POST"])
+@require_api_key
 def reload_resume():
     """
     Deprecated: Resume context is now loaded dynamically from database on each request.
@@ -1285,6 +1225,7 @@ def reload_resume():
 
 
 @app.route("/api/companies/enrich", methods=["POST"])
+@require_api_key
 def enrich_company():
     """
     Company enrichment endpoint using ReAct research agent.
@@ -1393,6 +1334,7 @@ def enrich_company():
 
 
 @app.route("/api/positions/score", methods=["POST"])
+@require_api_key
 def score_position():
     """
     Position fit scoring endpoint using AI analysis.

@@ -18,12 +18,28 @@ export class PositionScoringWorkerService implements OnModuleInit, OnModuleDestr
   private readonly logger = new Logger(PositionScoringWorkerService.name);
   private worker: Worker<PositionScoringJob, PositionScoringResult>;
   private llmServiceUrl: string;
+  private llmApiKey: string;
 
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
   ) {
     this.llmServiceUrl = this.configService.get('LLM_SERVICE_URL', 'http://localhost:5000');
+    this.llmApiKey = this.configService.get('LLM_API_KEY', '');
+    
+    if (!this.llmApiKey) {
+      this.logger.warn('LLM_API_KEY not configured - LLM service calls may fail');
+    }
+  }
+
+  /**
+   * Get headers for LLM service requests.
+   */
+  private getLLMHeaders(): Record<string, string> {
+    return {
+      'Content-Type': 'application/json',
+      'X-API-Key': this.llmApiKey,
+    };
   }
 
   onModuleInit() {
@@ -165,9 +181,7 @@ export class PositionScoringWorkerService implements OnModuleInit, OnModuleDestr
         requestBody,
         {
           timeout: useWebhooks ? 10000 : 180000, // 10s for webhook, 3min for sync
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: this.getLLMHeaders(),
         },
       );
 

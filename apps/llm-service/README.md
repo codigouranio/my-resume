@@ -67,8 +67,52 @@ wget https://huggingface.co/TheBloke/Llama-2-7B-Chat-GGUF/resolve/main/llama-2-7
 
 ```bash
 cp .env.example .env
-# Edit .env and set LLAMA_MODEL_PATH to your model file
 ```
+
+Edit `.env` and configure:
+
+#### JWT Authentication (Required)
+
+```bash
+# API Service endpoint
+API_SERVICE_URL=http://localhost:3000
+
+# JWT credentials (must match API service)
+LLM_SERVICE_USERNAME=llm-service
+LLM_SERVICE_PASSWORD=<your-secure-password>
+```
+
+**Generate secure password:**
+```bash
+openssl rand -base64 32
+```
+
+**⚠️ Critical:** The same `LLM_SERVICE_PASSWORD` must be set in:
+- `apps/api-service/.env` 
+- `apps/llm-service/.env`
+
+#### PyJWT Dependency
+
+```bash
+# Install PyJWT for JWT authentication
+pip install pyjwt
+# Or with Poetry:
+poetry add pyjwt
+```
+
+#### LLAMA Model Configuration
+
+```bash
+# For Ollama (recommended)
+LLAMA_SERVER_URL=http://localhost:11434
+LLAMA_API_TYPE=ollama
+OLLAMA_MODEL=llama3.1:latest
+
+# Or for local GGUF model
+# LLAMA_MODEL_PATH=./models/llama-2-7b-chat.Q4_K_M.gguf
+```
+
+**See [../../JWT_AUTH_GUIDE.md](../../JWT_AUTH_GUIDE.md) for detailed authentication setup and troubleshooting.**
 
 ### 4. Run the Service
 

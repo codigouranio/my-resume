@@ -184,6 +184,32 @@ export function DashboardPage() {
     navigate('/');
   };
 
+  const handleLinkedInImport = () => {
+    // Redirect to LinkedIn OAuth flow
+    const API_BASE_URL = import.meta.env.PUBLIC_API_URL || '/api';
+    window.location.href = `${API_BASE_URL}/resumes/import/linkedin/auth`;
+  };
+
+  // Handle LinkedIn import callback status
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const importStatus = urlParams.get('linkedin_import');
+    const message = urlParams.get('message');
+
+    if (importStatus === 'success') {
+      alert('✅ Resume imported from LinkedIn successfully!');
+      // Refresh resumes list
+      fetchResumes();
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (importStatus === 'error') {
+      const errorMessage = message ? decodeURIComponent(message) : 'Failed to import from LinkedIn';
+      alert(`❌ ${errorMessage}`);
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
   return (
     <div className="dashboard-container">
       {/* Header */}
@@ -664,14 +690,24 @@ export function DashboardPage() {
                       const hasReachedLimit = resumes.length >= limit;
 
                       return (
-                        <button
-                          className="btn btn-primary btn-sm btn-block"
-                          onClick={() => navigate('/editor/new')}
-                          disabled={hasReachedLimit}
-                          title={hasReachedLimit ? t('dashboard.reached_limit', { tier: currentTier, limit }) : t('dashboard.create_resume_action')}
-                        >
-                          ➕ {t('dashboard.create_resume_action')}
-                        </button>
+                        <>
+                          <button
+                            className="btn btn-primary btn-sm btn-block"
+                            onClick={() => navigate('/editor/new')}
+                            disabled={hasReachedLimit}
+                            title={hasReachedLimit ? t('dashboard.reached_limit', { tier: currentTier, limit }) : t('dashboard.create_resume_action')}
+                          >
+                            ➕ {t('dashboard.create_resume_action')}
+                          </button>
+                          <button
+                            className="btn btn-secondary btn-sm btn-block"
+                            onClick={handleLinkedInImport}
+                            disabled={hasReachedLimit}
+                            title={hasReachedLimit ? t('dashboard.reached_limit', { tier: currentTier, limit }) : 'Import resume from LinkedIn'}
+                          >
+                            🔗 Import from LinkedIn
+                          </button>
+                        </>
                       );
                     })()}
                     <Link to="/settings" className="btn btn-ghost btn-sm btn-block">

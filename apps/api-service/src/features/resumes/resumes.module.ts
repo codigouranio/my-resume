@@ -10,6 +10,9 @@ import {
 } from './queries/handlers';
 import { EmbeddingsModule } from '../embeddings/embeddings.module';
 import { EmailModule } from '@shared/email/email.module';
+import { LinkedInApiService } from './linkedin-api.service';
+import { LinkedInParserService } from './linkedin-parser.service';
+import { LinkedInImportController } from './linkedin-import.controller';
 
 const QueryHandlers = [
   GetResumeHandler,
@@ -22,8 +25,10 @@ const QueryHandlers = [
   providers: [
     ResumesService,
     ResumesResolver,
+    LinkedInApiService,
+    LinkedInParserService,
     ...QueryHandlers,
   ],
-  controllers: [ResumesController],
+  controllers: [ResumesController, LinkedInImportController],
 })
 export class ResumesModule {}

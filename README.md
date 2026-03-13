@@ -38,20 +38,29 @@ Flask API service that uses LLAMA running on RTX 3090 GPU to answer questions ab
 
 **Tech Stack:** Python 3.10+, Flask, llama-cpp-python, CUDA
 
+**Authentication:** JWT-based service-to-service authentication (see [JWT_AUTH_GUIDE.md](JWT_AUTH_GUIDE.md))
+
 **Quick Start:**
 ```bash
 cd apps/llm-service
 
-# With Poetry (recommended)
+# 1. Setup environment and dependencies
 ./setup_poetry.sh
-USE_POETRY=true ./run.sh
 
-# With Conda
-./setup_conda.sh
-USE_CONDA=true ./run.sh
+# 2. Configure JWT authentication
+cp .env.example .env
+# Edit .env and set LLM_SERVICE_USERNAME and LLM_SERVICE_PASSWORD
+# (must match credentials in API service)
+
+# 3. Install PyJWT for authentication
+pip install pyjwt
+
+# 4. Start service
+USE_POETRY=true ./run.sh
 ```
 
-See [apps/llm-service/README.md](apps/llm-service/README.md) for detailed setup.
+See [apps/llm-service/README.md](apps/llm-service/README.md) for detailed setup.  
+See [JWT_AUTH_GUIDE.md](JWT_AUTH_GUIDE.md) for authentication configuration.
 
 ## Infrastructure
 
@@ -103,9 +112,32 @@ npm run build
 
 ```bash
 cd apps/llm-service
+
+# 1. Install dependencies
+pip install pyjwt
+# Or with Poetry: poetry add pyjwt
+
+# 2. Create environment file
 cp .env.example .env
-# Edit .env and set LLAMA_MODEL_PATH to your model file
+
+# 3. Configure JWT authentication
+# Edit .env and set:
+#   API_SERVICE_URL=http://localhost:3000
+#   LLM_SERVICE_USERNAME=llm-service
+#   LLM_SERVICE_PASSWORD=<same-as-api-service>
+#
+# Generate secure password:
+#   openssl rand -base64 32
+
+# 4. Configure LLAMA model
+# Edit .env and set:
+#   LLAMA_SERVER_URL=http://localhost:11434
+#   OLLAMA_MODEL=llama3.1:latest
 ```
+
+**⚠️ Important:** The `LLM_SERVICE_PASSWORD` must be identical in both API service and LLM service `.env` files.
+
+See [JWT_AUTH_GUIDE.md](JWT_AUTH_GUIDE.md) for detailed authentication setup.
 
 ## Development Workflow
 

@@ -43,6 +43,12 @@ ansible-vault encrypt_string 'us-east-1' --name 'vault_aws_region'
 
 # SES From Email
 ansible-vault encrypt_string 'noreply@resumecast.ai' --name 'vault_ses_from_email'
+
+# LLM API Key (for API service to call LLM service)
+ansible-vault encrypt_string 'generated-32-char-key...' --name 'vault_llm_api_key'
+
+# LLM API Keys JSON (for LLM service - multiple service support)
+ansible-vault encrypt_string '{"api-service": "key1", "admin-dashboard": "key2"}' --name 'vault_llm_authorized_api_keys'
 ```
 
 Each command outputs:

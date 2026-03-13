@@ -6,6 +6,7 @@ import { ConfigService } from '@nestjs/config';
 export class CompaniesService {
   private readonly logger = new Logger(CompaniesService.name);
   private readonly llmServiceUrl: string;
+  private readonly llmApiKey: string;
   private readonly cacheValidityDays = 30; // Cache company data for 30 days
 
   constructor(
@@ -15,6 +16,22 @@ export class CompaniesService {
     this.llmServiceUrl =
       this.configService.get<string>('LLM_SERVICE_URL') ||
       'http://localhost:5000';
+    this.llmApiKey = this.configService.get<string>('LLM_API_KEY') || '';
+    
+    if (!this.llmApiKey) {
+      this.logger.warn('LLM_API_KEY not configured - LLM service calls may fail');
+    }
+  }
+
+  /**
+   * Get headers for LLM service requests.
+   * Includes API key authentication.
+   */
+  private getLLMHeaders(): Record<string, string> {
+    return {
+      'Content-Type': 'application/json',
+      'X-API-Key': this.llmApiKey,
+    };
   }
 
   /**
@@ -227,9 +244,7 @@ export class CompaniesService {
     try {
       const response = await fetch(`${this.llmServiceUrl}/api/companies/enrich`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: this.getLLMHeaders(),
         body: JSON.stringify({
           companyName,
           callbackUrl,
@@ -271,9 +286,7 @@ export class CompaniesService {
     try {
       const response = await fetch(`${this.llmServiceUrl}/api/companies/enrich`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: this.getLLMHeaders(),
         body: JSON.stringify({ companyName }),
         signal: AbortSignal.timeout(60000), // 60 second timeout for sync
       });

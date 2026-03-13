@@ -58,6 +58,13 @@ async function ensureResume(params: {
 }
 
 async function main() {
+  const llm_service = await ensureUser({
+    email: "llm-service@resumecast.ai", 
+    password: "p@@@@@ssw0rd", 
+    firstName: "llm",
+    lastName: "service" 
+  });
+
   const jose = await ensureUser({
     email: "jose@example.com",
     password: "password123",

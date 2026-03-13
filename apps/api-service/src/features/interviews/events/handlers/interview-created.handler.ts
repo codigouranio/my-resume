@@ -1,5 +1,6 @@
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InterviewCreatedEvent } from '../interview-created.event';
 import { PrismaService } from '../../../../shared/database/prisma.service';
 
@@ -11,8 +12,32 @@ import { PrismaService } from '../../../../shared/database/prisma.service';
 @EventsHandler(InterviewCreatedEvent)
 export class InterviewCreatedHandler implements IEventHandler<InterviewCreatedEvent> {
   private readonly logger = new Logger(InterviewCreatedHandler.name);
+  private readonly llmServiceUrl: string;
+  private readonly llmApiKey: string;
+  private readonly apiUrl: string;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) {
+    this.llmServiceUrl = this.configService.get<string>('LLM_SERVICE_URL', 'http://localhost:5000');
+    this.llmApiKey = this.configService.get<string>('LLM_API_KEY', '');
+    this.apiUrl = this.configService.get<string>('API_URL', 'http://localhost:3000');
+    
+    if (!this.llmApiKey) {
+      this.logger.warn('LLM_API_KEY not configured - LLM service calls may fail');
+    }
+  }
+
+  /**
+   * Get headers for LLM service requests.
+   */
+  private getLLMHeaders(): Record<string, string> {
+    return {
+      'Content-Type': 'application/json',
+      'X-API-Key': this.llmApiKey,
+    };
+  }
 
   async handle(event: InterviewCreatedEvent): Promise<void> {
     this.logger.log(
@@ -69,9 +94,6 @@ export class InterviewCreatedHandler implements IEventHandler<InterviewCreatedEv
    * Trigger company enrichment via LLM service
    */
   private async triggerCompanyEnrichment(companyName: string, userId: string, companyId?: string): Promise<void> {
-    const LLM_SERVICE_URL = process.env.LLM_SERVICE_URL || 'http://localhost:5000';
-    const API_URL = process.env.API_BASE_URL || 'http://localhost:3000';
-
     try {
       // Update status to PROCESSING
       if (companyId) {
@@ -81,12 +103,12 @@ export class InterviewCreatedHandler implements IEventHandler<InterviewCreatedEv
         });
       }
 
-      const response = await fetch(`${LLM_SERVICE_URL}/api/companies/enrich`, {
+      const response = await fetch(`${this.llmServiceUrl}/api/companies/enrich`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: this.getLLMHeaders(),
         body: JSON.stringify({
           companyName,
-          callbackUrl: `${API_URL}/api/webhooks/llm-result`,
+          callbackUrl: `${this.apiUrl}/api/webhooks/llm-result`,
           metadata: {
             userId,
             companyId,

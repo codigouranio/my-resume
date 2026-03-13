@@ -18,12 +18,28 @@ interface EmbeddingResponse {
 export class EmbeddingProcessor {
   private readonly logger = new Logger(EmbeddingProcessor.name);
   private readonly llmServiceUrl: string;
+  private readonly llmApiKey: string;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
   ) {
     this.llmServiceUrl = this.configService.get<string>('LLM_SERVICE_URL', 'http://localhost:5000');
+    this.llmApiKey = this.configService.get<string>('LLM_API_KEY', '');
+    
+    if (!this.llmApiKey) {
+      this.logger.warn('LLM_API_KEY not configured - LLM service calls may fail');
+    }
+  }
+
+  /**
+   * Get headers for LLM service requests.
+   */
+  private getLLMHeaders(): Record<string, string> {
+    return {
+      'Content-Type': 'application/json',
+      'X-API-Key': this.llmApiKey,
+    };
   }
 
   @OnQueueActive()
@@ -191,6 +207,7 @@ export class EmbeddingProcessor {
         },
         {
           timeout: 30000, // 30 second timeout
+          headers: this.getLLMHeaders(),
         },
       );
 

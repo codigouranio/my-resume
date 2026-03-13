@@ -5,6 +5,7 @@ import {
   Logger,
   NotFoundException,
 } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import * as crypto from "crypto";
 import { Response } from "express";
 import remarkParse from "remark-parse";
@@ -22,12 +23,32 @@ import { first } from "rxjs";
 @Injectable()
 export class ResumesService {
   private readonly logger = new Logger(ResumesService.name);
+  private readonly llmServiceUrl: string;
+  private readonly llmApiKey: string;
 
   constructor(
     private prisma: PrismaService,
     private embeddingQueueService: EmbeddingQueueService,
     private emailService: EmailService,
-  ) {}
+    private configService: ConfigService,
+  ) {
+    this.llmServiceUrl = this.configService.get<string>('LLM_SERVICE_URL', 'http://localhost:5000');
+    this.llmApiKey = this.configService.get<string>('LLM_API_KEY', '');
+    
+    if (!this.llmApiKey) {
+      this.logger.warn('LLM_API_KEY not configured - LLM service calls may fail');
+    }
+  }
+
+  /**
+   * Get headers for LLM service requests.
+   */
+  private getLLMHeaders(): Record<string, string> {
+    return {
+      'Content-Type': 'application/json',
+      'X-API-Key': this.llmApiKey,
+    };
+  }
 
   async create(userId: string, createResumeDto: CreateResumeDto) {
     // Get user's subscription tier and count existing resumes
@@ -866,15 +887,10 @@ export class ResumesService {
   }
 
   async improveText(text: string, context: string = "resume") {
-    const LLM_SERVICE_URL =
-      process.env.LLM_SERVICE_URL || "http://localhost:5000";
-
     try {
-      const response = await fetch(`${LLM_SERVICE_URL}/api/improve-text`, {
+      const response = await fetch(`${this.llmServiceUrl}/api/improve-text`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: this.getLLMHeaders(),
         body: JSON.stringify({ text, context }),
       });
 

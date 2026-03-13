@@ -76,6 +76,10 @@ flower_enabled: true
 # Webhook Security
 llm_webhook_secret: "{{ vault_llm_webhook_secret | default('CHANGE_ME_IN_PRODUCTION_MIN_32_CHARS') }}"
 
+# LLM API Key Authentication
+llm_authorized_api_keys: "{{ vault_llm_authorized_api_keys }}"  # Keys authorized to call LLM service
+llm_api_key: "{{ vault_llm_api_key }}"  # Key API service uses to call LLM service
+
 # PM2 Configuration
 pm2_instances_api: 2
 pm2_max_memory_restart: "512M"

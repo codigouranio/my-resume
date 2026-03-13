@@ -20,6 +20,7 @@ import { AIContextModule } from './features/ai-context/ai-context.module';
 import { DocumentStorageModule } from './features/document-storage/document-storage.module';
 import { InterviewsModule } from './features/interviews/interviews.module';
 import { CompaniesModule } from './features/companies/companies.module';
+import { LlmServiceApiModule } from './features/llm-service-api/llm-service-api.module';
 import { AppThrottlerGuard } from './shared/guards/throttler.guard';
 import { CustomBullBoardModule } from './shared/bull-board/bull-board.module';
 
@@ -109,6 +110,7 @@ import { CustomBullBoardModule } from './shared/bull-board/bull-board.module';
     DocumentStorageModule,
     InterviewsModule,
     CompaniesModule,
+    LlmServiceApiModule,
     CustomBullBoardModule,
   ],
   providers: [
