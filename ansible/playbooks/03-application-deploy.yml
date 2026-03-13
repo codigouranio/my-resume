@@ -56,7 +56,7 @@
           SES_FROM_EMAIL={{ ses_from_email | default('noreply@resumecast.ai') }}
           FRONTEND_URL={{ frontend_url | default('https://resumecast.ai') }}
           API_BASE_URL={{ api_base_url | default('https://resumecast.ai') }}
-          LLM_WEBHOOK_SECRET: '{{ llm_webhook_secret | default('default_key') }}'
+          LLM_WEBHOOK_SECRET={{ llm_webhook_secret | default('default_key') }}
         owner: "{{ ansible_user }}"
         mode: "0600"
 
@@ -182,7 +182,6 @@
       args:
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
-      become_user: "{{ ansible_user }}"
 
     - name: Debug - Check Poetry and Python versions
       shell: |
@@ -203,16 +202,21 @@
       debug:
         var: poetry_debug.stdout_lines
 
-    - name: Update Poetry lock file
+    - name: Remove old Poetry lock file
+      file:
+        path: "{{ llm_service_path }}/poetry.lock"
+        state: absent
+      become_user: "{{ ansible_user }}"
+
+    - name: Generate fresh Poetry lock file
       shell: |
         export PATH="$HOME/.local/bin:$PATH"
         cd {{ llm_service_path }}
-        poetry lock --no-update
+        poetry lock
       args:
         executable: /bin/bash
       become_user: "{{ ansible_user }}"
       register: poetry_lock
-      ignore_errors: yes
 
     - name: Install LLM service Python dependencies with Poetry
       shell: |
