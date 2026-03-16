@@ -809,7 +809,6 @@ async def enrich_company(
             else:
                 # Fallback to threading
                 import threading
-                from app_remote import research_company_async
 
                 thread = threading.Thread(
                     target=research_company_async,
