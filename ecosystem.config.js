@@ -28,7 +28,9 @@ module.exports = {
     },
     {
       name: "llm-service",
-      script: "/opt/my-resume/run-llm-service.sh",
+      script: "/opt/my-resume/apps/llm-service/.venv/bin/uvicorn",
+      args: "app_fastapi:app --host 0.0.0.0 --port 5000 --workers 2",
+      interpreter: "/opt/my-resume/apps/llm-service/.venv/bin/python",
       cwd: "/opt/my-resume/apps/llm-service",
       instances: 1,
       env: {

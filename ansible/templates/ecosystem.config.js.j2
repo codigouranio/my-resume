@@ -44,7 +44,8 @@ module.exports = {
       name: 'llm-service',
       cwd: '{{ llm_service_path }}',
       interpreter: '{{ llm_service_path }}/.venv/bin/python',
-      script: './app_remote.py',
+      script: '{{ llm_service_path }}/.venv/bin/uvicorn',
+      args: 'app_fastapi:app --host 0.0.0.0 --port {{ llm_port }} --workers 2',
       instances: 1,
       max_memory_restart: '1G',
       env: {
