@@ -21,8 +21,17 @@ export class CompaniesController {
       'Automatically gathers company data from web sources using LLM-powered research. ' +
       'Results are cached for 30 days. This endpoint blocks until complete (10-30 seconds).',
   })
-  async enrichCompany(@Body() dto: EnrichCompanyDto) {
-    return this.companiesService.enrichCompany(dto.companyName);
+  async enrichCompany(@Body() dto: EnrichCompanyDto, @Req() req: any) {
+    const userId = req.user?.userId || 'unknown';
+    console.log(`[CompaniesController] POST /companies/enrich called by user ${userId} for company: ${dto.companyName}`);
+    try {
+      const result = await this.companiesService.enrichCompany(dto.companyName);
+      console.log(`[CompaniesController] Enrichment successful for ${dto.companyName}, returned ${Object.keys(result).length} fields`);
+      return result;
+    } catch (error) {
+      console.error(`[CompaniesController] Enrichment failed for ${dto.companyName}: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   @Post('enrich/queue')
@@ -36,18 +45,25 @@ export class CompaniesController {
   })
   async queueEnrichment(@Body() dto: EnrichCompanyDto, @Req() req: any) {
     const userId = req.user?.userId || 'system';
+    console.log(`[CompaniesController] POST /companies/enrich/queue called by user ${userId} for company: ${dto.companyName}`);
     
-    const job = await enqueueCompanyEnrichment({
-      companyName: dto.companyName,
-      userId,
-    });
+    try {
+      const job = await enqueueCompanyEnrichment({
+        companyName: dto.companyName,
+        userId,
+      });
+      console.log(`[CompaniesController] Job queued successfully: ${job.id} for company ${dto.companyName}`);
 
-    return {
-      jobId: job.id,
-      companyName: dto.companyName,
-      status: 'queued',
-      message: 'Company enrichment job queued successfully',
-    };
+      return {
+        jobId: job.id,
+        companyName: dto.companyName,
+        status: 'queued',
+        message: 'Company enrichment job queued successfully',
+      };
+    } catch (error) {
+      console.error(`[CompaniesController] Failed to queue enrichment for ${dto.companyName}: ${error.message}`);
+      throw error;
+    }
   }
 
   @Get('enrich/status/:jobId')

@@ -351,12 +351,13 @@ async def verify_api_key(
     Verify API key from X-API-Key header.
     Returns service name if valid, raises HTTPException if invalid.
     """
+    logger.debug(f"[AUTH] Verifying API key (present: {x_api_key is not None})")
     manager = get_api_key_manager()
     is_valid, service_name = manager.validate_key(x_api_key)
 
     if not is_valid:
         logger.warning(
-            f"Invalid API key attempt: {x_api_key[:10] if x_api_key else 'None'}..."
+            f"[AUTH] ❌ Invalid API key attempt: {x_api_key[:10] if x_api_key else 'None'}..."
         )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -364,6 +365,7 @@ async def verify_api_key(
             headers={"WWW-Authenticate": "ApiKey"},
         )
 
+    logger.info(f"[AUTH] ✅ Valid API key for service: {service_name}")
     return service_name
 
 
@@ -824,15 +826,25 @@ async def enrich_company(
 
         # SYNC MODE: No callback, return directly
         else:
-            logger.info(f"Synchronous enrichment for: {company_name}")
+            logger.info(
+                f"[SYNC MODE] Starting synchronous enrichment for: {company_name}"
+            )
+            logger.info(f"[SYNC MODE] Initializing research agent...")
             agent = get_research_agent()
+            logger.info(f"[SYNC MODE] Research agent ready, starting research...")
             result = agent.research_company(company_name)
+            logger.info(
+                f"[SYNC MODE] Research complete for {company_name}, got {len(result)} result fields"
+            )
+            logger.info(f"[SYNC MODE] Result keys: {list(result.keys())}")
 
             return CompanyEnrichResponse(
                 company_data=result, sources=["web_search", "company_website"]
             )
     except Exception as e:
-        logger.error(f"Error enriching company data: {e}")
+        logger.error(
+            f"[ERROR] Company enrichment failed for {company_name}: {e}", exc_info=True
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
