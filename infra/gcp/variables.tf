@@ -84,6 +84,12 @@ variable "llm_webhook_secret" {
   sensitive   = true
 }
 
+variable "llm_api_key" {
+  description = "API key to call to LLM service"
+  type        = string
+  sensitive   = true
+}
+
 # Application Secrets
 variable "jwt_secret" {
   description = "JWT secret for authentication (min 32 characters)"

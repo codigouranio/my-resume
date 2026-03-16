@@ -360,7 +360,7 @@ resource "google_cloud_run_v2_service" "api" {
 
       env {
         name  = "LLM_API_KEY"
-        value = "not-configured"  # Set actual key if using external LLM
+        value = var.llm_api_key
       }
 
       env {
