@@ -119,16 +119,16 @@ poetry run gunicorn app_fastapi:app \
 
 Once the server is running:
 
-1. **Swagger UI** (Interactive): http://localhost:5000/docs
+1. **Swagger UI** (Interactive): http://localhost:5000/api/docs
    - Try out API endpoints directly in browser
    - See request/response schemas
    - Test authentication
 
-2. **ReDoc** (Alternative): http://localhost:5000/redoc
+2. **ReDoc** (Alternative): http://localhost:5000/api/redoc
    - Clean documentation view
    - Better for reading
 
-3. **OpenAPI Schema** (JSON): http://localhost:5000/openapi.json
+3. **OpenAPI Schema** (JSON): http://localhost:5000/api/openapi.json
    - Raw OpenAPI 3.0 specification
    - Import into Postman/Insomnia
 
@@ -170,7 +170,7 @@ curl -X POST http://localhost:5000/api/chat \
 
 ### Test with Swagger UI
 
-1. Go to http://localhost:5000/docs
+1. Go to http://localhost:5000/api/docs
 2. Click "Authorize" button (top right)
 3. Enter your API key
 4. Try any endpoint with the "Try it out" button
@@ -218,7 +218,7 @@ pm2 logs llm-service  # Verify startup
 ### Verify Documentation
 
 ```bash
-curl -I https://llm-service.paskot.com/docs
+curl -I https://llm-service.paskot.com/api/docs
 # Should return 200 OK with HTML content
 ```
 
@@ -288,14 +288,14 @@ lsof -ti:5000 | xargs kill -9  # Kill process on port 5000
 
 Check that FastAPI is actually running:
 ```bash
-curl http://localhost:5000/openapi.json
+curl http://localhost:5000/api/openapi.json
 # Should return OpenAPI schema
 ```
 
 ## Next Steps
 
 1. **Test locally** with `uvicorn app_fastapi:app --reload`
-2. **Access docs** at http://localhost:5000/docs
+2. **Access docs** at http://localhost:5000/api/docs
 3. **Test endpoints** using Swagger UI
 4. **Update deployment** scripts
 5. **Deploy to production**

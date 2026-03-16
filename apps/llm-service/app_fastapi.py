@@ -61,9 +61,9 @@ app = FastAPI(
     title="LLM Service API",
     description="AI-powered resume chat and analysis service with automatic Swagger documentation",
     version="2.0.0",
-    docs_url="/docs",  # Swagger UI
-    redoc_url="/redoc",  # ReDoc alternative
-    openapi_url="/openapi.json",  # OpenAPI schema
+    docs_url="/api/docs",  # Swagger UI
+    redoc_url="/api/redoc",  # ReDoc alternative
+    openapi_url="/api/openapi.json",  # OpenAPI schema
 )
 
 # CORS configuration
@@ -773,8 +773,8 @@ async def startup_event():
     logger.info(f"Celery: {'Enabled' if CELERY_AVAILABLE else 'Disabled'}")
     logger.info(f"API Keys: {api_key_manager.get_service_count()} configured")
     logger.info("=" * 80)
-    logger.info("📖 Swagger UI: http://localhost:5000/docs")
-    logger.info("📖 ReDoc: http://localhost:5000/redoc")
+    logger.info("📖 Swagger UI: http://localhost:5000/api/docs")
+    logger.info("📖 ReDoc: http://localhost:5000/api/redoc")
     logger.info("=" * 80)
 
 

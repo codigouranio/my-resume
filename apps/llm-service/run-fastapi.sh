@@ -31,8 +31,8 @@ if [ -f ./setup_poetry.sh ]; then
     echo "================================================"
     echo ""
     echo "Starting FastAPI server..."
-    echo "📖 Swagger UI: http://localhost:5000/docs"
-    echo "📖 ReDoc: http://localhost:5000/redoc"
+    echo "📖 Swagger UI: http://localhost:5000/api/docs"
+    echo "📖 ReDoc: http://localhost:5000/api/redoc"
     echo ""
     
     poetry run uvicorn app_fastapi:app --reload --host 0.0.0.0 --port 5000
@@ -54,8 +54,8 @@ else
     echo "================================================"
     echo ""
     echo "Starting FastAPI server..."
-    echo "📖 Swagger UI: http://localhost:5000/docs"
-    echo "📖 ReDoc: http://localhost:5000/redoc"
+    echo "📖 Swagger UI: http://localhost:5000/api/docs"
+    echo "📖 ReDoc: http://localhost:5000/api/redoc"
     echo ""
     
     uvicorn app_fastapi:app --reload --host 0.0.0.0 --port 5000
