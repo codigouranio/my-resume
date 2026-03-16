@@ -93,12 +93,9 @@ export class CompaniesWorkerService implements OnModuleInit, OnModuleDestroy {
       } else {
         // OLD: Synchronous mode (deprecated, kept for backward compatibility)
         this.logger.log(`[CompanyWorker Job ${job.id}] Using SYNCHRONOUS mode for ${companyName}`);
-        this.logger.log(`[CompanyWorker] LLM Service URL: ${this.llmServiceUrl}`);
-        this.logger.log(`[CompanyWorker] LLM API Key configured: ${this.llmApiKey ? 'YES (length: ' + this.llmApiKey.length + ')' : 'NO'}`);
         
-        this.logger.log(`[CompanyWorker] Calling companiesService.enrichCompany...`);
         const enrichedData = await this.companiesService.enrichCompany(companyName);
-        this.logger.log(`[CompanyWorker] Enrichment completed, got ${Object.keys(enrichedData).length} fields`);
+        this.logger.log(`[CompanyWorker Job ${job.id}] Enrichment completed for ${companyName}, got ${Object.keys(enrichedData).length} fields`);
 
         this.logger.log(`Successfully enriched company: ${companyName}`);
 
