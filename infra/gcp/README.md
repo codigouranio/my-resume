@@ -186,15 +186,16 @@ docker build -t us-central1-docker.pkg.dev/resume-cast-ai-prod/resumecast-images
 docker push us-central1-docker.pkg.dev/resume-cast-ai-prod/resumecast-images/frontend:latest
 ```
 
-### 2. Run Database Migrations
+### 2. Database Migrations (Automatic)
 
+✅ **Prisma migrations are automatically applied during `terraform apply`**
+
+The Terraform configuration includes a `null_resource` that runs `npx prisma migrate deploy` after the database is created. This ensures your schema is always up-to-date.
+
+If you need to run migrations manually:
 ```bash
 cd ../api-service
-
-# Get database URL from terraform output
 DATABASE_URL=$(cd ../../infra/gcp && terraform output -raw database_url_for_home_llm)
-
-# Run migrations
 DATABASE_URL=$DATABASE_URL npx prisma migrate deploy
 ```
 

@@ -64,6 +64,25 @@ output "frontend_service_url" {
   value       = google_cloud_run_v2_service.frontend.uri
 }
 
+# Custom Domain Mappings
+output "domain_mapping_dns_records" {
+  description = "DNS records to configure in Cloudflare for custom domains"
+  value = {
+    resumecast_ai = {
+      domain = "resumecast.ai"
+      records = google_cloud_run_domain_mapping.frontend_main.status[0].resource_records
+    }
+    www_resumecast_ai = {
+      domain = "www.resumecast.ai"
+      records = google_cloud_run_domain_mapping.frontend_www.status[0].resource_records
+    }
+    api_resumecast_ai = {
+      domain = "api.resumecast.ai"
+      records = google_cloud_run_domain_mapping.api.status[0].resource_records
+    }
+  }
+}
+
 # Service Account
 output "cloudrun_service_account" {
   description = "Cloud Run service account email"
@@ -101,6 +120,7 @@ output "docker_push_commands" {
 
 output "next_steps" {
   description = "What to do after Terraform apply"
+  sensitive   = true
   value = <<-EOT
     
     ✅ Infrastructure deployed successfully!
@@ -117,9 +137,8 @@ output "next_steps" {
        docker build -t ${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/frontend:latest -f apps/my-resume/Dockerfile .
        docker push ${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/frontend:latest
        
-    2. Run Prisma migrations:
-       cd apps/api-service
-       DATABASE_URL="postgresql://${google_sql_user.main.name}:${var.database_password}@${google_sql_database_instance.main.public_ip_address}:5432/${google_sql_database.main.name}" npx prisma migrate deploy
+    2. Database migrations:
+       ✅ Prisma migrations are automatically applied during terraform apply
        
     3. Configure home LLM service .env:
        DATABASE_URL=postgresql://${google_sql_user.main.name}:${var.database_password}@${google_sql_database_instance.main.public_ip_address}:5432/${google_sql_database.main.name}

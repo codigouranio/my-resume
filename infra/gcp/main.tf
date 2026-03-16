@@ -102,6 +102,30 @@ resource "google_sql_user" "main" {
   password = var.database_password
 }
 
+# Run Prisma migrations after database is ready
+resource "null_resource" "prisma_migrations" {
+  # Re-run migrations when database changes or when forced
+  triggers = {
+    database_instance = google_sql_database_instance.main.id
+    database_name     = google_sql_database.main.name
+    database_user     = google_sql_user.main.name
+  }
+
+  provisioner "local-exec" {
+    command     = "cd ../../apps/api-service && npx prisma migrate deploy"
+    working_dir = path.module
+    environment = {
+      DATABASE_URL = "postgresql://${google_sql_user.main.name}:${urlencode(var.database_password)}@${google_sql_database_instance.main.public_ip_address}:5432/${google_sql_database.main.name}"
+    }
+  }
+
+  depends_on = [
+    google_sql_database.main,
+    google_sql_user.main,
+    google_sql_database_instance.main
+  ]
+}
+
 # Artifact Registry for Docker images
 resource "google_artifact_registry_repository" "main" {
   location      = var.region
@@ -213,7 +237,8 @@ resource "google_secret_manager_secret" "database_url" {
 
 resource "google_secret_manager_secret_version" "database_url" {
   secret = google_secret_manager_secret.database_url.id
-  secret_data = "postgresql://${google_sql_user.main.name}:${var.database_password}@${google_sql_database_instance.main.public_ip_address}:5432/${google_sql_database.main.name}"
+  # Cloud Run uses Unix socket: /cloudsql/PROJECT:REGION:INSTANCE
+  secret_data = "postgresql://${google_sql_user.main.name}:${urlencode(var.database_password)}@localhost/${google_sql_database.main.name}?host=/cloudsql/${google_sql_database_instance.main.connection_name}"
 }
 
 resource "google_secret_manager_secret" "llm_webhook_secret" {
@@ -237,6 +262,11 @@ resource "google_cloud_run_v2_service" "api" {
 
   template {
     service_account = google_service_account.cloudrun.email
+    timeout         = "300s"
+
+    annotations = {
+      "run.googleapis.com/cloudsql-instances" = google_sql_database_instance.main.connection_name
+    }
 
     scaling {
       min_instance_count = var.api_min_instances
@@ -247,7 +277,7 @@ resource "google_cloud_run_v2_service" "api" {
       image = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/api-service:latest"
 
       ports {
-        container_port = 3000
+        container_port = 8080
       }
 
       resources {
@@ -260,11 +290,6 @@ resource "google_cloud_run_v2_service" "api" {
       env {
         name  = "NODE_ENV"
         value = "production"
-      }
-
-      env {
-        name  = "PORT"
-        value = "3000"
       }
 
       env {
@@ -308,6 +333,16 @@ resource "google_cloud_run_v2_service" "api" {
       }
 
       env {
+        name  = "STRIPE_SECRET_KEY"
+        value = "not-configured"  # Set actual key if using Stripe
+      }
+
+      env {
+        name  = "LLM_API_KEY"
+        value = "not-configured"  # Set actual key if using external LLM
+      }
+
+      env {
         name  = "FRONTEND_URL"
         value = var.frontend_url
       }
@@ -315,6 +350,27 @@ resource "google_cloud_run_v2_service" "api" {
       env {
         name  = "STORAGE_BUCKET"
         value = google_storage_bucket.uploads.name
+      }
+
+      # AWS Configuration (for SES email and S3 storage)
+      env {
+        name  = "AWS_ACCESS_KEY_ID"
+        value = var.aws_access_key_id
+      }
+
+      env {
+        name  = "AWS_SECRET_ACCESS_KEY"
+        value = var.aws_secret_access_key
+      }
+
+      env {
+        name  = "AWS_REGION"
+        value = var.aws_region
+      }
+
+      env {
+        name  = "SES_FROM_EMAIL"
+        value = var.ses_from_email
       }
     }
   }
@@ -358,7 +414,7 @@ resource "google_cloud_run_v2_service" "frontend" {
       resources {
         limits = {
           cpu    = "1"
-          memory = "256Mi"
+          memory = "512Mi"
         }
       }
 
@@ -383,4 +439,44 @@ resource "google_cloud_run_v2_service_iam_member" "frontend_public" {
   name     = google_cloud_run_v2_service.frontend.name
   role     = "roles/run.invoker"
   member   = "allUsers"
+}
+
+# Domain mappings for custom domains
+resource "google_cloud_run_domain_mapping" "frontend_main" {
+  location = var.region
+  name     = "resumecast.ai"
+
+  metadata {
+    namespace = var.project_id
+  }
+
+  spec {
+    route_name = google_cloud_run_v2_service.frontend.name
+  }
+}
+
+resource "google_cloud_run_domain_mapping" "frontend_www" {
+  location = var.region
+  name     = "www.resumecast.ai"
+
+  metadata {
+    namespace = var.project_id
+  }
+
+  spec {
+    route_name = google_cloud_run_v2_service.frontend.name
+  }
+}
+
+resource "google_cloud_run_domain_mapping" "api" {
+  location = var.region
+  name     = "api.resumecast.ai"
+
+  metadata {
+    namespace = var.project_id
+  }
+
+  spec {
+    route_name = google_cloud_run_v2_service.api.name
+  }
 }

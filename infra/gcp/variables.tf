@@ -127,3 +127,27 @@ variable "frontend_max_instances" {
   type        = number
   default     = 10
 }
+
+# AWS Configuration (for SES email and S3 storage)
+variable "aws_access_key_id" {
+  description = "AWS access key ID for SES and S3"
+  type        = string
+  sensitive   = true
+}
+
+variable "aws_secret_access_key" {
+  description = "AWS secret access key for SES and S3"
+  type        = string
+  sensitive   = true
+}
+
+variable "aws_region" {
+  description = "AWS region for SES and S3"
+  type        = string
+  default     = "us-east-1"
+}
+
+variable "ses_from_email" {
+  description = "Email address for sending emails via SES"
+  type        = string
+}

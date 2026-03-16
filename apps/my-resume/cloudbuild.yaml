@@ -1,0 +1,16 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/resumecast-images/frontend:latest'
+      - '-f'
+      - 'apps/my-resume/Dockerfile'
+      - '--build-arg'
+      - 'PUBLIC_API_URL=https://api-service-t6hqg2nmta-uc.a.run.app/api'
+      - '--build-arg'
+      - 'PUBLIC_LLM_API_URL=https://llm-service.paskot.com'
+      - '.'
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/resumecast-images/frontend:latest'
+timeout: 1200s

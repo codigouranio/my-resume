@@ -1,0 +1,12 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/resumecast-images/api-service:latest'
+      - '-f'
+      - 'apps/api-service/Dockerfile'
+      - '.'
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/resumecast-images/api-service:latest'
+timeout: 1200s
