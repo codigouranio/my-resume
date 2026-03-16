@@ -76,46 +76,70 @@ export class InterviewCompanyChangedHandler
   private async triggerCompanyEnrichment(companyName: string, userId: string, companyId?: string): Promise<void> {
     const LLM_SERVICE_URL = process.env.LLM_SERVICE_URL || 'http://localhost:5000';
     const API_URL = process.env.API_BASE_URL || 'http://localhost:3000';
+    const LLM_API_KEY = process.env.LLM_API_KEY || '';
+
+    this.logger.log(`[triggerCompanyEnrichment] START for company: "${companyName}", userId: ${userId}, companyId: ${companyId || 'N/A'}`);
+    this.logger.log(`[triggerCompanyEnrichment] LLM_SERVICE_URL: ${LLM_SERVICE_URL}`);
+    this.logger.log(`[triggerCompanyEnrichment] API_BASE_URL: ${API_URL}`);
+    this.logger.log(`[triggerCompanyEnrichment] LLM_API_KEY configured: ${LLM_API_KEY ? 'YES (length: ' + LLM_API_KEY.length + ')' : 'NO'}`);
 
     try {
       // Update status to PROCESSING
       if (companyId) {
+        this.logger.log(`[triggerCompanyEnrichment] Updating company ${companyId} status to PROCESSING`);
         await this.prisma.companyInfo.update({
           where: { id: companyId },
           data: { enrichmentStatus: 'PROCESSING' },
         });
+        this.logger.log(`[triggerCompanyEnrichment] Company ${companyId} status updated to PROCESSING`);
       }
 
-      const response = await fetch(`${LLM_SERVICE_URL}/api/companies/enrich`, {
+      const callbackUrl = `${API_URL}/api/webhooks/llm-result`;
+      const requestBody = {
+        companyName,
+        callbackUrl,
+        metadata: {
+          userId,
+          companyId,
+          type: 'company_research',
+          source: 'interview_company_changed',
+        },
+      };
+
+      const enrichUrl = `${LLM_SERVICE_URL}/api/companies/enrich`;
+      this.logger.log(`[triggerCompanyEnrichment] Calling LLM service at: ${enrichUrl}`);
+      this.logger.log(`[triggerCompanyEnrichment] Request body: ${JSON.stringify(requestBody)}`);
+
+      const response = await fetch(enrichUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          companyName,
-          callbackUrl: `${API_URL}/api/webhooks/llm-result`,
-          metadata: {
-            userId,
-            companyId,
-            type: 'company_research',
-            source: 'interview_company_changed',
-          },
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': LLM_API_KEY,
+        },
+        body: JSON.stringify(requestBody),
       });
 
+      this.logger.log(`[triggerCompanyEnrichment] LLM service responded with status: ${response.status} ${response.statusText}`);
+
       if (!response.ok) {
-        throw new Error(`LLM service returned ${response.status}`);
+        const errorText = await response.text();
+        this.logger.error(`[triggerCompanyEnrichment] LLM service error response: ${errorText}`);
+        throw new Error(`LLM service returned ${response.status}: ${errorText}`);
       }
 
       const result = await response.json();
-      this.logger.log(`Company enrichment queued: ${result.jobId} for company ${companyId || companyName}`);
+      this.logger.log(`[triggerCompanyEnrichment] LLM service response: ${JSON.stringify(result)}`);
+      this.logger.log(`[triggerCompanyEnrichment] SUCCESS - Company enrichment queued with jobId: ${result.jobId} for company ${companyId || companyName}`);
     } catch (error) {
-      this.logger.error(`Failed to trigger company enrichment: ${error.message}`);
+      this.logger.error(`[triggerCompanyEnrichment] FAILED for company "${companyName}": ${error.message}`, error.stack);
       
       // Mark as FAILED if we have a companyId
       if (companyId) {
+        this.logger.log(`[triggerCompanyEnrichment] Updating company ${companyId} status to FAILED`);
         await this.prisma.companyInfo.update({
           where: { id: companyId },
           data: { enrichmentStatus: 'FAILED' },
-        }).catch(err => this.logger.error(`Failed to update status to FAILED: ${err.message}`));
+        }).catch(err => this.logger.error(`[triggerCompanyEnrichment] Failed to update status to FAILED: ${err.message}`));
       }
     }
   }
