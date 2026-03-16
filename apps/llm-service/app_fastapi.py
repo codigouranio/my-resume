@@ -32,7 +32,7 @@ from api_client import (
     load_conversation_history_from_api,
 )
 from api_key_auth import get_api_key_manager
-from app_remote import RemoteLLMWrapper
+from app_remote import RemoteLLMWrapper, research_company_async, analyze_position_async
 
 # Import Celery app and tasks (optional - graceful fallback if not available)
 try:
@@ -268,22 +268,68 @@ class ReloadResumeRequest(BaseModel):
 class CompanyEnrichRequest(BaseModel):
     """Company research request"""
 
-    company_name: str = Field(..., description="Company name to research")
-    job_description: Optional[str] = Field(None, description="Job description context")
+    company_name: str = Field(
+        ..., description="Company name to research", alias="companyName"
+    )
+    job_description: Optional[str] = Field(
+        None, description="Job description context", alias="jobDescription"
+    )
+    callback_url: Optional[str] = Field(
+        None, description="Webhook URL for async processing", alias="callbackUrl"
+    )
+    metadata: Optional[Dict[str, Any]] = Field(
+        None, description="Additional metadata to pass back"
+    )
+
+    class Config:
+        populate_by_name = True  # Allow both snake_case and camelCase
 
 
 class CompanyEnrichResponse(BaseModel):
-    """Company research response"""
+    """Company research response (sync mode)"""
 
     company_data: Dict[str, Any] = Field(..., description="Company research data")
     sources: List[str] = Field(..., description="Data sources")
 
 
+class CompanyEnrichAsyncResponse(BaseModel):
+    """Company research async response"""
+
+    job_id: str = Field(..., description="Job ID for tracking", alias="jobId")
+    status: str = Field(..., description="Processing status")
+    estimated_time: str = Field(
+        ..., description="Estimated completion time", alias="estimatedTime"
+    )
+
+    class Config:
+        populate_by_name = True
+
+
 class PositionScoreRequest(BaseModel):
     """Position scoring request"""
 
-    job_description: str = Field(..., description="Job description")
-    resume_slug: str = Field(..., description="Resume slug")
+    company: Optional[str] = Field(None, description="Company name")
+    position: Optional[str] = Field(None, description="Position title")
+    job_url: Optional[str] = Field(None, description="Job posting URL", alias="jobUrl")
+    job_description: Optional[str] = Field(
+        None, description="Job description", alias="jobDescription"
+    )
+    resume: Optional[Dict[str, str]] = Field(
+        None, description="Resume with content and llmContext"
+    )
+    resume_slug: Optional[str] = Field(
+        None, description="Resume slug (for simple mode)", alias="resumeSlug"
+    )
+    journal_entries: Optional[List[Dict[str, Any]]] = Field(
+        None, description="Journal entries", alias="journalEntries"
+    )
+    callback_url: Optional[str] = Field(
+        None, description="Webhook URL for async processing", alias="callbackUrl"
+    )
+    metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata")
+
+    class Config:
+        populate_by_name = True
 
 
 class PositionScoreResponse(BaseModel):
@@ -729,68 +775,189 @@ async def reload_resume(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post(
-    "/api/companies/enrich", response_model=CompanyEnrichResponse, tags=["Research"]
-)
+@app.post("/api/companies/enrich", tags=["Research"])
 async def enrich_company(
     enrich_request: CompanyEnrichRequest, service_name: str = Depends(verify_api_key)
 ):
     """
     Research and enrich company data.
 
-    Gathers company information from various sources for job applications.
+    Supports two modes:
+    1. Async (with callbackUrl): Returns immediately, sends results to webhook when done
+    2. Sync (no callbackUrl): Blocks and returns data directly
+
     Requires X-API-Key header for authentication.
     """
     try:
         company_name = enrich_request.company_name
-        job_description = enrich_request.job_description or ""
+        callback_url = enrich_request.callback_url
+        metadata = enrich_request.metadata or {}
 
-        # Use CompanyResearchAgent if available
-        agent = get_research_agent()
-        result = agent.research_company(company_name)
+        # ASYNC MODE: Webhook callback provided
+        if callback_url:
+            job_id = f"llm_job_{uuid.uuid4().hex[:12]}"
+            logger.info(
+                f"Queueing async enrichment for: {company_name} (job: {job_id})"
+            )
 
-        return CompanyEnrichResponse(
-            company_data=result, sources=["web_search", "company_website"]
-        )
+            if CELERY_AVAILABLE:
+                # Queue task with Celery
+                task = research_company_task.delay(
+                    company_name, callback_url, metadata, job_id
+                )
+                logger.info(f"Celery task queued: {task.id}")
+            else:
+                # Fallback to threading
+                import threading
+                from app_remote import research_company_async
+
+                thread = threading.Thread(
+                    target=research_company_async,
+                    args=(company_name, callback_url, metadata, job_id),
+                    daemon=True,
+                )
+                thread.start()
+                logger.info(f"Thread started for job: {job_id}")
+
+            return CompanyEnrichAsyncResponse(
+                job_id=job_id, status="processing", estimated_time="30s"
+            )
+
+        # SYNC MODE: No callback, return directly
+        else:
+            logger.info(f"Synchronous enrichment for: {company_name}")
+            agent = get_research_agent()
+            result = agent.research_company(company_name)
+
+            return CompanyEnrichResponse(
+                company_data=result, sources=["web_search", "company_website"]
+            )
     except Exception as e:
         logger.error(f"Error enriching company data: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post(
-    "/api/positions/score", response_model=PositionScoreResponse, tags=["Analysis"]
-)
+@app.post("/api/positions/score", tags=["Analysis"])
 async def score_position(
     score_request: PositionScoreRequest, service_name: str = Depends(verify_api_key)
 ):
     """
     Score position fit for a resume.
 
-    Analyzes job description against resume to calculate fit score.
+    Supports two modes:
+    1. Async (with callbackUrl): Returns immediately, sends results to webhook when done
+    2. Sync (no callbackUrl): Blocks and returns data directly (requires resume_slug)
+
     Requires X-API-Key header for authentication.
     """
     try:
-        job_description = score_request.job_description
-        resume_slug = score_request.resume_slug
+        callback_url = score_request.callback_url
+        metadata = score_request.metadata or {}
 
-        # Load resume
-        context, resume_id = load_resume_from_db(resume_slug)
-        if not context:
-            raise HTTPException(status_code=404, detail="Resume not found")
+        # ASYNC MODE: Webhook callback provided
+        if callback_url:
+            company = score_request.company or ""
+            position = score_request.position or ""
 
-        # Use PositionFitAgent if available
-        agent = get_position_fit_agent()
-        result = agent.analyze_fit(
-            company="Unknown",  # Not provided in simple endpoint
-            position="Position",  # Not provided in simple endpoint
-            job_url=None,
-            job_description=job_description,
-            resume_content=context,
-            resume_llm_context="",  # Not available in this endpoint
-            journal_entries=[],  # Not available in this endpoint
-        )
+            if not company or not position:
+                raise HTTPException(
+                    status_code=400,
+                    detail="company and position are required for async mode",
+                )
 
-        return PositionScoreResponse(score=result.get("score", 0.0), analysis=result)
+            job_url = score_request.job_url
+            job_description = score_request.job_description
+            resume = score_request.resume or {}
+            journal_entries = score_request.journal_entries or []
+
+            resume_content = resume.get("content", "")
+            resume_llm_context = resume.get("llmContext", "")
+
+            if not resume_content:
+                raise HTTPException(
+                    status_code=400, detail="resume.content is required for async mode"
+                )
+
+            job_id = f"llm_job_{uuid.uuid4().hex[:12]}"
+            logger.info(
+                f"Queueing async position analysis: {position} at {company} (job: {job_id})"
+            )
+
+            if CELERY_AVAILABLE:
+                # Queue task with Celery
+                task = analyze_position_task.delay(
+                    company,
+                    position,
+                    job_url,
+                    job_description,
+                    resume_content,
+                    resume_llm_context,
+                    journal_entries,
+                    callback_url,
+                    metadata,
+                    job_id,
+                )
+                logger.info(f"Celery task queued: {task.id}")
+            else:
+                # Fallback to threading
+                import threading
+
+                thread = threading.Thread(
+                    target=analyze_position_async,
+                    args=(
+                        company,
+                        position,
+                        job_url,
+                        job_description,
+                        resume_content,
+                        resume_llm_context,
+                        journal_entries,
+                        callback_url,
+                        metadata,
+                        job_id,
+                    ),
+                    daemon=True,
+                )
+                thread.start()
+                logger.info(f"Thread started for job: {job_id}")
+
+            return CompanyEnrichAsyncResponse(
+                job_id=job_id, status="processing", estimated_time="30s"
+            )
+
+        # SYNC MODE: No callback, use resume_slug
+        else:
+            resume_slug = score_request.resume_slug
+            job_description = score_request.job_description
+
+            if not resume_slug or not job_description:
+                raise HTTPException(
+                    status_code=400,
+                    detail="resume_slug and job_description are required for sync mode",
+                )
+
+            logger.info(f"Synchronous position scoring for resume: {resume_slug}")
+
+            # Load resume
+            context, resume_id = load_resume_from_db(resume_slug)
+            if not context:
+                raise HTTPException(status_code=404, detail="Resume not found")
+
+            # Use PositionFitAgent
+            agent = get_position_fit_agent()
+            result = agent.analyze_fit(
+                company="Unknown",
+                position="Position",
+                job_url=None,
+                job_description=job_description,
+                resume_content=context,
+                resume_llm_context="",
+                journal_entries=[],
+            )
+
+            return PositionScoreResponse(
+                score=result.get("score", 0.0), analysis=result
+            )
     except HTTPException:
         raise
     except Exception as e:
