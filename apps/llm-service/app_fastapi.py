@@ -32,6 +32,7 @@ from api_client import (
     load_conversation_history_from_api,
 )
 from api_key_auth import get_api_key_manager
+from app_remote import RemoteLLMWrapper
 
 # Import Celery app and tasks (optional - graceful fallback if not available)
 try:
@@ -123,6 +124,40 @@ if api_key_manager.get_service_count() > 0:
     )
 else:
     logger.warning("⚠️  API key authentication disabled (no keys configured)")
+
+
+# ============================================================================
+# Lazy Loading for Research Agents
+# ============================================================================
+
+# Initialize research agent (lazy loading)
+research_agent = None
+
+
+def get_research_agent():
+    """Lazy load the research agent."""
+    global research_agent
+    if research_agent is None:
+        logger.info("Initializing company research agent...")
+        llm_wrapper = RemoteLLMWrapper()
+        research_agent = CompanyResearchAgent(llm_wrapper)
+        logger.info("Research agent initialized")
+    return research_agent
+
+
+# Initialize position fit agent (lazy loading)
+position_fit_agent = None
+
+
+def get_position_fit_agent():
+    """Lazy load the position fit agent."""
+    global position_fit_agent
+    if position_fit_agent is None:
+        logger.info("Initializing position fit agent...")
+        llm_wrapper = RemoteLLMWrapper()
+        position_fit_agent = PositionFitAgent(llm_wrapper)
+        logger.info("Position fit agent initialized")
+    return position_fit_agent
 
 
 # ============================================================================
@@ -711,7 +746,7 @@ async def enrich_company(
         job_description = enrich_request.job_description or ""
 
         # Use CompanyResearchAgent if available
-        agent = CompanyResearchAgent()
+        agent = get_research_agent()
         result = agent.research(company_name, job_description)
 
         return CompanyEnrichResponse(
@@ -744,7 +779,7 @@ async def score_position(
             raise HTTPException(status_code=404, detail="Resume not found")
 
         # Use PositionFitAgent if available
-        agent = PositionFitAgent()
+        agent = get_position_fit_agent()
         result = agent.analyze(job_description, context)
 
         return PositionScoreResponse(score=result.get("score", 0.0), analysis=result)
