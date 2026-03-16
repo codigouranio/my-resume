@@ -3,6 +3,11 @@
 *.tfstate.*
 *.tfstate.backup
 
+# Terraform plan files (may contain secrets!)
+*.tfplan
+tfplan
+tfplan.*
+
 # Terraform directory
 .terraform/
 .terraform.lock.hcl
