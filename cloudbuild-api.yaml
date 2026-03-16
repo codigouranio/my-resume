@@ -1,0 +1,15 @@
+steps:
+  # Build the API service Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/resume-cast-ai-prod/resumecast-images/api-service:latest'
+      - '-f'
+      - 'apps/api-service/Dockerfile'
+      - '.'
+
+images:
+  - 'us-central1-docker.pkg.dev/resume-cast-ai-prod/resumecast-images/api-service:latest'
+
+timeout: 1200s

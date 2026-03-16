@@ -19,6 +19,7 @@ import { Queue } from 'bullmq';
           port: configService.get('REDIS_PORT', 6379),
           password: configService.get('REDIS_PASSWORD'),
           db: configService.get('REDIS_DB', 0),
+          tls: configService.get('REDIS_HOST')?.includes('upstash.io') ? {} : undefined,
         };
 
         console.log('🔌 Connecting Bull Board to Redis:', {

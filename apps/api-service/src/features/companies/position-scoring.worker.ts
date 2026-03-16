@@ -48,6 +48,7 @@ export class PositionScoringWorkerService implements OnModuleInit, OnModuleDestr
       port: this.configService.get('REDIS_PORT', 6379),
       password: this.configService.get('REDIS_PASSWORD'),
       db: this.configService.get('REDIS_DB', 0),
+      tls: this.configService.get('REDIS_HOST')?.includes('upstash.io') ? {} : undefined,
     };
 
     // Initialize queue

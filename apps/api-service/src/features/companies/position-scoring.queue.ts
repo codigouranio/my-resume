@@ -44,6 +44,7 @@ export function createPositionScoringQueue(redisConfig: any): Queue<PositionScor
       port: redisConfig.port || 6379,
       password: redisConfig.password,
       db: redisConfig.db || 0,
+      tls: redisConfig.tls,
     },
     defaultJobOptions: {
       attempts: 2, // Less retries since this is compute-intensive

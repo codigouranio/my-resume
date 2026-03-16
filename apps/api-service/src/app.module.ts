@@ -74,6 +74,7 @@ import { CustomBullBoardModule } from './shared/bull-board/bull-board.module';
           port: configService.get<number>('REDIS_PORT', 6379),
           password: configService.get<string>('REDIS_PASSWORD'),
           db: configService.get<number>('REDIS_DB', 0),
+          tls: configService.get<string>('REDIS_HOST')?.includes('upstash.io') ? {} : undefined,
         },
       }),
       inject: [ConfigService],
