@@ -747,7 +747,7 @@ async def enrich_company(
 
         # Use CompanyResearchAgent if available
         agent = get_research_agent()
-        result = agent.research(company_name, job_description)
+        result = agent.research_company(company_name)
 
         return CompanyEnrichResponse(
             company_data=result, sources=["web_search", "company_website"]
@@ -780,7 +780,15 @@ async def score_position(
 
         # Use PositionFitAgent if available
         agent = get_position_fit_agent()
-        result = agent.analyze(job_description, context)
+        result = agent.analyze_fit(
+            company="Unknown",  # Not provided in simple endpoint
+            position="Position",  # Not provided in simple endpoint
+            job_url=None,
+            job_description=job_description,
+            resume_content=context,
+            resume_llm_context="",  # Not available in this endpoint
+            journal_entries=[],  # Not available in this endpoint
+        )
 
         return PositionScoreResponse(score=result.get("score", 0.0), analysis=result)
     except HTTPException:
