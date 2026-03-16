@@ -317,6 +317,27 @@ resource "google_cloud_run_v2_service" "api" {
         value = var.redis_url
       }
 
+      # Parse Redis URL for BullMQ (expects individual components)
+      env {
+        name  = "REDIS_HOST"
+        value = regex("://(?:[^:]+:)?[^@]+@([^:]+):", var.redis_url)[0]
+      }
+
+      env {
+        name  = "REDIS_PORT"
+        value = regex(":([0-9]+)$", var.redis_url)[0]
+      }
+
+      env {
+        name  = "REDIS_PASSWORD"
+        value = regex("://[^:]+:([^@]+)@", var.redis_url)[0]
+      }
+
+      env {
+        name  = "REDIS_DB"
+        value = "0"
+      }
+
       env {
         name  = "LLM_SERVICE_URL"
         value = var.llm_service_url

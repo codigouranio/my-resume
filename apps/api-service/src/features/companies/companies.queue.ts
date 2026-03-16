@@ -35,6 +35,7 @@ export function createCompanyEnrichmentQueue(redisConfig: any): Queue<CompanyEnr
       host: redisConfig.host || 'localhost',
       port: redisConfig.port || 6379,
       password: redisConfig.password,
+      db: redisConfig.db || 0,
     },
     defaultJobOptions: {
       attempts: 3,
