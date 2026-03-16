@@ -116,6 +116,11 @@ export function createPositionScoringWorker(
         host: redisConfig.host || 'localhost',
         port: redisConfig.port || 6379,
         password: redisConfig.password,
+        db: redisConfig.db || 0,
+        tls: redisConfig.tls,
+        maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
+        enableReadyCheck: redisConfig.enableReadyCheck !== undefined ? redisConfig.enableReadyCheck : true,
+        connectTimeout: redisConfig.connectTimeout || 10000,
       },
       concurrency: 1, // Process 1 job at a time (LLM intensive)
     }
