@@ -4,6 +4,7 @@ import { createBullBoard } from '@bull-board/api';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bullmq';
+import { createRedisConfig } from '../redis/redis.config';
 
 @Module({
   providers: [
@@ -13,14 +14,8 @@ import { Queue } from 'bullmq';
         const serverAdapter = new ExpressAdapter();
         serverAdapter.setBasePath('/api/admin/queues');
 
-        // Create the queue connection (must match your existing queue config)
-        const redisConfig = {
-          host: configService.get('REDIS_HOST', 'localhost'),
-          port: configService.get('REDIS_PORT', 6379),
-          password: configService.get('REDIS_PASSWORD'),
-          db: configService.get('REDIS_DB', 0),
-          tls: configService.get('REDIS_HOST')?.includes('upstash.io') ? {} : undefined,
-        };
+        // Create the queue connection using shared config
+        const redisConfig = createRedisConfig(configService);
 
         console.log('🔌 Connecting Bull Board to Redis:', {
           host: redisConfig.host,

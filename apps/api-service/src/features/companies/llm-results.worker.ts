@@ -11,6 +11,7 @@ import {
 import { CompaniesService } from './companies.service';
 import { PrismaService } from '@shared/database/prisma.service';
 import { EmailService } from '@shared/email/email.service';
+import { createRedisConfig } from '@shared/redis/redis.config';
 
 /**
  * Worker service that processes research results from LLM service
@@ -32,11 +33,7 @@ export class LLMResultsWorkerService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   onModuleInit() {
-    const redisConfig = {
-      host: this.configService.get('REDIS_HOST', 'localhost'),
-      port: this.configService.get('REDIS_PORT', 6379),
-      password: this.configService.get('REDIS_PASSWORD'),
-    };
+    const redisConfig = createRedisConfig(this.configService);
 
     // Initialize queue
     createLLMResultsQueue(redisConfig);

@@ -37,6 +37,9 @@ export function createCompanyEnrichmentQueue(redisConfig: any): Queue<CompanyEnr
       password: redisConfig.password,
       db: redisConfig.db || 0,
       tls: redisConfig.tls,
+      maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
+      enableReadyCheck: redisConfig.enableReadyCheck !== undefined ? redisConfig.enableReadyCheck : true,
+      connectTimeout: redisConfig.connectTimeout || 10000,
     },
     defaultJobOptions: {
       attempts: 3,

@@ -8,6 +8,7 @@ import {
   PositionScoringResult,
 } from './position-scoring.queue';
 import { PrismaService } from '@shared/database/prisma.service';
+import { createRedisConfig } from '@shared/redis/redis.config';
 import axios from 'axios';
 
 /**
@@ -43,13 +44,7 @@ export class PositionScoringWorkerService implements OnModuleInit, OnModuleDestr
   }
 
   onModuleInit() {
-    const redisConfig = {
-      host: this.configService.get('REDIS_HOST', 'localhost'),
-      port: this.configService.get('REDIS_PORT', 6379),
-      password: this.configService.get('REDIS_PASSWORD'),
-      db: this.configService.get('REDIS_DB', 0),
-      tls: this.configService.get('REDIS_HOST')?.includes('upstash.io') ? {} : undefined,
-    };
+    const redisConfig = createRedisConfig(this.configService);
 
     // Initialize queue
     createPositionScoringQueue(redisConfig);
