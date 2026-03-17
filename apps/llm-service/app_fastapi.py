@@ -630,7 +630,7 @@ async def health_check():
     server_reachable = False
     server_url = LLAMA_SERVER_URL
     model_name = LLAMA_MODEL
-    
+
     try:
         if LLAMA_API_TYPE == "ollama":
             # Ollama has a specific tags endpoint
