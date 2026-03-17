@@ -369,6 +369,11 @@ resource "google_cloud_run_v2_service" "api" {
       }
 
       env {
+        name  = "API_BASE_URL"
+        value = var.api_base_url
+      }
+
+      env {
         name  = "STORAGE_BUCKET"
         value = google_storage_bucket.uploads.name
       }

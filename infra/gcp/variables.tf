@@ -109,6 +109,11 @@ variable "frontend_urls" {
   default     = []
 }
 
+variable "api_base_url" {
+  description = "API base URL for webhooks and callbacks (e.g., https://api.resumecast.ai)"
+  type        = string
+}
+
 # Cloud Run Scaling
 variable "api_min_instances" {
   description = "Minimum instances for API service"
