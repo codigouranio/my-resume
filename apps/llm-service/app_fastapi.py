@@ -558,26 +558,36 @@ def call_openai_compatible(
 def generate_completion(
     system_prompt: str, user_message: str, max_tokens: int = 200
 ) -> str:
-    """Generate completion from LLAMA server - routes to appropriate API based on LLAMA_API_TYPE"""
+    """Generate completion from LLAMA server - routes to appropriate API based on LLAMA_API_TYPE
+
+    Supported API types:
+    - llama-cpp: llama.cpp server
+    - ollama: Ollama server
+    - openai: OpenAI-compatible API (including vLLM)
+    - vllm: Alias for openai (uses vLLM server)
+    """
     try:
         logger.info(
             f"Generating completion with API type '{LLAMA_API_TYPE}' for prompt: {user_message[:100]}..."
         )
-        
+
         # Build full prompt for llama-cpp and ollama
         full_prompt = f"{system_prompt}\n\nUser: {user_message}\nAssistant:"
-        
+
         if LLAMA_API_TYPE == "llama-cpp":
             result = call_llama_cpp_server(full_prompt, max_tokens)
             return result.get("text", "")
         elif LLAMA_API_TYPE == "ollama":
             result = call_ollama_server(full_prompt, max_tokens)
             return result.get("text", "")
-        elif LLAMA_API_TYPE == "openai":
+        elif LLAMA_API_TYPE in ["openai", "vllm"]:
+            # vLLM uses OpenAI-compatible API, so both types work the same way
             result = call_openai_compatible(system_prompt, user_message, max_tokens)
             return result.get("text", "")
         else:
-            raise ValueError(f"Unsupported LLAMA_API_TYPE: {LLAMA_API_TYPE}")
+            raise ValueError(
+                f"Unsupported LLAMA_API_TYPE: {LLAMA_API_TYPE}. Supported: llama-cpp, ollama, openai, vllm"
+            )
     except HTTPException:
         raise
     except Exception as e:
