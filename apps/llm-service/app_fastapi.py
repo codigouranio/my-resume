@@ -537,7 +537,7 @@ async def health_check():
             response = requests.get(f"{LLAMA_SERVER_URL}/api/tags", timeout=5)
             server_reachable = response.status_code == 200
         else:
-            response = requests.get(f"{LLAMA_SERVER_URL}/health", timeout=5)
+            response = requests.get(f"{LLAMA_SERVER_URL}", timeout=5)
             server_reachable = response.status_code == 200
     except requests.RequestException as e:
         logger.warning(f"LLAMA server not reachable: {e}")
