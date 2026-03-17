@@ -151,6 +151,9 @@ export class InterviewsService {
   }
 
   async update(id: string, userId: string, dto: UpdateInterviewDto) {
+    this.logger.log(`[update] Updating interview ${id} for user ${userId}`);
+    this.logger.log(`[update] DTO company: "${dto.company || 'N/A'}"`);
+
     const interview = await this.prisma.interviewProcess.findFirst({
       where: { id, userId },
     });
@@ -159,10 +162,14 @@ export class InterviewsService {
       throw new NotFoundException('Interview not found');
     }
 
+    this.logger.log(`[update] Current interview company: "${interview.company || 'N/A'}"`);
+
     // If company name changed, try to re-link company info
     let companyInfoId = interview.companyInfoId;
     
     if (dto.company && dto.company !== interview.company) {
+      this.logger.log(`[update] Company changed from "${interview.company}" to "${dto.company}"`);
+      
       const companyInfo = await this.prisma.companyInfo.findFirst({
         where: {
           companyName: {
@@ -176,14 +183,19 @@ export class InterviewsService {
       });
       
       if (companyInfo) {
+        this.logger.log(`[update] Found existing CompanyInfo ${companyInfo.id} for "${dto.company}", linking to it`);
         companyInfoId = companyInfo.id;
       } else {
+        this.logger.log(`[update] No CompanyInfo found for "${dto.company}", publishing InterviewCompanyChangedEvent`);
         companyInfoId = null;
         // Publish event for company enrichment side effect
         this.eventBus.publish(
           new InterviewCompanyChangedEvent(id, userId, interview.company, dto.company),
         );
+        this.logger.log(`[update] InterviewCompanyChangedEvent published for interview ${id}`);
       }
+    } else {
+      this.logger.log(`[update] Company name unchanged or not provided, no event published`);
     }
 
     return this.prisma.interviewProcess.update({
