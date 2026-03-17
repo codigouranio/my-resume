@@ -4,11 +4,11 @@ import { render, screen } from '@testing-library/react';
 // Mock IntersectionObserver BEFORE importing the component
 if (typeof global.IntersectionObserver === 'undefined') {
   global.IntersectionObserver = class IntersectionObserver {
-    constructor() {}
-    disconnect() {}
-    observe() {}
+    constructor() { }
+    disconnect() { }
+    observe() { }
     takeRecords() { return []; }
-    unobserve() {}
+    unobserve() { }
   } as any;
 }
 
