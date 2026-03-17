@@ -36,7 +36,7 @@ data/                 # Resume data files
 
 ## 📚 Documentation
 
-All documentation is organized in the [`docs/`](docs/) directory:
+All documentation is organized in the [`docs/`](docs/) and [`infra/docs/`](infra/docs/) directories:
 
 - **[Architecture](docs/architecture/)** - System design and technical decisions
 - **[Deployment](docs/deployment/)** - Infrastructure and deployment guides
@@ -45,6 +45,7 @@ All documentation is organized in the [`docs/`](docs/) directory:
 - **[Setup](docs/setup/)** - Initial configuration
 - **[Implementation](docs/implementation/)** - Implementation details and changelogs
 - **[Testing](docs/testing/)** - Test reports and QA documentation
+- **[Infrastructure Docs](infra/docs/)** - GCP deployment and troubleshooting 🚀
 
 **Start here:** [Documentation Index](docs/README.md)
 
@@ -98,11 +99,39 @@ USE_POETRY=true ./run.sh
 See [apps/llm-service/README.md](apps/llm-service/README.md) for detailed setup.  
 See [SERVICE_INTERACTIONS.md](docs/guides/SERVICE_INTERACTIONS.md) for complete authentication setup (API keys + JWT).
 
-## Infrastructure
+## Infrastructure & Deployment
 
-AWS CDK infrastructure for deploying to CloudFront + S3.
+### GCP Cloud Run (Production)
 
-**Quick Start:**
+**Quick Deploy:**
+```bash
+cd infra/scripts
+
+# Deploy everything (frontend + API)
+./deploy-all.sh
+
+# Or deploy individually
+./deploy-frontend.sh
+./deploy-api-service.sh
+```
+
+See [infra/docs/DEPLOY_SCRIPTS.md](infra/docs/DEPLOY_SCRIPTS.md) for deployment guide.  
+See [infra/docs/GCP_DEPLOYMENT_GUIDE.md](infra/docs/GCP_DEPLOYMENT_GUIDE.md) for full GCP setup.
+
+### Home Server (LLM Service)
+
+Ansible deployment for GPU server:
+```bash
+cd ansible
+ansible-playbook -i inventory.yml update-services.yml
+```
+
+See [ansible/DEPLOYMENT.md](ansible/DEPLOYMENT.md) for details.
+
+### AWS CloudFront (Alternative)
+
+AWS CDK infrastructure for deploying to CloudFront + S3:
+
 ```bash
 cd infra
 
