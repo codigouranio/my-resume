@@ -1,0 +1,13 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-f'
+      - 'apps/my-resume/Dockerfile'
+      - '--build-arg'
+      - 'PUBLIC_API_URL=https://api.resumecast.ai'
+      - '-t'
+      - 'gcr.io/resume-cast-ai-prod/frontend:latest'
+      - '.'
+images:
+  - 'gcr.io/resume-cast-ai-prod/frontend:latest'

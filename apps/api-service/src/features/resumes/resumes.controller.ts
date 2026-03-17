@@ -41,7 +41,8 @@ export class ResumesController {
   }
 
   @Get("identify-slug")
-  @ApiOperation({ summary: "Identify slug" })
+  @Public()
+  @ApiOperation({ summary: "Identify slug from URL" })
   async identifySlug(
     @Headers("X-Referer-URL") referer: string,
     @Req() req: Request,
