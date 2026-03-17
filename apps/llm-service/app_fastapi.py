@@ -196,6 +196,7 @@ class HealthResponse(BaseModel):
     llama_server: str = Field(..., description="LLAMA server URL")
     server_reachable: bool = Field(..., description="Whether LLAMA server is reachable")
     model: str = Field(..., description="Model name")
+    api_url: Optional[str] = Field(None, description="API service URL")
 
 
 class ResumeResponse(BaseModel):
@@ -546,6 +547,7 @@ async def health_check():
         llama_server=LLAMA_SERVER_URL,
         server_reachable=server_reachable,
         model=LLAMA_MODEL,
+        api_url=API_SERVICE_URL,
     )
 
 
