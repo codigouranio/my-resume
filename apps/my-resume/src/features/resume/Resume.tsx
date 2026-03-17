@@ -1,5 +1,6 @@
 import { isValidElement, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '../../shared/api/client';
 import { CourseraCertificate, GitHubStats } from '../badges';
 import { ChatWidget } from '../chat';
@@ -31,6 +32,7 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
   const [viewCount, setViewCount] = useState<number | null>(null);
   const [slug, setSlug] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   if (customDomain) {
     console.log(`Accessing resume via custom domain: ${customDomain}`);
