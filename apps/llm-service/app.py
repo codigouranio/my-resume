@@ -75,7 +75,7 @@ def load_model():
         raise
 
 
-@lru_cache(maxsize=1)
+@lru_cache(maxsize=10)
 def get_resume_content():
     """Fetch resume content from API (cached for 1 hour)."""
     try:
