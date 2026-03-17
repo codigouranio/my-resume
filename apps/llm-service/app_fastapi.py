@@ -631,16 +631,21 @@ async def chat(
         topics = extract_topics_from_question(user_message)
 
         try:
+            # Extract request metadata
+            ip_address = request.client.host if request.client else None
+            user_agent = request.headers.get("user-agent")
+            referrer = request.headers.get("referer")
+            
             log_chat_interaction_to_api(
                 resume_slug=slug,
                 question=user_message,
                 answer=result,
                 response_time=response_time,
-                request_obj=request,
                 session_id=conversation_id,
-                conversation_id=conversation_id,
-                resume_id=resume_id,
                 topics=topics,
+                ip_address=ip_address,
+                user_agent=user_agent,
+                referrer=referrer,
             )
         except Exception as log_error:
             logger.error(f"Failed to log chat interaction: {log_error}")
