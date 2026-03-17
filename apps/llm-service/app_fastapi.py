@@ -471,32 +471,118 @@ def load_conversation_history(conversation_id: str, resume_id: str):
     return load_conversation_history_from_api(conversation_id, resume_id)
 
 
+def call_llama_cpp_server(prompt: str, max_tokens: int = 256) -> dict:
+    """Call llama.cpp server API."""
+    try:
+        response = requests.post(
+            f"{LLAMA_SERVER_URL}/completion",
+            json={
+                "prompt": prompt,
+                "n_predict": max_tokens,
+                "temperature": 0.7,
+                "top_p": 0.9,
+                "stop": ["User:", "\n\n"],
+            },
+            timeout=60,
+        )
+        response.raise_for_status()
+        data = response.json()
+        return {
+            "text": data.get("content", ""),
+            "tokens": data.get("tokens_predicted", 0),
+        }
+    except Exception as e:
+        logger.error(f"Error calling llama.cpp server: {e}")
+        raise HTTPException(status_code=500, detail=f"LLAMA server error: {e}")
+
+
+def call_ollama_server(prompt: str, max_tokens: int = 256) -> dict:
+    """Call Ollama API using chat endpoint."""
+    try:
+        response = requests.post(
+            f"{LLAMA_SERVER_URL}/api/chat",
+            json={
+                "model": LLAMA_MODEL,
+                "messages": [{"role": "user", "content": prompt}],
+                "stream": False,
+                "options": {
+                    "temperature": 0.7,
+                    "top_p": 0.9,
+                    "num_predict": max_tokens,
+                },
+            },
+            timeout=60,
+        )
+        response.raise_for_status()
+        data = response.json()
+        message = data.get("message", {})
+        return {"text": message.get("content", ""), "tokens": 0}
+    except Exception as e:
+        logger.error(f"Error calling Ollama server: {e}")
+        raise HTTPException(status_code=500, detail=f"Ollama server error: {e}")
+
+
+def call_openai_compatible(
+    system_prompt: str, user_message: str, max_tokens: int = 128
+) -> dict:
+    """Call OpenAI-compatible API (LocalAI, vLLM, etc.)."""
+    try:
+        response = requests.post(
+            f"{VLLM_SERVER_URL}/v1/chat/completions",
+            json={
+                "model": os.getenv("MODEL_NAME", VLLM_MODEL),
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_message},
+                ],
+                "max_tokens": max_tokens,
+                "temperature": 0.7,
+                "top_p": 0.9,
+                "stop": None,
+            },
+            timeout=60,
+        )
+        response.raise_for_status()
+        data = response.json()
+        choice = data.get("choices", [{}])[0]
+        message = choice.get("message", {})
+        return {
+            "text": message.get("content", ""),
+            "tokens": data.get("usage", {}).get("total_tokens", 0),
+        }
+    except Exception as e:
+        logger.error(f"Error calling OpenAI-compatible API: {e}")
+        raise HTTPException(status_code=500, detail=f"OpenAI API error: {e}")
+
+
 def generate_completion(
     system_prompt: str, user_message: str, max_tokens: int = 200
 ) -> str:
-    """Generate completion from LLAMA server - should be extracted from app_remote.py"""
-    # This would need to be extracted from the original Flask app
-    # Placeholder implementation
+    """Generate completion from LLAMA server - routes to appropriate API based on LLAMA_API_TYPE"""
     try:
-        if LLAMA_API_TYPE == "ollama":
-            response = requests.post(
-                f"{LLAMA_SERVER_URL}/api/generate",
-                json={
-                    "model": LLAMA_MODEL,
-                    "prompt": f"{system_prompt}\n\nUser: {user_message}\nAssistant:",
-                    "stream": False,
-                    "options": {"num_predict": max_tokens},
-                },
-                timeout=30,
-            )
-            response.raise_for_status()
-            return response.json().get("response", "")
+        logger.info(
+            f"Generating completion with API type '{LLAMA_API_TYPE}' for prompt: {user_message[:100]}..."
+        )
+        
+        # Build full prompt for llama-cpp and ollama
+        full_prompt = f"{system_prompt}\n\nUser: {user_message}\nAssistant:"
+        
+        if LLAMA_API_TYPE == "llama-cpp":
+            result = call_llama_cpp_server(full_prompt, max_tokens)
+            return result.get("text", "")
+        elif LLAMA_API_TYPE == "ollama":
+            result = call_ollama_server(full_prompt, max_tokens)
+            return result.get("text", "")
+        elif LLAMA_API_TYPE == "openai":
+            result = call_openai_compatible(system_prompt, user_message, max_tokens)
+            return result.get("text", "")
         else:
-            # Add other API types as needed
-            return "Response generation not implemented for this API type"
+            raise ValueError(f"Unsupported LLAMA_API_TYPE: {LLAMA_API_TYPE}")
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error generating completion: {e}")
-        raise HTTPException(status_code=500, detail="Failed to generate response")
+        logger.error(f"Error generating completion: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to generate response: {e}")
 
 
 def _get_safety_instructions(user_info: Dict) -> str:
@@ -635,7 +721,7 @@ async def chat(
             ip_address = request.client.host if request.client else None
             user_agent = request.headers.get("user-agent")
             referrer = request.headers.get("referer")
-            
+
             log_chat_interaction_to_api(
                 resume_slug=slug,
                 question=user_message,
