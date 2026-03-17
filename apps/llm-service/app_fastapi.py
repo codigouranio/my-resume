@@ -628,21 +628,36 @@ async def health_check():
     Returns the current status of the LLM service and whether the LLAMA server is reachable.
     """
     server_reachable = False
+    server_url = LLAMA_SERVER_URL
+    model_name = LLAMA_MODEL
+    
     try:
         if LLAMA_API_TYPE == "ollama":
+            # Ollama has a specific tags endpoint
             response = requests.get(f"{LLAMA_SERVER_URL}/api/tags", timeout=5)
             server_reachable = response.status_code == 200
+        elif LLAMA_API_TYPE in ["openai", "vllm"]:
+            # vLLM and OpenAI-compatible APIs use /v1/models endpoint
+            server_url = VLLM_SERVER_URL
+            model_name = VLLM_MODEL
+            response = requests.get(f"{VLLM_SERVER_URL}/v1/models", timeout=5)
+            server_reachable = response.status_code == 200
+        elif LLAMA_API_TYPE == "llama-cpp":
+            # llama.cpp server - check /health or root endpoint
+            response = requests.get(f"{LLAMA_SERVER_URL}/health", timeout=5)
+            server_reachable = response.status_code == 200
         else:
+            # Fallback: just check if server responds
             response = requests.get(f"{LLAMA_SERVER_URL}", timeout=5)
             server_reachable = response.status_code == 200
     except requests.RequestException as e:
-        logger.warning(f"LLAMA server not reachable: {e}")
+        logger.warning(f"LLM server not reachable: {e}")
 
     return HealthResponse(
         status="healthy",
-        llama_server=LLAMA_SERVER_URL,
+        llama_server=server_url,
         server_reachable=server_reachable,
-        model=LLAMA_MODEL,
+        model=model_name,
         api_url=API_SERVICE_URL,
     )
 
