@@ -5,7 +5,7 @@ import { SearchPage } from '../src/features/search/SearchPage';
 
 // Mock fetch with native function
 const mockFetch = () => {
-  global.fetch = (() => { }) as any;
+  global.fetch = (() => {}) as any;
 };
 
 const mockSearchResponse = {

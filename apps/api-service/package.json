@@ -109,6 +109,9 @@
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
+    "transformIgnorePatterns": [
+      "node_modules/(?!(remark-parse|unified|unist-.*|vfile.*|bail|is-plain-obj|trough|devlop|micromark.*|mdast-util.*|decode-.*|character-.*)/)"
+    ],
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],

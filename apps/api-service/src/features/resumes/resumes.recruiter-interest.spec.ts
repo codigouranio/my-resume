@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { ResumesService } from './resumes.service';
 import { PrismaService } from '@shared/database/prisma.service';
 import { EmailService } from '@shared/email/email.service';
@@ -41,6 +42,18 @@ describe('ResumesService - Recruiter Interest', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ResumesService,
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((key: string, defaultValue?: any) => {
+              const config = {
+                'LLM_SERVICE_URL': 'http://localhost:5000',
+                'LLM_API_KEY': 'test-api-key',
+              };
+              return config[key] || defaultValue;
+            }),
+          },
+        },
         {
           provide: PrismaService,
           useValue: {
