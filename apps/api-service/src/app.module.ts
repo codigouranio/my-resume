@@ -21,6 +21,7 @@ import { DocumentStorageModule } from './features/document-storage/document-stor
 import { InterviewsModule } from './features/interviews/interviews.module';
 import { CompaniesModule } from './features/companies/companies.module';
 import { LlmServiceApiModule } from './features/llm-service-api/llm-service-api.module';
+import { ChatModule } from './features/chat/chat.module';
 import { AppThrottlerGuard } from './shared/guards/throttler.guard';
 import { CustomBullBoardModule } from './shared/bull-board/bull-board.module';
 
@@ -112,6 +113,7 @@ import { CustomBullBoardModule } from './shared/bull-board/bull-board.module';
     InterviewsModule,
     CompaniesModule,
     LlmServiceApiModule,
+    ChatModule,
     CustomBullBoardModule,
   ],
   providers: [

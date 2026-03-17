@@ -2,8 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import './ChatWidget.css';
 
 // API Configuration
-// In Rsbuild, use PUBLIC_ prefix for environment variables
-const API_URL = import.meta.env.PUBLIC_LLM_API_URL || '/llm';
+// Call API service (which proxies to LLM service with authentication)
+const API_URL = import.meta.env.PUBLIC_API_URL || '/api';
 
 // Get resume slug from URL
 const getResumeSlug = () => {
@@ -83,9 +83,9 @@ export default function ChatWidget({ resumeSlug }: ChatWidgetProps) {
     focusInput();
 
     try {
-      // Call Flask API
+      // Call API service (which proxies to LLM service with API key)
       const activeConversationId = conversationId ?? getConversationId(slug);
-      const response = await fetch(`${API_URL}/api/chat`, {
+      const response = await fetch(`${API_URL}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
