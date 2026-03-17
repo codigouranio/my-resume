@@ -118,7 +118,7 @@
           RESUME_PATH=../../data/resume.md
           DATABASE_URL=postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}
           ADMIN_TOKEN={{ llm_admin_token }}
-          API_BASE_URL=http://localhost:{{ api_port }}/api
+          API_BASE_URL={{ api_service_url }}/api
           RESUME_SLUG=jose-blanco-swe
           LLM_WEBHOOK_SECRET={{ llm_webhook_secret }}
           REDIS_HOST={{ llm_redis_host }}

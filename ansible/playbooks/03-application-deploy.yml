@@ -274,7 +274,7 @@
           DATABASE_URL="postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}"
           ADMIN_TOKEN="{{ llm_admin_token }}"
           API_BASE_URL="http://localhost:{{ api_port }}/api"
-          API_SERVICE_URL="http://localhost:{{ api_port }}"
+          API_SERVICE_URL="{{ api_service_url }}"
           LLM_SERVICE_USERNAME="{{ llm_service_username }}"
           LLM_SERVICE_PASSWORD="{{ llm_service_password }}"
           CORS_ORIGINS="{{ cors_origins | join(',') }}"

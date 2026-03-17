@@ -16,7 +16,7 @@ module.exports = {
         JWT_SECRET: '{{ jwt_secret }}',
         JWT_EXPIRES_IN: '7d',
         LLM_SERVICE_URL: 'http://localhost:{{ llm_port }}',
-        API_BASE_URL: '{{ api_base_url | default('http://localhost:' ~ api_port) }}',
+        API_BASE_URL: '{{ api_service_url | default('http://localhost:' ~ api_port) }}',
         FRONTEND_URL: '{{ frontend_url | default('http://localhost:' ~ frontend_port) }}',
         CORS_ORIGINS: '{{ cors_origins | join(',') if cors_origins is iterable and cors_origins is not string else cors_origins | default('http://localhost:3001') }}',
         LLM_WEBHOOK_SECRET: '{{ llm_webhook_secret }}',
