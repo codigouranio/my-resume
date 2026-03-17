@@ -90,6 +90,18 @@ variable "llm_api_key" {
   sensitive   = true
 }
 
+variable "llm_service_username" {
+  description = "Username for LLM service to authenticate with API service"
+  type        = string
+  default     = "llm-service"
+}
+
+variable "llm_service_password" {
+  description = "Password for LLM service to authenticate with API service"
+  type        = string
+  sensitive   = true
+}
+
 # Application Secrets
 variable "jwt_secret" {
   description = "JWT secret for authentication (min 32 characters)"

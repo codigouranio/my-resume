@@ -364,6 +364,16 @@ resource "google_cloud_run_v2_service" "api" {
       }
 
       env {
+        name  = "LLM_SERVICE_USERNAME"
+        value = var.llm_service_username
+      }
+
+      env {
+        name  = "LLM_SERVICE_PASSWORD"
+        value = var.llm_service_password
+      }
+
+      env {
         name  = "FRONTEND_URL"
         value = var.frontend_url
       }

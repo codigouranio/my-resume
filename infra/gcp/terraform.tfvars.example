@@ -23,8 +23,11 @@ home_network_ip = "1.2.3.4/32"  # Your home public IP in CIDR format (get from w
 redis_url = "rediss://default:xxxxx@us1-xxxxx.upstash.io:6379"  # Get from Upstash dashboard
 
 # LLM Service (Your home GPU server)
-llm_service_url     = "https://llm.yourdomain.com"  # Cloudflare Tunnel or DuckDNS URL
-llm_webhook_secret  = "CHANGE_ME_RANDOM_32_CHAR_STRING"  # Generate with: openssl rand -base64 32
+llm_service_url      = "https://llm.yourdomain.com"  # Cloudflare Tunnel or DuckDNS URL
+llm_webhook_secret   = "CHANGE_ME_RANDOM_32_CHAR_STRING"  # Generate with: openssl rand -base64 32
+llm_api_key          = "CHANGE_ME_64_CHAR_HEX_STRING"  # Generate with: openssl rand -hex 32
+llm_service_username = "llm-service"  # LLM service auth username (must match ansible config)
+llm_service_password = "CHANGE_ME_PASSWORD"  # LLM service auth password (must match ansible config)
 
 # Application Secrets
 jwt_secret = "CHANGE_ME_RANDOM_32_CHAR_STRING"  # Generate with: openssl rand -base64 32
