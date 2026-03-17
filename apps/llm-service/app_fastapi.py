@@ -580,12 +580,12 @@ async def chat(
             logger.warning(f"No user information found for slug: {slug}")
             raise HTTPException(status_code=404, detail="Resume not found")
 
-        user_first_name = user_info[0].get("firstName", "The person").strip()
-        user_full_name = f"{user_info[0].get('firstName', 'The person')} {user_info[0].get('lastName', '')}".strip()
+        user_first_name = user_info.get("firstName", "The person").strip()
+        user_full_name = f"{user_info.get('firstName', 'The person')} {user_info.get('lastName', '')}".strip()
 
         # Safety guardrails for AI responses
-        safety_instructions = _get_safety_instructions(user_info[0])
-        system_instructions = _get_system_instructions(user_info[0])
+        safety_instructions = _get_safety_instructions(user_info)
+        system_instructions = _get_system_instructions(user_info)
 
         # Load fresh resume context from database
         resume_context = None
@@ -650,7 +650,7 @@ async def chat(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error in chat endpoint: {e}")
+        logger.error(f"Error in chat endpoint: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
