@@ -25,6 +25,7 @@ from dotenv import load_dotenv
 from prompt_manager import get_prompt_manager
 from company_research_agent import CompanyResearchAgent
 from position_fit_agent import PositionFitAgent
+from musashi_index_agent import MusashiIndexAgent
 from api_client import (
     load_resume_from_api,
     get_user_info_from_api,
@@ -158,6 +159,21 @@ def get_position_fit_agent():
         position_fit_agent = PositionFitAgent(llm_wrapper)
         logger.info("Position fit agent initialized")
     return position_fit_agent
+
+
+# Initialize Musashi Index agent (lazy loading)
+musashi_agent = None
+
+
+def get_musashi_agent():
+    """Lazy load the Musashi Index agent."""
+    global musashi_agent
+    if musashi_agent is None:
+        logger.info("Initializing Musashi Index agent...")
+        llm_wrapper = RemoteLLMWrapper()
+        musashi_agent = MusashiIndexAgent(llm_wrapper, prompts)
+        logger.info("Musashi Index agent initialized")
+    return musashi_agent
 
 
 # ============================================================================
@@ -338,6 +354,78 @@ class PositionScoreResponse(BaseModel):
 
     score: float = Field(..., description="Fit score (0-100)")
     analysis: Dict[str, Any] = Field(..., description="Detailed analysis")
+
+
+class MusashiScores(BaseModel):
+    """Sub-scores for each Musashi Index dimension"""
+
+    tenure: float = Field(
+        ..., ge=0, le=10, description="Tenure & Sustained Practice (0–10)"
+    )
+    portfolio: float = Field(..., ge=0, le=10, description="Portfolio Evidence (0–10)")
+    impact: float = Field(..., ge=0, le=10, description="Measurable Impact (0–10)")
+    learning: float = Field(..., ge=0, le=10, description="Continuous Learning (0–10)")
+
+
+class MusashiIndexRequest(BaseModel):
+    """Índice de Musashi — evaluation request"""
+
+    career_profile: str = Field(
+        ...,
+        alias="careerProfile",
+        description="Free-form career description (resume text, bio, experience summary)",
+    )
+    experience_years: Optional[float] = Field(
+        None,
+        alias="experienceYears",
+        description="Optional hint: total years of experience",
+    )
+    portfolio_items: Optional[List[str]] = Field(
+        None, alias="portfolioItems", description="Notable projects or deliverables"
+    )
+    impact_highlights: Optional[List[str]] = Field(
+        None,
+        alias="impactHighlights",
+        description="Quantified impact statements (e.g. 'reduced churn 30%')",
+    )
+    learning_highlights: Optional[List[str]] = Field(
+        None,
+        alias="learningHighlights",
+        description="Certifications, self-directed courses, open-source contributions",
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+class MusashiIndexResponse(BaseModel):
+    """Índice de Musashi — evaluation result"""
+
+    im_score: float = Field(
+        ..., alias="imScore", ge=0, le=10, description="Composite Musashi Index (0–10)"
+    )
+    scores: MusashiScores = Field(..., description="Dimensional sub-scores")
+    academic_equivalent: str = Field(
+        ...,
+        alias="academicEquivalent",
+        description="Spanish academic equivalency label",
+    )
+    academic_equivalent_en: str = Field(
+        ...,
+        alias="academicEquivalentEn",
+        description="English academic equivalency label",
+    )
+    citation: str = Field(..., description="Warrior-style citation of career mastery")
+    duels_won: List[str] = Field(
+        ..., alias="duelsWon", description="Top career achievements (the 'duels' won)"
+    )
+    growth_area: str = Field(
+        ..., alias="growthArea", description="Primary area for further development"
+    )
+    rationale: str = Field(..., description="Scoring rationale (max ~200 words)")
+
+    class Config:
+        populate_by_name = True
 
 
 # ============================================================================
@@ -1096,6 +1184,62 @@ async def score_position(
 
 # ============================================================================
 # Startup/Shutdown Events
+
+# ============================================================================
+# Índice de Musashi
+# ============================================================================
+
+
+@app.post(
+    "/api/musashi-index",
+    response_model=MusashiIndexResponse,
+    summary="Índice de Musashi — career mastery score",
+    description=(
+        "Scores a career profile on four weighted dimensions "
+        "(tenure 40%, portfolio 30%, impact 20%, learning 10%) "
+        "and maps the composite 0–10 score to an academic equivalency "
+        "(Preparatoria → Licenciatura → Especialización → Maestría → Doctorado → Sword Saint)."
+    ),
+    tags=["Musashi Index"],
+)
+async def calculate_musashi_index(request: MusashiIndexRequest):
+    """Compute the Índice de Musashi for the supplied career profile."""
+    try:
+        logger.info(
+            f"Musashi Index evaluation started — "
+            f"profile_length={len(request.career_profile)}, "
+            f"experience_years={request.experience_years}"
+        )
+        agent = get_musashi_agent()
+        result = agent.score(
+            career_profile=request.career_profile,
+            experience_years=request.experience_years,
+            portfolio_items=request.portfolio_items,
+            impact_highlights=request.impact_highlights,
+            learning_highlights=request.learning_highlights,
+        )
+        logger.info(
+            f"Musashi Index evaluation complete — "
+            f"im_score={result['im_score']}, "
+            f"academic_equivalent={result['academic_equivalent']}"
+        )
+        return MusashiIndexResponse(
+            imScore=result["im_score"],
+            scores=MusashiScores(**result["scores"]),
+            academicEquivalent=result["academic_equivalent"],
+            academicEquivalentEn=result["academic_equivalent_en"],
+            citation=result["citation"],
+            duelsWon=result["duels_won"],
+            growthArea=result["growth_area"],
+            rationale=result["rationale"],
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error computing Musashi Index: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ============================================================================
 
 
