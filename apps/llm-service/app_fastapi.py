@@ -39,7 +39,11 @@ from app_remote import RemoteLLMWrapper, research_company_async, analyze_positio
 # Import Celery app and tasks (optional - graceful fallback if not available)
 try:
     from celery_config import celery_app
-    from tasks import research_company_task, analyze_position_task
+    from tasks import (
+        research_company_task,
+        analyze_position_task,
+        calculate_musashi_task,
+    )
 
     CELERY_AVAILABLE = True
     logger = logging.getLogger(__name__)
@@ -407,6 +411,15 @@ class MusashiIndexRequest(BaseModel):
         None,
         alias="learningHighlights",
         description="Certifications, self-directed courses, open-source contributions",
+    )
+    callback_url: Optional[str] = Field(
+        None,
+        alias="callbackUrl",
+        description="Webhook URL for async processing",
+    )
+    metadata: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Additional metadata echoed in webhook payload",
     )
 
     class Config:
@@ -1295,6 +1308,81 @@ async def calculate_musashi_index(request: MusashiIndexRequest):
     except Exception as e:
         logger.error(f"Error computing Musashi Index: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post(
+    "/api/musashi-index/async",
+    response_model=CompanyEnrichAsyncResponse,
+    summary="Índice de Musashi — async calculation",
+    tags=["Musashi Index"],
+)
+async def calculate_musashi_index_async(
+    request: MusashiIndexRequest, service_name: str = Depends(verify_api_key)
+):
+    """Queue Musashi Index calculation and send result to callbackUrl webhook."""
+    callback_url = getattr(request, "callback_url", None)
+    metadata = getattr(request, "metadata", None) or {}
+
+    if not callback_url:
+        raise HTTPException(status_code=400, detail="callbackUrl is required")
+
+    resume_content = ""
+    hidden_context = ""
+
+    if request.resume:
+        resume_content = (request.resume.get("content") or "").strip()
+        hidden_context = (request.resume.get("llmContext") or "").strip()
+
+    if request.resume_slug:
+        url = f"{API_SERVICE_URL}/api/llm-service/resume/{request.resume_slug}"
+        response = requests.get(url, headers=get_headers(), timeout=10)
+        if response.status_code == 404:
+            raise HTTPException(status_code=404, detail="Resume not found")
+        response.raise_for_status()
+        resume_data = response.json()
+        resume_content = (resume_data.get("content") or resume_content or "").strip()
+        hidden_context = (resume_data.get("llmContext") or hidden_context or "").strip()
+
+    if request.ai_context and request.ai_context.strip():
+        ai_context = request.ai_context.strip()
+        hidden_context = (
+            f"{hidden_context}\n\n{ai_context}" if hidden_context else ai_context
+        )
+
+    if not resume_content or not hidden_context:
+        raise HTTPException(
+            status_code=400,
+            detail="Both resume content and AI context are required",
+        )
+
+    job_id = f"llm_job_{uuid.uuid4().hex[:12]}"
+    logger.info(f"Queueing async Musashi evaluation (job: {job_id})")
+
+    if CELERY_AVAILABLE:
+        task = calculate_musashi_task.delay(
+            resume_content,
+            hidden_context,
+            request.career_profile or "",
+            request.experience_years,
+            request.portfolio_items or [],
+            request.impact_highlights or [],
+            request.learning_highlights or [],
+            callback_url,
+            metadata,
+            job_id,
+        )
+        logger.info(f"Celery task queued: {task.id}")
+    else:
+        raise HTTPException(
+            status_code=503,
+            detail="Celery is not available for async Musashi processing",
+        )
+
+    return CompanyEnrichAsyncResponse(
+        job_id=job_id,
+        status="processing",
+        estimated_time="30s",
+    )
 
 
 # ============================================================================

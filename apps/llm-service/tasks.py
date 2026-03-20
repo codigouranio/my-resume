@@ -16,6 +16,8 @@ from celery import Task
 from celery_config import celery_app
 from company_research_agent import CompanyResearchAgent
 from position_fit_agent import PositionFitAgent
+from musashi_index_agent import MusashiIndexAgent
+from prompt_manager import get_prompt_manager
 from app_remote import RemoteLLMWrapper
 
 # Configure logging for Celery tasks
@@ -355,4 +357,78 @@ def analyze_position_task(
         call_webhook(callback_url, failure_payload)
 
         # Re-raise to trigger Celery retry
+        raise
+
+
+@celery_app.task(
+    bind=True,
+    base=CallbackTask,
+    name="llm_service.tasks.calculate_musashi_task",
+    max_retries=2,
+    default_retry_delay=60,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_backoff_max=600,
+    retry_jitter=True,
+)
+def calculate_musashi_task(
+    self,
+    resume_content: str,
+    resume_llm_context: str,
+    career_profile: str,
+    experience_years: float,
+    portfolio_items: list,
+    impact_highlights: list,
+    learning_highlights: list,
+    callback_url: str,
+    metadata: dict,
+    job_id: str,
+):
+    """Calculate Musashi Index asynchronously and post result to webhook."""
+    try:
+        logger.info(f"[Task {self.request.id}] Starting Musashi Index job {job_id}")
+
+        llm_wrapper = RemoteLLMWrapper()
+        prompts = get_prompt_manager()
+        agent = MusashiIndexAgent(llm_wrapper, prompts)
+
+        result = agent.score(
+            career_profile=career_profile,
+            resume_content=resume_content,
+            ai_context=resume_llm_context,
+            experience_years=experience_years,
+            portfolio_items=portfolio_items,
+            impact_highlights=impact_highlights,
+            learning_highlights=learning_highlights,
+        )
+
+        payload = {
+            "jobId": metadata.get("jobId", job_id),
+            "type": "musashi",
+            "status": "completed",
+            "data": result,
+            "metadata": metadata,
+            "celeryTaskId": self.request.id,
+        }
+
+        webhook_success = call_webhook(callback_url, payload)
+        if not webhook_success:
+            logger.warning(
+                f"[Task {self.request.id}] Musashi webhook delivery failed, but task succeeded"
+            )
+
+        return result
+
+    except Exception as e:
+        logger.error(f"[Task {self.request.id}] Musashi Index failed: {e}")
+        failure_payload = {
+            "jobId": metadata.get("jobId", job_id),
+            "type": "musashi",
+            "status": "failed",
+            "error": str(e),
+            "metadata": metadata,
+            "celeryTaskId": self.request.id,
+            "retries": self.request.retries,
+        }
+        call_webhook(callback_url, failure_payload)
         raise

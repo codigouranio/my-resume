@@ -1,5 +1,5 @@
 import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '@shared/database/prisma.service';
 
 interface GitHubStats {
   totalStars: number;
@@ -12,16 +12,8 @@ interface GitHubStats {
 @Injectable()
 export class BadgesService {
   private readonly logger = new Logger(BadgesService.name);
-  private readonly llmServiceUrl: string;
-  private readonly llmApiKey: string;
 
-  constructor(private readonly configService: ConfigService) {
-    this.llmServiceUrl = this.configService.get<string>(
-      'LLM_SERVICE_URL',
-      'http://localhost:5000',
-    );
-    this.llmApiKey = this.configService.get<string>('LLM_API_KEY', '');
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   private async fetchGitHubStats(username: string): Promise<GitHubStats> {
     try {
@@ -142,34 +134,32 @@ export class BadgesService {
       throw new HttpException('Missing slug', HttpStatus.BAD_REQUEST);
     }
 
-    let score = 0;
-    let level = 'Not Rated';
+    const resume = await this.prisma.resume.findUnique({
+      where: { slug },
+      select: {
+        customCss: true,
+        isPublic: true,
+        isPublished: true,
+      },
+    });
 
-    try {
-      const response = await fetch(`${this.llmServiceUrl}/api/musashi-index`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': this.llmApiKey,
-        },
-        body: JSON.stringify({ resumeSlug: slug }),
-      });
-
-      if (!response.ok) {
-        const body = await response.text();
-        throw new Error(`LLM service error ${response.status}: ${body}`);
-      }
-
-      const data = await response.json();
-      score = Number(data.imScore ?? 0);
-      level = String(data.academicEquivalentEn || data.academicEquivalent || 'Not Rated');
-    } catch (error) {
-      this.logger.warn(`Failed to generate Musashi score badge for slug=${slug}: ${error}`);
+    if (!resume || !resume.isPublic || !resume.isPublished) {
       return this.renderMusashiBadge({
         score: 0,
         level: 'Unavailable',
         label: 'Musashi IM',
       });
+    }
+
+    const css = resume.customCss || '';
+    const scoreMatch = css.match(/\/\* resumecast:musashi-im-score=([0-9.]+) \*\//);
+    const levelMatch = css.match(/\/\* resumecast:musashi-equivalent=(.*?) \*\//);
+
+    const score = scoreMatch ? Number(scoreMatch[1]) : 0;
+    const level = levelMatch ? levelMatch[1] : 'Pending';
+
+    if (!scoreMatch) {
+      this.logger.debug(`No persisted Musashi score for slug=${slug}`);
     }
 
     return this.renderMusashiBadge({

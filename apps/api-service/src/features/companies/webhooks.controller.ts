@@ -21,13 +21,15 @@ import type { Request } from 'express';
  */
 interface LLMWebhookPayload {
   jobId: string;
-  type: 'company' | 'position';
+  type: 'company' | 'position' | 'musashi';
   status: 'completed' | 'failed';
   data?: any;
   error?: string;
   metadata?: {
     userId?: string;
     interviewId?: string;
+    resumeId?: string;
+    slug?: string;
     companyName?: string;
   };
 }
@@ -100,6 +102,8 @@ export class WebhooksController {
         await this.handleCompanyResult(payload);
       } else if (payload.type === 'position') {
         await this.handlePositionResult(payload);
+      } else if (payload.type === 'musashi') {
+        await this.handleMusashiResult(payload);
       } else {
         this.logger.warn(`Unknown webhook type: ${payload.type}`);
         throw new BadRequestException(`Unknown type: ${payload.type}`);
@@ -320,5 +324,67 @@ export class WebhooksController {
       this.logger.log(`Notifying user ${metadata.userId} about failure`);
       // Optional: Send failure email
     }
+  }
+
+  private async handleMusashiResult(payload: LLMWebhookPayload): Promise<void> {
+    const { data, metadata } = payload;
+
+    if (!data || !metadata?.resumeId) {
+      this.logger.warn(`Missing Musashi data or resumeId in webhook ${payload.jobId}`);
+      return;
+    }
+
+    const resume = await this.prisma.resume.findUnique({
+      where: { id: metadata.resumeId },
+      select: { id: true, customCss: true },
+    });
+
+    if (!resume) {
+      this.logger.warn(`Resume not found for Musashi webhook: ${metadata.resumeId}`);
+      return;
+    }
+
+    const imScore = Number(data.im_score ?? data.imScore ?? 0);
+    const academicEquivalent = String(
+      data.academic_equivalent_en || data.academic_equivalent || 'Unknown',
+    );
+
+    const updatedCss = this.upsertMusashiMetadata(resume.customCss || '', {
+      imScore,
+      academicEquivalent,
+      raw: data,
+    });
+
+    await this.prisma.resume.update({
+      where: { id: metadata.resumeId },
+      data: { customCss: updatedCss },
+    });
+
+    this.logger.log(
+      `Persisted Musashi score for resume ${metadata.resumeId}: ${imScore.toFixed(2)} (${academicEquivalent})`,
+    );
+  }
+
+  private upsertMusashiMetadata(
+    customCss: string,
+    data: { imScore: number; academicEquivalent: string; raw: any },
+  ): string {
+    const cleaned = customCss
+      .replace(/\/\* resumecast:musashi-im-score=.*? \*\/\n?/g, '')
+      .replace(/\/\* resumecast:musashi-equivalent=.*? \*\/\n?/g, '')
+      .replace(/\/\* resumecast:musashi-updated-at=.*? \*\/\n?/g, '')
+      .replace(/\/\* resumecast:musashi-json=.*? \*\/\n?/g, '')
+      .trim();
+
+    const metadataLines = [
+      `/* resumecast:musashi-im-score=${data.imScore.toFixed(2)} */`,
+      `/* resumecast:musashi-equivalent=${data.academicEquivalent} */`,
+      `/* resumecast:musashi-updated-at=${new Date().toISOString()} */`,
+      `/* resumecast:musashi-json=${encodeURIComponent(JSON.stringify(data.raw))} */`,
+    ];
+
+    return cleaned
+      ? `${cleaned}\n\n${metadataLines.join('\n')}`
+      : metadataLines.join('\n');
   }
 }

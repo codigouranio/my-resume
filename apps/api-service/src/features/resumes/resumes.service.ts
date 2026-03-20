@@ -110,6 +110,18 @@ export class ResumesService {
         );
       });
 
+    this.queueMusashiIndexCalculation({
+      resumeId: resume.id,
+      userId,
+      slug: resume.slug,
+      content: resume.content,
+      llmContext: resume.llmContext,
+    }).catch((error) => {
+      this.logger.error(
+        `Failed to queue Musashi calculation for resume ${resume.id}: ${error.message}`,
+      );
+    });
+
     return resume;
   }
 
@@ -457,7 +469,67 @@ export class ResumesService {
         });
     }
 
+    this.queueMusashiIndexCalculation({
+      resumeId: updatedResume.id,
+      userId,
+      slug: updatedResume.slug,
+      content: updatedResume.content,
+      llmContext: updatedResume.llmContext,
+    }).catch((error) => {
+      this.logger.error(
+        `Failed to queue Musashi calculation for resume ${updatedResume.id}: ${error.message}`,
+      );
+    });
+
     return updatedResume;
+  }
+
+  private async queueMusashiIndexCalculation(input: {
+    resumeId: string;
+    userId: string;
+    slug: string;
+    content: string;
+    llmContext?: string | null;
+  }): Promise<void> {
+    if (!input.content || !input.llmContext) {
+      this.logger.debug(
+        `Skipping Musashi calculation for resume ${input.resumeId}: missing content or llmContext`,
+      );
+      return;
+    }
+
+    const callbackUrl = `${this.configService.get('API_BASE_URL', 'http://localhost:3000')}/api/webhooks/llm-result`;
+
+    const payload = {
+      resume: {
+        content: input.content,
+        llmContext: input.llmContext,
+      },
+      resumeSlug: input.slug,
+      callbackUrl,
+      metadata: {
+        userId: input.userId,
+        resumeId: input.resumeId,
+        slug: input.slug,
+      },
+    };
+
+    const response = await fetch(`${this.llmServiceUrl}/api/musashi-index/async`, {
+      method: 'POST',
+      headers: this.getLLMHeaders(),
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const responseText = await response.text();
+      throw new Error(
+        `LLM async musashi enqueue failed (${response.status}): ${responseText}`,
+      );
+    }
+
+    this.logger.log(
+      `Queued Musashi calculation for resume ${input.resumeId} (slug: ${input.slug})`,
+    );
   }
 
   /**
