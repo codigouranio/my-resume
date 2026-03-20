@@ -4,7 +4,10 @@
 # Run this after completing manual GCP setup
 #
 
-set -e  # Exit on error
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 # Colors for output
 RED='\033[0;31m'
@@ -39,7 +42,7 @@ echo -e "${GREEN}✅ All prerequisites found${NC}"
 echo ""
 
 # Navigate to terraform directory
-cd infra/gcp
+cd "${SCRIPT_DIR}"
 
 # Check if terraform.tfvars exists
 if [ ! -f "terraform.tfvars" ]; then
@@ -58,16 +61,21 @@ if [ ! -f "terraform.tfvars" ]; then
 fi
 
 echo -e "${YELLOW}🔐 Checking authentication...${NC}"
-if [ ! -f "terraform-key.json" ]; then
-    echo -e "${RED}❌ terraform-key.json not found${NC}"
-    echo "Create it with:"
-    echo "  gcloud iam service-accounts keys create terraform-key.json \\"
-    echo "    --iam-account=terraform@PROJECT_ID.iam.gserviceaccount.com"
+if [ -f "terraform-key.json" ]; then
+    export GOOGLE_APPLICATION_CREDENTIALS="${SCRIPT_DIR}/terraform-key.json"
+    echo -e "${GREEN}✅ Authentication configured with terraform-key.json${NC}"
+elif [ -n "${GOOGLE_APPLICATION_CREDENTIALS:-}" ] && [ -f "${GOOGLE_APPLICATION_CREDENTIALS}" ]; then
+    echo -e "${GREEN}✅ Authentication configured with GOOGLE_APPLICATION_CREDENTIALS${NC}"
+elif gcloud auth application-default print-access-token >/dev/null 2>&1; then
+    echo -e "${GREEN}✅ Authentication configured with gcloud application-default credentials${NC}"
+else
+    echo -e "${RED}❌ No GCP application credentials found${NC}"
+    echo "Use one of these options:"
+    echo "  1) gcloud auth application-default login"
+    echo "  2) export GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json"
+    echo "  3) create ${SCRIPT_DIR}/terraform-key.json"
     exit 1
 fi
-
-export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/terraform-key.json"
-echo -e "${GREEN}✅ Authentication configured${NC}"
 echo ""
 
 # Terraform init
@@ -98,7 +106,12 @@ echo "  🗄️  Cloud Storage buckets"
 echo "  🔐 Secret Manager secrets"
 echo "  📦 Artifact Registry repository"
 echo ""
-read -p "Continue with deployment? (yes/no): " confirm
+if [ "${AUTO_APPROVE:-false}" = "true" ] || [ "${CI:-false}" = "true" ]; then
+    confirm="yes"
+    echo "AUTO_APPROVE/CI enabled: proceeding without prompt"
+else
+    read -p "Continue with deployment? (yes/no): " confirm
+fi
 
 if [ "$confirm" != "yes" ]; then
     echo -e "${RED}Deployment cancelled${NC}"
@@ -156,5 +169,5 @@ echo "5️⃣  Setup GitHub Actions (add secrets to repo):"
 echo "   - GCP_SA_KEY (contents of terraform-key.json)"
 echo "   - See GCP_DEPLOYMENT_GUIDE.md for full list"
 echo ""
-echo -e "${GREEN}📚 Full documentation: ../../GCP_DEPLOYMENT_GUIDE.md${NC}"
+echo -e "${GREEN}📚 Full documentation: ${REPO_ROOT}/infra/docs/GCP_DEPLOYMENT_GUIDE.md${NC}"
 echo ""

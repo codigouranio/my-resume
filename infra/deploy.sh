@@ -1,58 +1,23 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-echo "🚀 Deploying My Resume to AWS CloudFront..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+TARGET="${DEPLOY_TARGET:-gcp}"
 
-# Check if we should use conda or venv
-if command -v conda &> /dev/null && [ "$USE_CONDA" = "true" ]; then
-    echo "🐍 Using Conda environment..."
-    
-    # Check if conda environment exists
-    if ! conda env list | grep -q "my-resume-infra"; then
-        echo "📦 Creating Conda environment..."
-        conda env create -f environment.yml
-    fi
-    
-    echo "🔧 Activating Conda environment..."
-    eval "$(conda shell.bash hook)"
-    conda activate my-resume-infra
-    
-    echo "📚 Updating dependencies..."
-    conda env update -f environment.yml --prune
-else
-    echo "🐍 Using Python virtual environment..."
-    
-    # Check if virtual environment exists
-    if [ ! -d "venv" ]; then
-        echo "📦 Creating Python virtual environment..."
-        python3 -m venv venv
-    fi
-    
-    # Activate virtual environment
-    echo "🔧 Activating virtual environment..."
-    source venv/bin/activate
-    
-    # Install dependencies
-    echo "📚 Installing Python dependencies..."
-    pip install -r requirements.txt
-fi
+echo "Starting infrastructure deployment (target=${TARGET})"
 
-# Build React app
-echo "🏗️  Building React application..."
-cd ../apps/my-resume
-npm install
-npm run build
-cd ../../infra
-
-# Bootstrap CDK (only needed once per account/region)
-echo "🔐 Bootstrapping CDK (if needed)..."
-cdk bootstrap
-
-# Deploy the stack
-echo "☁️  Deploying to AWS..."
-cdk deploy --require-approval never
-
-echo "✅ Deployment complete!"
-echo ""
-echo "To view the website URL, check the CloudFormation outputs above"
-echo "or run: cdk deploy --outputs-file outputs.json"
+case "${TARGET}" in
+    gcp)
+        exec "${REPO_ROOT}/infra/gcp/deploy.sh" "$@"
+        ;;
+    aws)
+        echo "AWS deployment is no longer the default in this repository."
+        echo "Use the dedicated AWS scripts under ${REPO_ROOT}/infra/scripts if required."
+        exit 1
+        ;;
+    *)
+        echo "Unsupported DEPLOY_TARGET='${TARGET}'. Supported values: gcp, aws"
+        exit 1
+        ;;
+esac

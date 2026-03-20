@@ -37,8 +37,18 @@ output "uploads_bucket_name" {
   value       = google_storage_bucket.uploads.name
 }
 
+output "documents_bucket_name" {
+  description = "Cloud Storage bucket for document storage"
+  value       = google_storage_bucket.uploads.name
+}
+
 output "uploads_bucket_url" {
   description = "Cloud Storage bucket URL"
+  value       = google_storage_bucket.uploads.url
+}
+
+output "documents_bucket_url" {
+  description = "Cloud Storage document bucket URL"
   value       = google_storage_bucket.uploads.url
 }
 
@@ -69,15 +79,15 @@ output "domain_mapping_dns_records" {
   description = "DNS records to configure in Cloudflare for custom domains"
   value = {
     resumecast_ai = {
-      domain = "resumecast.ai"
+      domain  = "resumecast.ai"
       records = google_cloud_run_domain_mapping.frontend_main.status[0].resource_records
     }
     www_resumecast_ai = {
-      domain = "www.resumecast.ai"
+      domain  = "www.resumecast.ai"
       records = google_cloud_run_domain_mapping.frontend_www.status[0].resource_records
     }
     api_resumecast_ai = {
-      domain = "api.resumecast.ai"
+      domain  = "api.resumecast.ai"
       records = google_cloud_run_domain_mapping.api.status[0].resource_records
     }
   }
@@ -110,9 +120,9 @@ output "database_url_for_home_llm" {
 output "docker_push_commands" {
   description = "Commands to push Docker images to Artifact Registry"
   value = {
-    configure = "gcloud auth configure-docker ${var.region}-docker.pkg.dev"
-    api_build = "docker build -t ${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/api-service:latest ./apps/api-service"
-    api_push  = "docker push ${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/api-service:latest"
+    configure      = "gcloud auth configure-docker ${var.region}-docker.pkg.dev"
+    api_build      = "docker build -t ${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/api-service:latest ./apps/api-service"
+    api_push       = "docker push ${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/api-service:latest"
     frontend_build = "docker build -t ${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/frontend:latest ./apps/my-resume"
     frontend_push  = "docker push ${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/frontend:latest"
   }
@@ -121,7 +131,7 @@ output "docker_push_commands" {
 output "next_steps" {
   description = "What to do after Terraform apply"
   sensitive   = true
-  value = <<-EOT
+  value       = <<-EOT
     
     ✅ Infrastructure deployed successfully!
     

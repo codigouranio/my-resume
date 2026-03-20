@@ -1,13 +1,19 @@
 # Document Storage Feature
 
-A flexible document storage service that supports multiple storage backends (S3, filesystem, mock) with automatic provider selection based on environment configuration.
+A flexible document storage service that supports multiple storage backends (S3, GCS, filesystem, mock) with automatic provider selection based on environment configuration.
 
 ## Features
 
 - **Multiple Storage Backends:**
   - **S3**: Production-ready AWS S3 storage
+  - **GCS**: Production-ready Google Cloud Storage
   - **Filesystem**: Local development with file system storage
   - **Mock**: In-memory storage for testing
+
+- **Aligned Behavior Across Providers:**
+  - Consistent file key format: `documents/{userId}/{timestamp}-{sanitizedFileName}`
+  - Consistent links through API endpoints (`/api/documents/view` and `/api/documents/download`)
+  - Consistent markdown embed generation based on file extension
 
 - **REST API Endpoints:**
   - `POST /api/documents/upload` - Upload documents with JWT authentication
@@ -29,11 +35,20 @@ Set the storage type via environment variable:
 ```bash
 # Use S3 (production)
 DOCUMENT_STORAGE_TYPE=s3
+API_BASE_URL=https://api.example.com
 AWS_REGION=us-east-1
 AWS_S3_BUCKET_NAME=my-resume-documents
 AWS_ACCESS_KEY_ID=your-key-id
 AWS_SECRET_ACCESS_KEY=your-secret-key
-AWS_S3_BASE_URL=https://your-bucket.s3.amazonaws.com
+
+# Use GCS (production)
+DOCUMENT_STORAGE_TYPE=gcs
+API_BASE_URL=https://api.example.com
+GCS_BUCKET_NAME=my-resume-documents
+GCS_PROJECT_ID=your-gcp-project-id
+# Optional credential options:
+# GCS_KEY_FILENAME=/path/to/service-account.json
+# GCS_CREDENTIALS_JSON={"type":"service_account",...}
 
 # Use filesystem (development)
 DOCUMENT_STORAGE_TYPE=fs
@@ -42,6 +57,7 @@ API_BASE_URL=http://localhost:3000
 
 # Use mock (testing)
 DOCUMENT_STORAGE_TYPE=mock
+API_BASE_URL=http://localhost:3000
 ```
 
 ## Usage
@@ -58,9 +74,9 @@ Response:
 ```json
 {
   "fileKey": "documents/user123/1234567890-document.pdf",
-  "embedCode": "[📄 document.pdf](http://localhost:3000/api/documents/view/user123/document.pdf)",
-  "viewUrl": "http://localhost:3000/api/documents/view/user123/document.pdf",
-  "downloadUrl": "http://localhost:3000/api/documents/download/user123/document.pdf"
+  "embedCode": "[📄 1234567890-document.pdf](http://localhost:3000/api/documents/view/user123/documents%2Fuser123%2F1234567890-document.pdf)",
+  "viewUrl": "http://localhost:3000/api/documents/view/user123/documents%2Fuser123%2F1234567890-document.pdf",
+  "downloadUrl": "http://localhost:3000/api/documents/download/user123/documents%2Fuser123%2F1234567890-document.pdf"
 }
 ```
 
@@ -72,7 +88,7 @@ Copy the `embedCode` from the upload response and paste it into your resume:
 ## Certifications
 
 Here's my AWS certification:
-[📄 aws-certification.pdf](http://localhost:3000/api/documents/view/user123/aws-certification.pdf)
+[📄 1234567890-aws-certification.pdf](http://localhost:3000/api/documents/view/user123/documents%2Fuser123%2F1234567890-aws-certification.pdf)
 ```
 
 ### Integration with AI Context
@@ -130,6 +146,7 @@ providers: [
       
       switch (type) {
         case 's3': return new DocumentStorageS3Service();
+        case 'gcs': return new DocumentStorageGcsService();
         case 'mock': return new DocumentStorageMockService();
         case 'fs': 
         default: return new DocumentStorageFsService();
@@ -147,8 +164,10 @@ document-storage/
 ├── document-storage.module.ts          # NestJS module
 ├── document-storage.controller.ts      # REST API endpoints
 ├── document-storage-s3.service.ts      # S3 implementation
+├── document-storage-gcs.service.ts     # GCS implementation
 ├── document-storage-fs.service.ts      # Filesystem implementation
 ├── document-storage-mock.service.ts    # Mock implementation
+├── document-storage.utils.ts           # Shared key/link/embed utilities
 ├── dto/
 │   └── upload-document.dto.ts          # DTOs and Swagger definitions
 ├── index.ts                            # Public exports

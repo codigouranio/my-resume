@@ -4,6 +4,13 @@ import * as fs from 'fs/promises';
 import * as fsSync from 'fs';
 import * as path from 'path';
 import { IDocumentStorageService } from './document-storage.interface';
+import {
+  buildDocumentEmbedCode,
+  buildDocumentKey,
+  buildDocumentRouteUrl,
+  normalizeApiBaseUrl,
+  resolveFsPathFromDocumentKey,
+} from './document-storage.utils';
 
 @Injectable()
 export class DocumentStorageFsService implements IDocumentStorageService {
@@ -12,9 +19,9 @@ export class DocumentStorageFsService implements IDocumentStorageService {
   private readonly baseUrl: string;
 
   constructor() {
-    // Store files in uploads directory
+    // Store files in uploads/documents directory by default
     this.storageDir = process.env.FS_STORAGE_DIR || path.join(process.cwd(), 'uploads', 'documents');
-    this.baseUrl = process.env.API_BASE_URL || 'http://localhost:3000';
+    this.baseUrl = normalizeApiBaseUrl(process.env.API_BASE_URL);
 
     // Ensure storage directory exists
     this.ensureStorageDir();
@@ -29,30 +36,14 @@ export class DocumentStorageFsService implements IDocumentStorageService {
     }
   }
 
-  /**
-   * Generate filesystem path for a user's document.
-   */
-  private getFilePath(userId: string, fileName: string): string {
-    const timestamp = Date.now();
-    const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const userDir = path.join(this.storageDir, userId);
-    return path.join(userDir, `${timestamp}-${sanitizedFileName}`);
-  }
-
-  /**
-   * Get relative path for URL generation.
-   */
-  private getRelativePath(fullPath: string): string {
-    return path.relative(this.storageDir, fullPath);
-  }
-
   async saveDoc(
     userId: string,
     fileName: string,
     content: Buffer | Readable,
     mimeType: string,
   ): Promise<string> {
-    const filePath = this.getFilePath(userId, fileName);
+    const fileKey = buildDocumentKey(userId, fileName);
+    const filePath = resolveFsPathFromDocumentKey(this.storageDir, userId, fileKey);
     const userDir = path.dirname(filePath);
 
     try {
@@ -73,7 +64,7 @@ export class DocumentStorageFsService implements IDocumentStorageService {
       }
 
       this.logger.log(`File saved to filesystem: ${filePath}`);
-      return this.getRelativePath(filePath);
+      return fileKey;
     } catch (error) {
       this.logger.error(`Failed to save file to filesystem: ${error.message}`, error.stack);
       throw error;
@@ -82,33 +73,19 @@ export class DocumentStorageFsService implements IDocumentStorageService {
 
   getDocHtmlEmbeddedCode(userId: string, fileName: string): string {
     const viewUrl = this.getDocLinkForViewing(userId, fileName);
-    const fileExt = fileName.split('.').pop()?.toLowerCase();
-
-    // Generate appropriate embed code based on file type
-    if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(fileExt)) {
-      return `![${fileName}](${viewUrl})`;
-    } else if (['pdf'].includes(fileExt)) {
-      return `[📄 ${fileName}](${viewUrl})`;
-    } else if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(fileExt)) {
-      return `[📎 ${fileName}](${viewUrl})`;
-    } else {
-      return `[📁 ${fileName}](${viewUrl})`;
-    }
+    return buildDocumentEmbedCode(fileName, viewUrl);
   }
 
   getDocLinkForViewing(userId: string, fileName: string): string {
-    // Return API endpoint URL for serving the file
-    const encodedFileName = encodeURIComponent(fileName);
-    return `${this.baseUrl}/api/documents/view/${userId}/${encodedFileName}`;
+    return buildDocumentRouteUrl(this.baseUrl, 'view', userId, fileName);
   }
 
   getDocLinkForDownloading(userId: string, fileName: string): string {
-    const encodedFileName = encodeURIComponent(fileName);
-    return `${this.baseUrl}/api/documents/download/${userId}/${encodedFileName}`;
+    return buildDocumentRouteUrl(this.baseUrl, 'download', userId, fileName);
   }
 
   async deleteDoc(userId: string, fileName: string): Promise<void> {
-    const filePath = path.join(this.storageDir, fileName);
+    const filePath = resolveFsPathFromDocumentKey(this.storageDir, userId, fileName);
 
     try {
       await fs.unlink(filePath);
@@ -120,7 +97,7 @@ export class DocumentStorageFsService implements IDocumentStorageService {
   }
 
   async getDocStream(userId: string, fileName: string): Promise<Readable> {
-    const filePath = path.join(this.storageDir, fileName);
+    const filePath = resolveFsPathFromDocumentKey(this.storageDir, userId, fileName);
 
     try {
       // Check if file exists

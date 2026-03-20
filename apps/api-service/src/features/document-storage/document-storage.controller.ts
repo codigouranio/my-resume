@@ -12,7 +12,6 @@ import {
   BadRequestException,
   NotFoundException,
   Inject,
-  HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
@@ -20,13 +19,10 @@ import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { IDocumentStorageService } from './document-storage.interface';
 import {
-  UploadDocumentDto,
   DocumentUploadResponseDto,
   DocumentUrlsDto,
 } from './dto/upload-document.dto';
-
-// Token for injecting the storage service
-const DOCUMENT_STORAGE = 'DOCUMENT_STORAGE';
+import { DOCUMENT_STORAGE } from './document-storage.constants';
 
 @ApiTags('documents')
 @Controller('documents')

@@ -2,7 +2,7 @@ import { Readable } from 'stream';
 
 /**
  * Document storage service interface.
- * Supports multiple storage backends (S3, filesystem, mock).
+ * Supports multiple storage backends (S3, GCS, filesystem, mock).
  */
 export interface IDocumentStorageService {
   /**
@@ -11,7 +11,7 @@ export interface IDocumentStorageService {
    * @param fileName - Original filename
    * @param content - File content as Buffer or stream
    * @param mimeType - MIME type of the file
-   * @returns Promise resolving to the stored file path/key
+    * @returns Promise resolving to the stored file key (documents/{userId}/{timestamp}-{fileName})
    */
   saveDoc(
     userId: string,

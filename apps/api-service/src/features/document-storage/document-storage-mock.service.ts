@@ -1,6 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Readable } from 'stream';
 import { IDocumentStorageService } from './document-storage.interface';
+import {
+  assertDocumentKeyOwnership,
+  buildDocumentEmbedCode,
+  buildDocumentKey,
+  buildDocumentRouteUrl,
+  normalizeApiBaseUrl,
+} from './document-storage.utils';
 
 /**
  * Mock storage service for testing.
@@ -11,18 +18,11 @@ export class DocumentStorageMockService implements IDocumentStorageService {
   private readonly logger = new Logger(DocumentStorageMockService.name);
   private readonly storage: Map<string, Buffer> = new Map();
   private readonly metadata: Map<string, { mimeType: string; originalName: string }> = new Map();
+  private readonly baseUrl: string;
 
   constructor() {
+    this.baseUrl = normalizeApiBaseUrl(process.env.API_BASE_URL);
     this.logger.log('Mock storage initialized (in-memory only)');
-  }
-
-  /**
-   * Generate mock key for a user's document.
-   */
-  private getKey(userId: string, fileName: string): string {
-    const timestamp = Date.now();
-    const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
-    return `mock://${userId}/${timestamp}-${sanitizedFileName}`;
   }
 
   async saveDoc(
@@ -31,7 +31,7 @@ export class DocumentStorageMockService implements IDocumentStorageService {
     content: Buffer | Readable,
     mimeType: string,
   ): Promise<string> {
-    const key = this.getKey(userId, fileName);
+    const key = buildDocumentKey(userId, fileName);
 
     try {
       let buffer: Buffer;
@@ -60,29 +60,22 @@ export class DocumentStorageMockService implements IDocumentStorageService {
 
   getDocHtmlEmbeddedCode(userId: string, fileName: string): string {
     const viewUrl = this.getDocLinkForViewing(userId, fileName);
-    const fileExt = fileName.split('.').pop()?.toLowerCase();
-
-    // Generate appropriate embed code based on file type
-    if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(fileExt)) {
-      return `![${fileName}](${viewUrl})`;
-    } else if (['pdf'].includes(fileExt)) {
-      return `[📄 ${fileName}](${viewUrl})`;
-    } else if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(fileExt)) {
-      return `[📎 ${fileName}](${viewUrl})`;
-    } else {
-      return `[📁 ${fileName}](${viewUrl})`;
-    }
+    return buildDocumentEmbedCode(fileName, viewUrl);
   }
 
   getDocLinkForViewing(userId: string, fileName: string): string {
-    return `http://localhost:3000/api/documents/view/${userId}/${encodeURIComponent(fileName)}`;
+    assertDocumentKeyOwnership(userId, fileName);
+    return buildDocumentRouteUrl(this.baseUrl, 'view', userId, fileName);
   }
 
   getDocLinkForDownloading(userId: string, fileName: string): string {
-    return `http://localhost:3000/api/documents/download/${userId}/${encodeURIComponent(fileName)}`;
+    assertDocumentKeyOwnership(userId, fileName);
+    return buildDocumentRouteUrl(this.baseUrl, 'download', userId, fileName);
   }
 
   async deleteDoc(userId: string, fileName: string): Promise<void> {
+    assertDocumentKeyOwnership(userId, fileName);
+
     const deleted = this.storage.delete(fileName);
     this.metadata.delete(fileName);
 
@@ -94,6 +87,8 @@ export class DocumentStorageMockService implements IDocumentStorageService {
   }
 
   async getDocStream(userId: string, fileName: string): Promise<Readable> {
+    assertDocumentKeyOwnership(userId, fileName);
+
     const buffer = this.storage.get(fileName);
 
     if (!buffer) {

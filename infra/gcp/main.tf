@@ -368,6 +368,21 @@ resource "google_cloud_run_v2_service" "api" {
       }
 
       env {
+        name  = "DOCUMENT_STORAGE_TYPE"
+        value = "gcs"
+      }
+
+      env {
+        name  = "GCS_BUCKET_NAME"
+        value = google_storage_bucket.uploads.name
+      }
+
+      env {
+        name  = "GCS_PROJECT_ID"
+        value = var.project_id
+      }
+
+      env {
         name  = "STORAGE_BUCKET"
         value = google_storage_bucket.uploads.name
       }
