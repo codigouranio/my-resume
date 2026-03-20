@@ -222,18 +222,6 @@ resource "google_secret_manager_secret" "jwt_secret" {
   depends_on = [google_project_service.required_apis]
 }
 
-resource "google_secret_manager_secret_version" "jwt_secret" {
-  secret      = google_secret_manager_secret.jwt_secret.id
-  secret_data = var.jwt_secret
-
-  lifecycle {
-    # Prevent Terraform from reading/diffing the secret value on every plan.
-    # The Terraform SA does not need secretmanager.versions.access.
-    # Re-run apply explicitly if you need to rotate the secret.
-    ignore_changes = [secret_data]
-  }
-}
-
 resource "google_secret_manager_secret" "database_url" {
   secret_id = "database-url"
 
@@ -242,30 +230,11 @@ resource "google_secret_manager_secret" "database_url" {
   }
 }
 
-resource "google_secret_manager_secret_version" "database_url" {
-  secret = google_secret_manager_secret.database_url.id
-  # Cloud Run uses Unix socket: /cloudsql/PROJECT:REGION:INSTANCE
-  secret_data = "postgresql://${google_sql_user.main.name}:${urlencode(var.database_password)}@localhost/${google_sql_database.main.name}?host=/cloudsql/${google_sql_database_instance.main.connection_name}"
-
-  lifecycle {
-    ignore_changes = [secret_data]
-  }
-}
-
 resource "google_secret_manager_secret" "llm_webhook_secret" {
   secret_id = "llm-webhook-secret"
 
   replication {
     auto {}
-  }
-}
-
-resource "google_secret_manager_secret_version" "llm_webhook_secret" {
-  secret      = google_secret_manager_secret.llm_webhook_secret.id
-  secret_data = var.llm_webhook_secret
-
-  lifecycle {
-    ignore_changes = [secret_data]
   }
 }
 
@@ -429,7 +398,7 @@ resource "google_cloud_run_v2_service" "api" {
   depends_on = [
     google_project_service.required_apis,
     google_sql_database.main,
-    google_secret_manager_secret_version.database_url,
+    google_secret_manager_secret.database_url,
   ]
 }
 

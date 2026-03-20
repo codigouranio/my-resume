@@ -34,6 +34,7 @@
     "@bull-board/express": "^6.20.3",
     "@bull-board/nestjs": "^6.20.3",
     "@bull-board/ui": "^6.20.3",
+    "@google-cloud/storage": "^7.19.0",
     "@nestjs/apollo": "^12.2.2",
     "@nestjs/bull": "^11.0.4",
     "@nestjs/common": "^10.3.0",
