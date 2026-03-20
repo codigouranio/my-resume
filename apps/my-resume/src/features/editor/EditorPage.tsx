@@ -10,6 +10,20 @@ import { formatResumeDisplayPath } from '../../shared/utils/domain';
 import { FileInsertModal } from './FileInsertModal';
 import './Editor.css';
 
+const MUSASHI_BADGE_MARKER = '/* resumecast:musashi-badge=enabled */';
+
+function hasMusashiBadgeMarker(customCss?: string): boolean {
+  return Boolean(customCss && customCss.includes(MUSASHI_BADGE_MARKER));
+}
+
+function setMusashiBadgeMarker(customCss: string | undefined, enabled: boolean): string {
+  const current = (customCss || '').replace(MUSASHI_BADGE_MARKER, '').trim();
+  if (!enabled) {
+    return current;
+  }
+  return current ? `${current}\n\n${MUSASHI_BADGE_MARKER}` : MUSASHI_BADGE_MARKER;
+}
+
 export function EditorPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -26,7 +40,9 @@ export function EditorPage() {
     isPublic: false,
     isPublished: false,
     theme: 'default',
+    customCss: '',
   });
+  const [showMusashiBadge, setShowMusashiBadge] = useState(false);
   const [isLoading, setIsLoading] = useState(!isNew);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
@@ -93,7 +109,9 @@ export function EditorPage() {
         isPublic: data.isPublic,
         isPublished: data.isPublished,
         theme: data.theme || 'default',
+        customCss: data.customCss || '',
       });
+      setShowMusashiBadge(hasMusashiBadgeMarker(data.customCss || ''));
     } catch (err: any) {
       setError(err.message || t('editor.errors.load_failed'));
     } finally {
@@ -108,7 +126,10 @@ export function EditorPage() {
     setError('');
 
     try {
-      await apiClient.updateResume(id!, formData);
+      await apiClient.updateResume(id!, {
+        ...formData,
+        customCss: setMusashiBadgeMarker(formData.customCss, showMusashiBadge),
+      });
       setLastSaved(new Date());
       setHasUnsavedChanges(false);
     } catch (err: any) {
@@ -129,13 +150,18 @@ export function EditorPage() {
     setError('');
 
     try {
+      const payload = {
+        ...formData,
+        customCss: setMusashiBadgeMarker(formData.customCss, showMusashiBadge),
+      };
+
       if (isNew) {
-        const newResume = await apiClient.createResume(formData);
+        const newResume = await apiClient.createResume(payload);
         setLastSaved(new Date());
         setHasUnsavedChanges(false);
         navigate(`/editor/${newResume.id}`, { replace: true });
       } else {
-        await apiClient.updateResume(id!, formData);
+        await apiClient.updateResume(id!, payload);
         setLastSaved(new Date());
         setHasUnsavedChanges(false);
       }
@@ -504,6 +530,26 @@ export function EditorPage() {
               <option value="corporate">{t('editor.templates.corporate')}</option>
               <option value="tech">{t('editor.templates.tech')}</option>
             </select>
+          </div>
+
+          <div className="divider"></div>
+
+          <div className="form-control mb-4">
+            <label className="label cursor-pointer">
+              <span className="label-text">Show Musashi Index Badge</span>
+              <input
+                type="checkbox"
+                className="toggle toggle-info"
+                checked={showMusashiBadge}
+                onChange={(e) => {
+                  setShowMusashiBadge(e.target.checked);
+                  setHasUnsavedChanges(true);
+                }}
+              />
+            </label>
+            <p className="text-xs text-base-content/60 mt-1">
+              When enabled, your public resume shows a live Musashi IM badge computed from resume + AI context.
+            </p>
           </div>
 
           <div className="divider"></div>

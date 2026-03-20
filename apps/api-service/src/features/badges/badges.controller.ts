@@ -25,4 +25,19 @@ export class BadgesController {
     res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
     res.send(svgContent);
   }
+
+  @Get('musashi')
+  @Public()
+  @ApiOperation({ summary: 'Generate Musashi Index badge for a resume' })
+  @ApiQuery({ name: 'slug', required: true, description: 'Public resume slug' })
+  async getMusashiBadge(
+    @Query('slug') slug: string,
+    @Res() res: Response,
+  ) {
+    const svgContent = await this.badgesService.generateMusashiBadge(slug);
+
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.setHeader('Cache-Control', 'public, max-age=600');
+    res.send(svgContent);
+  }
 }

@@ -228,6 +228,7 @@ class ApiClient {
     isPublic?: boolean;
     isPublished?: boolean;
     theme?: string;
+    customCss?: string;
   }) {
     return this.request('/resumes', {
       method: 'POST',
@@ -245,6 +246,7 @@ class ApiClient {
       isPublic?: boolean;
       isPublished?: boolean;
       theme?: string;
+      customCss?: string;
     }>,
   ) {
     return this.request(`/resumes/${id}`, {

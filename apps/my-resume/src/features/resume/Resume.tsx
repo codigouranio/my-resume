@@ -7,6 +7,11 @@ import { ChatWidget } from '../chat';
 import { TEMPLATES, TemplateType } from '../templates';
 import './Resume.css';
 const API_BASE_URL = import.meta.env.PUBLIC_API_URL || '/api';
+const MUSASHI_BADGE_MARKER = '/* resumecast:musashi-badge=enabled */';
+
+function hasMusashiBadgeEnabled(customCss?: string): boolean {
+  return Boolean(customCss && customCss.includes(MUSASHI_BADGE_MARKER));
+}
 
 interface ResumeProps {
   customDomain?: string;
@@ -31,6 +36,7 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
   const [expandedVideo, setExpandedVideo] = useState<string | null>(null);
   const [viewCount, setViewCount] = useState<number | null>(null);
   const [slug, setSlug] = useState<string | null>(null);
+  const [hideMusashiBadge, setHideMusashiBadge] = useState<boolean>(false);
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -195,7 +201,18 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
     <div className="resume-container">
       {/* Action Buttons */}
       <div className="sticky top-4 z-10 mb-8">
-        <div className="flex justify-end gap-3 items-center">
+        <div className="flex flex-wrap justify-end gap-3 items-center">
+          {resumeData &&
+            hasMusashiBadgeEnabled(resumeData.customCss) &&
+            !hideMusashiBadge && (
+              <img
+                src={`${API_BASE_URL}/badges/musashi?slug=${encodeURIComponent(resumeData.slug || slug || '')}`}
+                alt="Musashi Index Badge"
+                className="h-16 w-auto rounded-xl shadow-md border border-base-300 bg-base-100"
+                loading="lazy"
+                onError={() => setHideMusashiBadge(true)}
+              />
+            )}
           <div className="tooltip tooltip-left" data-tip="Download as PDF">
             <button
               onClick={handleDownloadPDF}

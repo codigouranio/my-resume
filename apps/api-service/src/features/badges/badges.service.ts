@@ -1,4 +1,5 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 interface GitHubStats {
   totalStars: number;
@@ -10,6 +11,18 @@ interface GitHubStats {
 
 @Injectable()
 export class BadgesService {
+  private readonly logger = new Logger(BadgesService.name);
+  private readonly llmServiceUrl: string;
+  private readonly llmApiKey: string;
+
+  constructor(private readonly configService: ConfigService) {
+    this.llmServiceUrl = this.configService.get<string>(
+      'LLM_SERVICE_URL',
+      'http://localhost:5000',
+    );
+    this.llmApiKey = this.configService.get<string>('LLM_API_KEY', '');
+  }
+
   private async fetchGitHubStats(username: string): Promise<GitHubStats> {
     try {
       // Fetch user data
@@ -122,5 +135,97 @@ export class BadgesService {
     `.trim();
 
     return svg;
+  }
+
+  async generateMusashiBadge(slug: string): Promise<string> {
+    if (!slug) {
+      throw new HttpException('Missing slug', HttpStatus.BAD_REQUEST);
+    }
+
+    let score = 0;
+    let level = 'Not Rated';
+
+    try {
+      const response = await fetch(`${this.llmServiceUrl}/api/musashi-index`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': this.llmApiKey,
+        },
+        body: JSON.stringify({ resumeSlug: slug }),
+      });
+
+      if (!response.ok) {
+        const body = await response.text();
+        throw new Error(`LLM service error ${response.status}: ${body}`);
+      }
+
+      const data = await response.json();
+      score = Number(data.imScore ?? 0);
+      level = String(data.academicEquivalentEn || data.academicEquivalent || 'Not Rated');
+    } catch (error) {
+      this.logger.warn(`Failed to generate Musashi score badge for slug=${slug}: ${error}`);
+      return this.renderMusashiBadge({
+        score: 0,
+        level: 'Unavailable',
+        label: 'Musashi IM',
+      });
+    }
+
+    return this.renderMusashiBadge({
+      score,
+      level,
+      label: 'Musashi IM',
+    });
+  }
+
+  private renderMusashiBadge(input: {
+    score: number;
+    level: string;
+    label: string;
+  }): string {
+    const safeScore = Math.max(0, Math.min(10, Number.isFinite(input.score) ? input.score : 0));
+    const rounded = safeScore.toFixed(2);
+
+    let accent = '#ef4444';
+    if (safeScore >= 9.5) accent = '#a855f7';
+    else if (safeScore >= 8.5) accent = '#2563eb';
+    else if (safeScore >= 7.5) accent = '#0ea5e9';
+    else if (safeScore >= 6) accent = '#14b8a6';
+    else if (safeScore >= 4) accent = '#f59e0b';
+
+    const width = 430;
+    const height = 92;
+
+    const level = this.escapeXml(input.level);
+    const label = this.escapeXml(input.label);
+
+    return `
+      <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${label} ${rounded}">
+        <defs>
+          <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#0f172a" />
+            <stop offset="100%" stop-color="#111827" />
+          </linearGradient>
+        </defs>
+        <rect x="1" y="1" width="${width - 2}" height="${height - 2}" rx="14" fill="url(#bg)" stroke="#334155"/>
+        <circle cx="44" cy="46" r="22" fill="none" stroke="#374151" stroke-width="8"/>
+        <circle cx="44" cy="46" r="22" fill="none" stroke="${accent}" stroke-width="8" stroke-dasharray="${2 * Math.PI * 22}" stroke-dashoffset="${2 * Math.PI * 22 * (1 - safeScore / 10)}" transform="rotate(-90 44 46)"/>
+        <text x="44" y="51" text-anchor="middle" font-family="Segoe UI, Inter, sans-serif" font-size="11" fill="#e5e7eb">${safeScore.toFixed(1)}</text>
+        <text x="82" y="36" font-family="Segoe UI, Inter, sans-serif" font-size="14" fill="#cbd5e1">${label}</text>
+        <text x="82" y="60" font-family="Segoe UI, Inter, sans-serif" font-size="22" font-weight="700" fill="#f8fafc">${rounded}</text>
+        <text x="176" y="60" font-family="Segoe UI, Inter, sans-serif" font-size="12" fill="#94a3b8">/ 10</text>
+        <text x="240" y="60" font-family="Segoe UI, Inter, sans-serif" font-size="13" fill="${accent}">${level}</text>
+      </svg>
+    `.trim();
+  }
+
+  private escapeXml(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
   }
 }
