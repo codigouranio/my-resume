@@ -67,3 +67,16 @@ build/
 *.local
 
 uploads/
+
+# Terraform - sensitive files (state, vars, plans all may contain secrets)
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+terraform.tfvars
+*.auto.tfvars
+*.tfplan
+tfplan
+tfplan.*
+.terraform/
+terraform-key.json
+*-terraform-key.json
