@@ -1,0 +1,96 @@
+api_service_url = "https://api-service-t6hqg2nmta-uc.a.run.app"
+artifact_registry_url = "us-central1-docker.pkg.dev/resume-cast-ai-prod/resumecast-images"
+cloudrun_service_account = "cloudrun-sa@resume-cast-ai-prod.iam.gserviceaccount.com"
+database_connection_name = "resume-cast-ai-prod:us-central1:resumecast-db-61156347"
+database_instance_name = "resumecast-db-61156347"
+database_private_ip = ""
+database_public_ip = "34.46.114.224"
+database_url_for_home_llm = <sensitive>
+docker_push_commands = {
+  "api_build" = "docker build -t us-central1-docker.pkg.dev/resume-cast-ai-prod/resumecast-images/api-service:latest ./apps/api-service"
+  "api_push" = "docker push us-central1-docker.pkg.dev/resume-cast-ai-prod/resumecast-images/api-service:latest"
+  "configure" = "gcloud auth configure-docker us-central1-docker.pkg.dev"
+  "frontend_build" = "docker build -t us-central1-docker.pkg.dev/resume-cast-ai-prod/resumecast-images/frontend:latest ./apps/my-resume"
+  "frontend_push" = "docker push us-central1-docker.pkg.dev/resume-cast-ai-prod/resumecast-images/frontend:latest"
+}
+documents_bucket_name = "resume-cast-ai-prod-uploads-61156347"
+documents_bucket_url = "gs://resume-cast-ai-prod-uploads-61156347"
+domain_mapping_dns_records = {
+  "api_resumecast_ai" = {
+    "domain" = "api.resumecast.ai"
+    "records" = tolist([
+      {
+        "name" = "api"
+        "rrdata" = "ghs.googlehosted.com."
+        "type" = "CNAME"
+      },
+    ])
+  }
+  "resumecast_ai" = {
+    "domain" = "resumecast.ai"
+    "records" = tolist([
+      {
+        "name" = ""
+        "rrdata" = "216.239.32.21"
+        "type" = "A"
+      },
+      {
+        "name" = ""
+        "rrdata" = "216.239.34.21"
+        "type" = "A"
+      },
+      {
+        "name" = ""
+        "rrdata" = "216.239.36.21"
+        "type" = "A"
+      },
+      {
+        "name" = ""
+        "rrdata" = "216.239.38.21"
+        "type" = "A"
+      },
+      {
+        "name" = ""
+        "rrdata" = "2001:4860:4802:32::15"
+        "type" = "AAAA"
+      },
+      {
+        "name" = ""
+        "rrdata" = "2001:4860:4802:34::15"
+        "type" = "AAAA"
+      },
+      {
+        "name" = ""
+        "rrdata" = "2001:4860:4802:36::15"
+        "type" = "AAAA"
+      },
+      {
+        "name" = ""
+        "rrdata" = "2001:4860:4802:38::15"
+        "type" = "AAAA"
+      },
+    ])
+  }
+  "www_resumecast_ai" = {
+    "domain" = "www.resumecast.ai"
+    "records" = tolist([
+      {
+        "name" = "www"
+        "rrdata" = "ghs.googlehosted.com."
+        "type" = "CNAME"
+      },
+    ])
+  }
+}
+frontend_assets_bucket_name = "resume-cast-ai-prod-frontend-61156347"
+frontend_service_url = "https://frontend-t6hqg2nmta-uc.a.run.app"
+next_steps = <sensitive>
+project_id = "resume-cast-ai-prod"
+region = "us-central1"
+secrets_created = [
+  "jwt-secret",
+  "database-url",
+  "llm-webhook-secret",
+]
+uploads_bucket_name = "resume-cast-ai-prod-uploads-61156347"
+uploads_bucket_url = "gs://resume-cast-ai-prod-uploads-61156347"
