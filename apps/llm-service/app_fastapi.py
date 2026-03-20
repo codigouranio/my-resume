@@ -31,6 +31,7 @@ from api_client import (
     get_user_info_from_api,
     log_chat_interaction_to_api,
     load_conversation_history_from_api,
+    get_headers,
 )
 from api_key_auth import get_api_key_manager
 from app_remote import RemoteLLMWrapper, research_company_async, analyze_position_async
@@ -370,10 +371,24 @@ class MusashiScores(BaseModel):
 class MusashiIndexRequest(BaseModel):
     """Índice de Musashi — evaluation request"""
 
-    career_profile: str = Field(
-        ...,
+    career_profile: Optional[str] = Field(
+        None,
         alias="careerProfile",
-        description="Free-form career description (resume text, bio, experience summary)",
+        description="Optional additional free-form career notes",
+    )
+    resume: Optional[Dict[str, str]] = Field(
+        None,
+        description="Resume object including content and llmContext",
+    )
+    resume_slug: Optional[str] = Field(
+        None,
+        alias="resumeSlug",
+        description="Optional resume slug to load content + llmContext from API",
+    )
+    ai_context: Optional[str] = Field(
+        None,
+        alias="aiContext",
+        description="Optional explicit AI context (merged with llmContext if provided)",
     )
     experience_years: Optional[float] = Field(
         None,
@@ -1205,14 +1220,56 @@ async def score_position(
 async def calculate_musashi_index(request: MusashiIndexRequest):
     """Compute the Índice de Musashi for the supplied career profile."""
     try:
+        resume_content = ""
+        hidden_context = ""
+
+        if request.resume:
+            resume_content = (request.resume.get("content") or "").strip()
+            hidden_context = (request.resume.get("llmContext") or "").strip()
+
+        if request.resume_slug:
+            url = f"{API_SERVICE_URL}/api/llm-service/resume/{request.resume_slug}"
+            response = requests.get(url, headers=get_headers(), timeout=10)
+            if response.status_code == 404:
+                raise HTTPException(status_code=404, detail="Resume not found")
+            response.raise_for_status()
+            resume_data = response.json()
+            resume_content = (
+                resume_data.get("content") or resume_content or ""
+            ).strip()
+            hidden_context = (
+                resume_data.get("llmContext") or hidden_context or ""
+            ).strip()
+
+        if request.ai_context and request.ai_context.strip():
+            ai_context = request.ai_context.strip()
+            if hidden_context:
+                hidden_context = f"{hidden_context}\n\n{ai_context}"
+            else:
+                hidden_context = ai_context
+
+        if not resume_content or not hidden_context:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Both resume content and AI context are required. "
+                    "Provide resume.content + resume.llmContext, or resumeSlug with llmContext, "
+                    "or aiContext alongside resume content."
+                ),
+            )
+
         logger.info(
             f"Musashi Index evaluation started — "
-            f"profile_length={len(request.career_profile)}, "
+            f"resume_length={len(resume_content)}, "
+            f"ai_context_length={len(hidden_context)}, "
+            f"profile_length={len((request.career_profile or ''))}, "
             f"experience_years={request.experience_years}"
         )
         agent = get_musashi_agent()
         result = agent.score(
             career_profile=request.career_profile,
+            resume_content=resume_content,
+            ai_context=hidden_context,
             experience_years=request.experience_years,
             portfolio_items=request.portfolio_items,
             impact_highlights=request.impact_highlights,

@@ -45,6 +45,11 @@ Evaluate the candidate across these four dimensions:
 
 Given the career profile below, you must:
 
+0. Use BOTH sections when present: [RESUME CONTENT] and [AI CONTEXT].
+  - Treat resume content as canonical chronology/evidence.
+  - Use AI context as strategic/private nuance and additional signals.
+  - If they conflict, prefer factual chronology from resume content and explain the uncertainty in rationale.
+
 1. Evaluate each of the 4 dimensions with a sub-score (0–10)
 2. Compute the weighted composite IM score
 3. Determine the academic equivalency

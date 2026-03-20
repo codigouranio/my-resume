@@ -130,7 +130,9 @@ class MusashiIndexAgent:
 
     def score(
         self,
-        career_profile: str,
+        career_profile: Optional[str] = None,
+        resume_content: Optional[str] = None,
+        ai_context: Optional[str] = None,
         experience_years: Optional[float] = None,
         portfolio_items: Optional[List[str]] = None,
         impact_highlights: Optional[List[str]] = None,
@@ -140,7 +142,9 @@ class MusashiIndexAgent:
         Compute the Musashi Index for the supplied career profile.
 
         Args:
-            career_profile:       Free-form text (resume, bio, summary).
+            career_profile:       Optional free-form text (bio/summary/notes).
+            resume_content:       Public resume content.
+            ai_context:           Hidden/private AI context (llmContext).
             experience_years:     Optional hint for total years of experience.
             portfolio_items:      Optional list of notable projects/outputs.
             impact_highlights:    Optional list of quantified impact statements.
@@ -151,6 +155,8 @@ class MusashiIndexAgent:
         """
         enriched_profile = self._enrich_profile(
             career_profile,
+            resume_content,
+            ai_context,
             experience_years,
             portfolio_items,
             impact_highlights,
@@ -187,14 +193,25 @@ class MusashiIndexAgent:
 
     def _enrich_profile(
         self,
-        base_profile: str,
+        base_profile: Optional[str],
+        resume_content: Optional[str],
+        ai_context: Optional[str],
         experience_years: Optional[float],
         portfolio_items: Optional[List[str]],
         impact_highlights: Optional[List[str]],
         learning_highlights: Optional[List[str]],
     ) -> str:
-        """Append structured hints to the free-form profile."""
-        sections = [base_profile.strip()]
+        """Compose a profile that keeps resume and AI context as separate sections."""
+        sections = []
+
+        if resume_content and resume_content.strip():
+            sections.append(f"[RESUME CONTENT]\n{resume_content.strip()}")
+
+        if ai_context and ai_context.strip():
+            sections.append(f"[AI CONTEXT]\n{ai_context.strip()}")
+
+        if base_profile and base_profile.strip():
+            sections.append(f"[ADDITIONAL CAREER PROFILE]\n{base_profile.strip()}")
 
         if experience_years is not None:
             sections.append(f"\n[HINT] Total years of experience: {experience_years}")
@@ -211,7 +228,10 @@ class MusashiIndexAgent:
             joined = "\n  - ".join(learning_highlights)
             sections.append(f"\n[CONTINUOUS LEARNING]\n  - {joined}")
 
-        return "\n".join(sections)
+        if not sections:
+            return "[NO PROFILE DATA PROVIDED]"
+
+        return "\n\n".join(sections)
 
     def _heuristic_fallback(
         self,
