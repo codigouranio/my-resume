@@ -4,7 +4,7 @@
 
 terraform {
   required_version = ">= 1.5.0"
-  
+
   required_providers {
     google = {
       source  = "hashicorp/google"
@@ -34,7 +34,7 @@ resource "google_project_service" "required_apis" {
     "secretmanager.googleapis.com",
     "artifactregistry.googleapis.com",
   ])
-  
+
   service            = each.key
   disable_on_destroy = false
 }
@@ -67,7 +67,7 @@ resource "google_sql_database_instance" "main" {
 
     ip_configuration {
       ipv4_enabled = true
-      
+
       # Authorize home network for LLM service access
       authorized_networks {
         name  = "home-llm-service"
@@ -214,7 +214,7 @@ resource "google_project_iam_member" "cloudrun_storage" {
 # Secrets in Secret Manager
 resource "google_secret_manager_secret" "jwt_secret" {
   secret_id = "jwt-secret"
-  
+
   replication {
     auto {}
   }
@@ -225,11 +225,18 @@ resource "google_secret_manager_secret" "jwt_secret" {
 resource "google_secret_manager_secret_version" "jwt_secret" {
   secret      = google_secret_manager_secret.jwt_secret.id
   secret_data = var.jwt_secret
+
+  lifecycle {
+    # Prevent Terraform from reading/diffing the secret value on every plan.
+    # The Terraform SA does not need secretmanager.versions.access.
+    # Re-run apply explicitly if you need to rotate the secret.
+    ignore_changes = [secret_data]
+  }
 }
 
 resource "google_secret_manager_secret" "database_url" {
   secret_id = "database-url"
-  
+
   replication {
     auto {}
   }
@@ -239,11 +246,15 @@ resource "google_secret_manager_secret_version" "database_url" {
   secret = google_secret_manager_secret.database_url.id
   # Cloud Run uses Unix socket: /cloudsql/PROJECT:REGION:INSTANCE
   secret_data = "postgresql://${google_sql_user.main.name}:${urlencode(var.database_password)}@localhost/${google_sql_database.main.name}?host=/cloudsql/${google_sql_database_instance.main.connection_name}"
+
+  lifecycle {
+    ignore_changes = [secret_data]
+  }
 }
 
 resource "google_secret_manager_secret" "llm_webhook_secret" {
   secret_id = "llm-webhook-secret"
-  
+
   replication {
     auto {}
   }
@@ -252,6 +263,10 @@ resource "google_secret_manager_secret" "llm_webhook_secret" {
 resource "google_secret_manager_secret_version" "llm_webhook_secret" {
   secret      = google_secret_manager_secret.llm_webhook_secret.id
   secret_data = var.llm_webhook_secret
+
+  lifecycle {
+    ignore_changes = [secret_data]
+  }
 }
 
 # Cloud Run - API Service
@@ -355,7 +370,7 @@ resource "google_cloud_run_v2_service" "api" {
 
       env {
         name  = "STRIPE_SECRET_KEY"
-        value = "not-configured"  # Set actual key if using Stripe
+        value = "not-configured" # Set actual key if using Stripe
       }
 
       env {
