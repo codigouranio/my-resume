@@ -508,6 +508,7 @@ class ApiClient {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
+        'x-goog-project-id': 'resume-cast-ai-prod',
       },
       body: formData,
     });

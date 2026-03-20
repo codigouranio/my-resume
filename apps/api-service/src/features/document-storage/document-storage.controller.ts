@@ -12,6 +12,7 @@ import {
   BadRequestException,
   NotFoundException,
   Inject,
+  Logger,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
@@ -27,6 +28,8 @@ import { DOCUMENT_STORAGE } from './document-storage.constants';
 @ApiTags('documents')
 @Controller('documents')
 export class DocumentStorageController {
+  private readonly logger = new Logger(DocumentStorageController.name);
+
   constructor(
     @Inject(DOCUMENT_STORAGE)
     private readonly storageService: IDocumentStorageService,
@@ -57,21 +60,39 @@ export class DocumentStorageController {
     const fileName = file.originalname;
     const mimeType = file.mimetype;
     const content = file.buffer;
+    const fileSizeBytes = file.size;
+    const googProjectId = req.headers?.['x-goog-project-id'];
 
-    // Save document
-    const fileKey = await this.storageService.saveDoc(userId, fileName, content, mimeType);
+    this.logger.log(
+      `Document upload started: userId=${userId}, fileName=${fileName}, mimeType=${mimeType}, sizeBytes=${fileSizeBytes}, xGoogProjectId=${googProjectId || 'missing'}`,
+    );
 
-    // Get URLs
-    const embedCode = this.storageService.getDocHtmlEmbeddedCode(userId, fileKey);
-    const viewUrl = this.storageService.getDocLinkForViewing(userId, fileKey);
-    const downloadUrl = this.storageService.getDocLinkForDownloading(userId, fileKey);
+    try {
+      // Save document
+      const fileKey = await this.storageService.saveDoc(userId, fileName, content, mimeType);
 
-    return {
-      fileKey,
-      embedCode,
-      viewUrl,
-      downloadUrl,
-    };
+      // Get URLs
+      const embedCode = this.storageService.getDocHtmlEmbeddedCode(userId, fileKey);
+      const viewUrl = this.storageService.getDocLinkForViewing(userId, fileKey);
+      const downloadUrl = this.storageService.getDocLinkForDownloading(userId, fileKey);
+
+      this.logger.log(
+        `Document upload succeeded: userId=${userId}, fileKey=${fileKey}, sizeBytes=${fileSizeBytes}, xGoogProjectId=${googProjectId || 'missing'}`,
+      );
+
+      return {
+        fileKey,
+        embedCode,
+        viewUrl,
+        downloadUrl,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Document upload failed: userId=${userId}, fileName=${fileName}, sizeBytes=${fileSizeBytes}, xGoogProjectId=${googProjectId || 'missing'}, error=${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
   }
 
   @Get('urls/:userId/:fileName')
