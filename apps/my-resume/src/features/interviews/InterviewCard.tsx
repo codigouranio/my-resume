@@ -184,7 +184,7 @@ export function InterviewCard({ interview, onEdit, onDelete, onArchive, onView }
             className="btn btn-primary btn-sm"
             onClick={onView}
           >
-            👁️ {t('interviews.view_details')}
+            {t('interviews.view_details')}
           </button>
           <button
             className="btn btn-ghost btn-sm"

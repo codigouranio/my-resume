@@ -16,6 +16,7 @@ export interface ServiceStatus {
 
 export interface SystemHealth {
   timestamp: string;
+  version: string;
   environment: string;
   overall: 'healthy' | 'degraded' | 'unhealthy';
   services: ServiceStatus[];
@@ -29,6 +30,15 @@ export class HealthController {
     private readonly prisma: any,
   ) {}
 
+  private getServiceVersion(): string {
+    return (
+      this.configService.get('APP_VERSION') ||
+      this.configService.get('K_REVISION') ||
+      this.configService.get('SERVICE_VERSION') ||
+      'unknown'
+    );
+  }
+
   /**
    * System-wide health check endpoint
    * Returns comprehensive status of all critical services
@@ -38,6 +48,7 @@ export class HealthController {
   async getSystemHealth(): Promise<SystemHealth> {
     const startTime = Date.now();
     const services: ServiceStatus[] = [];
+    const apiVersion = this.getServiceVersion();
 
     // Check API Service
     services.push({
@@ -47,6 +58,7 @@ export class HealthController {
       details: {
         node: process.version,
         uptime: process.uptime(),
+        version: apiVersion,
       },
     });
 
@@ -77,6 +89,15 @@ export class HealthController {
       const llmUrl = this.configService.get('LLM_SERVICE_URL', 'http://localhost:5000');
       const llmStartTime = Date.now();
       const response = await fetch(`${llmUrl}/health`);
+      let llmVersion = 'unknown';
+
+      try {
+        const llmHealth = await response.json();
+        llmVersion = llmHealth?.version || llmVersion;
+      } catch {
+        // Keep fallback when upstream health body isn't JSON.
+      }
+
       services.push({
         service: 'LLM Service',
         status: response.ok ? 'healthy' : 'degraded',
@@ -84,6 +105,7 @@ export class HealthController {
         details: {
           url: llmUrl,
           statusCode: response.status,
+          version: llmVersion,
         },
       });
     } catch (error) {
@@ -108,6 +130,7 @@ export class HealthController {
 
     return {
       timestamp: new Date().toISOString(),
+      version: apiVersion,
       environment: this.configService.get('NODE_ENV', 'development'),
       overall,
       services,
@@ -121,7 +144,7 @@ export class HealthController {
   @Get('live')
   @Public()
   getLiveness() {
-    return { status: 'alive' };
+    return { status: 'alive', version: this.getServiceVersion() };
   }
 
   /**
@@ -132,9 +155,9 @@ export class HealthController {
   async getReadiness(): Promise<any> {
     try {
       await this.prisma.$queryRaw`SELECT 1`;
-      return { status: 'ready' };
+      return { status: 'ready', version: this.getServiceVersion() };
     } catch {
-      return { status: 'not-ready' };
+      return { status: 'not-ready', version: this.getServiceVersion() };
     }
   }
 }

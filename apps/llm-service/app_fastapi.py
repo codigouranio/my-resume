@@ -91,6 +91,12 @@ VLLM_MODEL = os.getenv("VLLM_MODEL", "Qwen/Qwen2.5-7B-Instruct")
 LLAMA_SERVER_URL = os.getenv("LLAMA_SERVER_URL", "http://localhost:8080")
 LLAMA_MODEL = os.getenv("LLAMA_MODEL", "llama3.1")
 LLAMA_API_TYPE = os.getenv("LLAMA_API_TYPE", "llama-cpp")
+SERVICE_VERSION = (
+    os.getenv("APP_VERSION")
+    or os.getenv("K_REVISION")
+    or os.getenv("SERVICE_VERSION")
+    or "1.0.0"
+)
 
 # API service configuration
 API_SERVICE_URL = os.getenv("API_SERVICE_URL", "http://localhost:3000")
@@ -214,6 +220,7 @@ class HealthResponse(BaseModel):
     """Health check response"""
 
     status: str = Field(..., description="Service status")
+    version: str = Field(..., description="Service version or revision")
     llama_server: str = Field(..., description="LLAMA server URL")
     server_reachable: bool = Field(..., description="Whether LLAMA server is reachable")
     model: str = Field(..., description="Model name")
@@ -771,6 +778,7 @@ async def health_check():
 
     return HealthResponse(
         status="healthy",
+        version=SERVICE_VERSION,
         llama_server=server_url,
         server_reachable=server_reachable,
         model=model_name,
