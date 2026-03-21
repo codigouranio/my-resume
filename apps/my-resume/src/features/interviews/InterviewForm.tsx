@@ -343,7 +343,7 @@ export function InterviewForm({ interview, onSave, onCancel }: InterviewFormProp
               {selectedResumeId && (
                 <label className="label">
                   <span className="label-text-alt text-success">
-                    ✓ {t('interviews.resume_helper')}
+                    {t('interviews.resume_helper')}
                   </span>
                 </label>
               )}

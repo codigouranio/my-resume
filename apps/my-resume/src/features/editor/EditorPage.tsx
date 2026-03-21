@@ -467,7 +467,7 @@ export function EditorPage() {
                 <span className="label-text-alt text-error">❌ {slugError}</span>
               )}
               {!isCheckingSlug && !slugError && formData.slug && (
-                <span className="label-text-alt text-success">✓ {t('editor.status.slug_available')}</span>
+                <span className="label-text-alt text-success"> {t('editor.status.slug_available')}</span>
               )}
             </label>
             <input
