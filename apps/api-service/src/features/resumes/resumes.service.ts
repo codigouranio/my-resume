@@ -15,6 +15,7 @@ import { PrismaService } from "../../shared/database/prisma.service";
 import { EmailService } from "../../shared/email/email.service";
 import { EmbeddingJobType } from "../embeddings/dto/generate-embedding.dto";
 import { EmbeddingQueueService } from "../embeddings/embedding-queue.service";
+import { AIContextService } from "../ai-context/ai-context.service";
 import { CreateRecruiterInterestDto } from "./dto/create-recruiter-interest.dto";
 import { CreateResumeDto } from "./dto/create-resume.dto";
 import { UpdateResumeDto } from "./dto/update-resume.dto";
@@ -29,6 +30,7 @@ export class ResumesService {
   constructor(
     private prisma: PrismaService,
     private embeddingQueueService: EmbeddingQueueService,
+    private aiContextService: AIContextService,
     private emailService: EmailService,
     private configService: ConfigService,
   ) {
@@ -491,10 +493,35 @@ export class ResumesService {
     content: string;
     llmContext?: string | null;
   }): Promise<void> {
-    const contentLength = (input.content || '').trim().length;
-    const llmContextLength = (input.llmContext || '').trim().length;
+    const content = (input.content || '').trim();
+    let aiContext = (input.llmContext || '').trim();
 
-    if (!input.content || !input.llmContext) {
+    if (!aiContext) {
+      try {
+        const taggedContext = (await this.aiContextService.getAIContext(input.userId, input.resumeId)).trim();
+        aiContext = taggedContext;
+
+        if (!aiContext) {
+          const globalContext = (await this.aiContextService.getAIContext(input.userId)).trim();
+          aiContext = globalContext;
+        }
+
+        if (aiContext) {
+          this.logger.log(
+            `Using AI Context feed fallback for Musashi on resume ${input.resumeId} (aiContextLength=${aiContext.length})`,
+          );
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Failed to load AI Context fallback for resume ${input.resumeId}: ${error.message}`,
+        );
+      }
+    }
+
+    const contentLength = content.length;
+    const llmContextLength = aiContext.length;
+
+    if (!content || !aiContext) {
       this.logger.warn(
         `Skipping Musashi calculation for resume ${input.resumeId}: missing content or llmContext (contentLength=${contentLength}, llmContextLength=${llmContextLength})`,
       );
@@ -512,8 +539,8 @@ export class ResumesService {
 
     const payload = {
       resume: {
-        content: input.content,
-        llmContext: input.llmContext,
+        content,
+        llmContext: aiContext,
       },
       resumeSlug: input.slug,
       callbackUrl,

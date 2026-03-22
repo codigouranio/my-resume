@@ -10,6 +10,7 @@ import {
 } from './queries/handlers';
 import { EmbeddingsModule } from '../embeddings/embeddings.module';
 import { EmailModule } from '@shared/email/email.module';
+import { AIContextModule } from '../ai-context/ai-context.module';
 import { LinkedInApiService } from './linkedin-api.service';
 import { LinkedInParserService } from './linkedin-parser.service';
 import { LinkedInImportController } from './linkedin-import.controller';
@@ -21,7 +22,7 @@ const QueryHandlers = [
 ];
 
 @Module({
-  imports: [CqrsModule, EmbeddingsModule, EmailModule],
+  imports: [CqrsModule, EmbeddingsModule, EmailModule, AIContextModule],
   providers: [
     ResumesService,
     ResumesResolver,
