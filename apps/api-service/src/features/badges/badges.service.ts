@@ -137,6 +137,8 @@ export class BadgesService {
     const resume = await this.prisma.resume.findUnique({
       where: { slug },
       select: {
+        musashiImScore: true,
+        musashiEquivalent: true,
         customCss: true,
         isPublic: true,
         isPublished: true,
@@ -151,15 +153,20 @@ export class BadgesService {
       });
     }
 
-    const css = resume.customCss || '';
-    const scoreMatch = css.match(/\/\* resumecast:musashi-im-score=([0-9.]+) \*\//);
-    const levelMatch = css.match(/\/\* resumecast:musashi-equivalent=(.*?) \*\//);
+    let score = Number(resume.musashiImScore ?? 0);
+    let level = resume.musashiEquivalent || 'Pending';
 
-    const score = scoreMatch ? Number(scoreMatch[1]) : 0;
-    const level = levelMatch ? levelMatch[1] : 'Pending';
+    if (!resume.musashiImScore && !resume.musashiEquivalent) {
+      const css = resume.customCss || '';
+      const scoreMatch = css.match(/\/\* resumecast:musashi-im-score=([0-9.]+) \*\//);
+      const levelMatch = css.match(/\/\* resumecast:musashi-equivalent=(.*?) \*\//);
 
-    if (!scoreMatch) {
-      this.logger.debug(`No persisted Musashi score for slug=${slug}`);
+      score = scoreMatch ? Number(scoreMatch[1]) : 0;
+      level = levelMatch ? levelMatch[1] : level;
+
+      if (!scoreMatch) {
+        this.logger.debug(`No persisted Musashi score for slug=${slug}`);
+      }
     }
 
     return this.renderMusashiBadge({
@@ -177,35 +184,92 @@ export class BadgesService {
     const safeScore = Math.max(0, Math.min(10, Number.isFinite(input.score) ? input.score : 0));
     const rounded = safeScore.toFixed(2);
 
-    let accent = '#ef4444';
-    if (safeScore >= 9.5) accent = '#a855f7';
-    else if (safeScore >= 8.5) accent = '#2563eb';
-    else if (safeScore >= 7.5) accent = '#0ea5e9';
-    else if (safeScore >= 6) accent = '#14b8a6';
-    else if (safeScore >= 4) accent = '#f59e0b';
+    let accentColor = '#ef4444';
+    let accentLight = '#fee2e2';
+    if (safeScore >= 9.5) {
+      accentColor = '#a855f7';
+      accentLight = '#f3e8ff';
+    } else if (safeScore >= 8.5) {
+      accentColor = '#2563eb';
+      accentLight = '#dbeafe';
+    } else if (safeScore >= 7.5) {
+      accentColor = '#0ea5e9';
+      accentLight = '#cffafe';
+    } else if (safeScore >= 6) {
+      accentColor = '#14b8a6';
+      accentLight = '#ccfbf1';
+    } else if (safeScore >= 4) {
+      accentColor = '#f59e0b';
+      accentLight = '#fef3c7';
+    }
 
-    const width = 430;
-    const height = 92;
+    const width = 480;
+    const height = 110;
 
     const level = this.escapeXml(input.level);
     const label = this.escapeXml(input.label);
+    const circumference = 2 * Math.PI * 28;
+    const strokeOffset = circumference * (1 - safeScore / 10);
 
     return `
       <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${label} ${rounded}">
         <defs>
-          <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+          <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stop-color="#0f172a" />
-            <stop offset="100%" stop-color="#111827" />
+            <stop offset="100%" stop-color="#1a1f35" />
+          </linearGradient>
+          <filter id="shadow">
+            <feDropShadow dx="0" dy="4" stdDeviation="6" flood-opacity="0.3" flood-color="#000000"/>
+          </filter>
+          <linearGradient id="circleGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="${accentColor}" />
+            <stop offset="100%" stop-color="${accentColor}dd" />
           </linearGradient>
         </defs>
-        <rect x="1" y="1" width="${width - 2}" height="${height - 2}" rx="14" fill="url(#bg)" stroke="#334155"/>
-        <circle cx="44" cy="46" r="22" fill="none" stroke="#374151" stroke-width="8"/>
-        <circle cx="44" cy="46" r="22" fill="none" stroke="${accent}" stroke-width="8" stroke-dasharray="${2 * Math.PI * 22}" stroke-dashoffset="${2 * Math.PI * 22 * (1 - safeScore / 10)}" transform="rotate(-90 44 46)"/>
-        <text x="44" y="51" text-anchor="middle" font-family="Segoe UI, Inter, sans-serif" font-size="11" fill="#e5e7eb">${safeScore.toFixed(1)}</text>
-        <text x="82" y="36" font-family="Segoe UI, Inter, sans-serif" font-size="14" fill="#cbd5e1">${label}</text>
-        <text x="82" y="60" font-family="Segoe UI, Inter, sans-serif" font-size="22" font-weight="700" fill="#f8fafc">${rounded}</text>
-        <text x="176" y="60" font-family="Segoe UI, Inter, sans-serif" font-size="12" fill="#94a3b8">/ 10</text>
-        <text x="240" y="60" font-family="Segoe UI, Inter, sans-serif" font-size="13" fill="${accent}">${level}</text>
+        
+        <!-- Background Card -->
+        <rect x="8" y="8" width="${width - 16}" height="${height - 16}" rx="18" fill="url(#bgGrad)" stroke="#334155" stroke-width="1" filter="url(#shadow)"/>
+        
+        <!-- Left accent bar -->
+        <rect x="0" y="0" width="6" height="${height}" rx="18" fill="${accentColor}"/>
+        
+        <!-- Circular Progress Container -->
+        <g transform="translate(52, 55)">
+          <!-- Background circle -->
+          <circle cx="0" cy="0" r="28" fill="none" stroke="#1e293b" stroke-width="6"/>
+          <!-- Progress circle -->
+          <circle cx="0" cy="0" r="28" fill="none" stroke="url(#circleGrad)" stroke-width="6" stroke-dasharray="${circumference}" stroke-dashoffset="${strokeOffset}" stroke-linecap="round" transform="rotate(-90)"/>
+        </g>
+        
+        <!-- Score Text (large, centered on circle) -->
+        <text x="52" y="62" text-anchor="middle" font-family="Segoe UI, -apple-system, BlinkMacSystemFont, sans-serif" font-size="28" font-weight="800" fill="${accentColor}">${rounded}</text>
+        
+        <!-- Label -->
+        <text x="120" y="32" font-family="Segoe UI, -apple-system, BlinkMacSystemFont, sans-serif" font-size="13" fill="#94a3b8" font-weight="600" letter-spacing="0.5">${label.toUpperCase()}</text>
+        
+        <!-- Main info section -->
+        <g transform="translate(120, 48)">
+          <!-- Score out of 10 -->
+          <text x="0" y="0" font-family="Segoe UI, -apple-system, BlinkMacSystemFont, sans-serif" font-size="24" font-weight="700" fill="#f1f5f9">${safeScore.toFixed(1)}</text>
+          <text x="68" y="0" font-family="Segoe UI, -apple-system, BlinkMacSystemFont, sans-serif" font-size="14" fill="#64748b" font-weight="500">/10</text>
+        </g>
+        
+        <!-- Level badge -->
+        <g transform="translate(260, 48)">
+          <rect x="0" y="-14" width="auto" height="28" rx="8" fill="${accentLight}" opacity="0.8"/>
+          <text x="12" y="4" font-family="Segoe UI, -apple-system, BlinkMacSystemFont, sans-serif" font-size="13" font-weight="700" fill="${accentColor}">${level}</text>
+        </g>
+        
+        <!-- Assessment bar indicator -->
+        <g transform="translate(120, 78)">
+          <rect x="0" y="0" width="320" height="4" rx="2" fill="#1e293b"/>
+          <rect x="0" y="0" width="${(safeScore / 10) * 320}" height="4" rx="2" fill="url(#circleGrad)"/>
+        </g>
+        
+        <!-- Status text -->
+        <text x="120" y="100" font-family="Segoe UI, -apple-system, BlinkMacSystemFont, sans-serif" font-size="11" fill="#64748b">
+          ${safeScore >= 9 ? '🔥 Exceptional' : safeScore >= 7.5 ? '⭐ Outstanding' : safeScore >= 6 ? '✨ Strong' : safeScore >= 4 ? '📈 Developing' : '🎯 Getting Started'}
+        </text>
       </svg>
     `.trim();
   }

@@ -121,6 +121,12 @@ model Resume {
   
   // Analytics
   viewCount Int @default(0)
+
+  // Musashi Index (persisted from LLM webhook)
+  musashiImScore     Float?
+  musashiEquivalent  String?
+  musashiUpdatedAt   DateTime?
+  musashiRawJson     Json?
   
   // Metadata
   createdAt DateTime @default(now())
@@ -141,6 +147,7 @@ model Resume {
   @@index([userId])
   @@index([slug])
   @@index([isPublic, isPublished])
+  @@index([musashiUpdatedAt])
 }
 
 model Template {

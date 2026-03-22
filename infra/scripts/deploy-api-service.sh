@@ -15,6 +15,22 @@ REGION="us-central1"
 SERVICE_NAME="api-service"
 IMAGE_NAME="gcr.io/${PROJECT_ID}/${SERVICE_NAME}:latest"
 
+echo "🗄️  Applying Prisma migrations to production database..."
+DATABASE_URL="$(gcloud secrets versions access latest --secret=database-url --project=${PROJECT_ID} 2>/dev/null || true)"
+
+if [ -z "${DATABASE_URL}" ]; then
+  echo "❌ Could not fetch DATABASE_URL from Secret Manager (secret: database-url)."
+  echo "   Ensure your gcloud account has Secret Manager access and retry."
+  exit 1
+fi
+
+(
+  cd "${REPO_ROOT}/apps/api-service"
+  DATABASE_URL="${DATABASE_URL}" npm run prisma:migrate
+)
+echo "✅ Prisma migrations applied"
+echo ""
+
 echo "📦 Building Docker image..."
 cat > /tmp/cloudbuild-api.yaml << 'EOF'
 steps:

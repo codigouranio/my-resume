@@ -336,7 +336,7 @@ export class WebhooksController {
 
     const resume = await this.prisma.resume.findUnique({
       where: { id: metadata.resumeId },
-      select: { id: true, customCss: true },
+      select: { id: true },
     });
 
     if (!resume) {
@@ -349,42 +349,18 @@ export class WebhooksController {
       data.academic_equivalent_en || data.academic_equivalent || 'Unknown',
     );
 
-    const updatedCss = this.upsertMusashiMetadata(resume.customCss || '', {
-      imScore,
-      academicEquivalent,
-      raw: data,
-    });
-
     await this.prisma.resume.update({
       where: { id: metadata.resumeId },
-      data: { customCss: updatedCss },
+      data: {
+        musashiImScore: Number.isFinite(imScore) ? imScore : 0,
+        musashiEquivalent: academicEquivalent,
+        musashiUpdatedAt: new Date(),
+        musashiRawJson: data,
+      },
     });
 
     this.logger.log(
       `Persisted Musashi score for resume ${metadata.resumeId}: ${imScore.toFixed(2)} (${academicEquivalent})`,
     );
-  }
-
-  private upsertMusashiMetadata(
-    customCss: string,
-    data: { imScore: number; academicEquivalent: string; raw: any },
-  ): string {
-    const cleaned = customCss
-      .replace(/\/\* resumecast:musashi-im-score=.*? \*\/\n?/g, '')
-      .replace(/\/\* resumecast:musashi-equivalent=.*? \*\/\n?/g, '')
-      .replace(/\/\* resumecast:musashi-updated-at=.*? \*\/\n?/g, '')
-      .replace(/\/\* resumecast:musashi-json=.*? \*\/\n?/g, '')
-      .trim();
-
-    const metadataLines = [
-      `/* resumecast:musashi-im-score=${data.imScore.toFixed(2)} */`,
-      `/* resumecast:musashi-equivalent=${data.academicEquivalent} */`,
-      `/* resumecast:musashi-updated-at=${new Date().toISOString()} */`,
-      `/* resumecast:musashi-json=${encodeURIComponent(JSON.stringify(data.raw))} */`,
-    ];
-
-    return cleaned
-      ? `${cleaned}\n\n${metadataLines.join('\n')}`
-      : metadataLines.join('\n');
   }
 }

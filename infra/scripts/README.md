@@ -29,6 +29,7 @@ Builds and deploys the NestJS API to Cloud Run:
 - ✅ Latest code changes
 - ✅ Environment variables preserved
 - ✅ PostgreSQL + Redis connections
+- ✅ Runs `prisma migrate deploy` against production DB before deploy
 
 **Note:** To update env vars:
 ```bash
