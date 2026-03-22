@@ -1363,6 +1363,14 @@ async def calculate_musashi_index_async(
             detail="Both resume content and AI context are required",
         )
 
+    logger.info(
+        "Musashi async request validated — "
+        f"resume_length={len(resume_content)}, "
+        f"ai_context_length={len(hidden_context)}, "
+        f"callback_url={callback_url}, "
+        f"metadata_keys={list(metadata.keys()) if isinstance(metadata, dict) else []}"
+    )
+
     job_id = f"llm_job_{uuid.uuid4().hex[:12]}"
     logger.info(f"Queueing async Musashi evaluation (job: {job_id})")
 

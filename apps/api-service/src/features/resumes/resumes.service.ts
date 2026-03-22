@@ -491,14 +491,24 @@ export class ResumesService {
     content: string;
     llmContext?: string | null;
   }): Promise<void> {
+    const contentLength = (input.content || '').trim().length;
+    const llmContextLength = (input.llmContext || '').trim().length;
+
     if (!input.content || !input.llmContext) {
-      this.logger.debug(
-        `Skipping Musashi calculation for resume ${input.resumeId}: missing content or llmContext`,
+      this.logger.warn(
+        `Skipping Musashi calculation for resume ${input.resumeId}: missing content or llmContext (contentLength=${contentLength}, llmContextLength=${llmContextLength})`,
       );
       return;
     }
 
-    const callbackUrl = `${this.configService.get('API_BASE_URL', 'http://localhost:3000')}/api/webhooks/llm-result`;
+    const apiBaseUrl = this.configService.get('API_BASE_URL', 'http://localhost:3000');
+    if (apiBaseUrl.includes('localhost') || apiBaseUrl.includes('127.0.0.1')) {
+      this.logger.warn(
+        `API_BASE_URL is set to local address (${apiBaseUrl}). LLM webhook callbacks from external hosts will fail.`,
+      );
+    }
+
+    const callbackUrl = `${apiBaseUrl}/api/webhooks/llm-result`;
 
     const payload = {
       resume: {
@@ -528,7 +538,7 @@ export class ResumesService {
     }
 
     this.logger.log(
-      `Queued Musashi calculation for resume ${input.resumeId} (slug: ${input.slug})`,
+      `Queued Musashi calculation for resume ${input.resumeId} (slug: ${input.slug}, callbackUrl: ${callbackUrl}, contentLength=${contentLength}, llmContextLength=${llmContextLength})`,
     );
   }
 
