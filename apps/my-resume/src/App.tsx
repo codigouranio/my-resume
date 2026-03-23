@@ -22,9 +22,17 @@ function getCustomSubdomain(): string | null {
 
   // Get base domain from env or use default
   const baseDomain = import.meta.env.PUBLIC_BASE_DOMAIN || 'resumecast.ai';
+  const reservedHostnames = (import.meta.env.PUBLIC_RESERVED_HOSTNAMES || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
 
   // Skip subdomain detection for localhost and IPs
   if (hostname === 'localhost' || hostname.match(/^\d+\.\d+\.\d+\.\d+$/)) {
+    return null;
+  }
+
+  if (reservedHostnames.includes(hostname)) {
     return null;
   }
 

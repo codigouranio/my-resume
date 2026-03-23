@@ -116,6 +116,9 @@ node_env: production
 enable_source_maps: true
 enable_debug_logging: true
 frontend_url: "https://resumecast.ai"
+frontend_reserved_hostnames:
+  - "staging-test.resumecast.ai"
+  - "www.staging-test.resumecast.ai"
 
 # Analytics Configuration (optional - set in production)
 gtm_id: "" # e.g., GTM-XXXXXXX

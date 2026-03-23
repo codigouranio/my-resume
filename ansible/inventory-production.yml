@@ -28,14 +28,15 @@ all:
           ansible_user: deploy
           ansible_python_interpreter: /usr/bin/python3
           domain: staging.my-resume.example.com
-          frontend_server_names: staging-test.resumecast.ai
+          frontend_server_names: staging-test.resumecast.ai www.staging-test.resumecast.ai
           frontend_url: https://staging-test.resumecast.ai
-          frontend_public_api_url: https://api.resumecast.ai
+          frontend_public_api_url: /api
           frontend_public_llm_url: https://llm.resumecast.ai
-          frontend_public_base_domain: resumecast.ai
+          frontend_public_base_domain: staging-test.resumecast.ai
           cors_origins:
             - "http://localhost:3001"
             - "https://staging-test.resumecast.ai"
+            - "https://www.staging-test.resumecast.ai"
             - "https://api.resumecast.ai"
             - "https://api.staging-test.resumecast.ai"
           node_env: staging

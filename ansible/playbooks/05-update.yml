@@ -89,6 +89,21 @@
       when: git_pull.changed
     
     - name: Update Frontend dependencies
+      copy:
+        dest: "{{ frontend_path }}/.env"
+        content: |
+          PUBLIC_API_URL={{ frontend_public_api_url | default('https://api.' ~ domain) }}
+          PUBLIC_LLM_API_URL={{ frontend_public_llm_url | default('https://llm.' ~ domain) }}
+          PUBLIC_BASE_DOMAIN={{ frontend_public_base_domain | default(domain) }}
+          PUBLIC_RESERVED_HOSTNAMES={{ frontend_reserved_hostnames | join(',') if frontend_reserved_hostnames is iterable and frontend_reserved_hostnames is not string else frontend_reserved_hostnames | default('') }}
+          PUBLIC_GTM_ID={{ gtm_id }}
+          PUBLIC_GA_ID={{ ga_id }}
+        owner: "{{ ansible_user }}"
+        mode: '0644'
+      become_user: "{{ ansible_user }}"
+      when: git_pull.changed
+
+    - name: Update Frontend dependencies
       shell: |
         source /opt/miniconda3/etc/profile.d/conda.sh
         conda activate {{ frontend_path }}/conda-env

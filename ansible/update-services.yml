@@ -139,6 +139,7 @@
           PUBLIC_API_URL={{ frontend_public_api_url | default('https://api.' ~ domain) }}
           PUBLIC_LLM_API_URL={{ frontend_public_llm_url | default('https://llm.' ~ domain) }}
           PUBLIC_BASE_DOMAIN={{ frontend_public_base_domain | default(domain) }}
+          PUBLIC_RESERVED_HOSTNAMES={{ frontend_reserved_hostnames | join(',') if frontend_reserved_hostnames is iterable and frontend_reserved_hostnames is not string else frontend_reserved_hostnames | default('') }}
           PUBLIC_GTM_ID={{ gtm_id }}
           PUBLIC_GA_ID={{ ga_id }}
         owner: "{{ ansible_user }}"

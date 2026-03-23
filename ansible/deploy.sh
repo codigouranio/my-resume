@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 set -e
 
@@ -7,18 +7,19 @@ if [ ! -f "${INVENTORY_FILE}" ]; then
 	INVENTORY_FILE="inventory.yml"
 fi
 
-LIMIT_HOSTS="${1:-${DEPLOY_LIMIT:-}}"
-LIMIT_ARGS=()
+LIMIT_HOSTS="${1:-${DEPLOY_LIMIT:-production}}"
 if [ -n "${LIMIT_HOSTS}" ]; then
-	LIMIT_ARGS=(--limit "${LIMIT_HOSTS}")
+	LIMIT_ARG="--limit ${LIMIT_HOSTS}"
+else
+	LIMIT_ARG=""
 fi
 
 echo "📦 Running application deployment playbook..."
-ansible-playbook -i "${INVENTORY_FILE}" playbooks/03-application-deploy.yml -b --ask-become-pass --ask-vault-pass "${LIMIT_ARGS[@]}" -vvv
+ansible-playbook -i "${INVENTORY_FILE}" playbooks/03-application-deploy.yml -b --ask-become-pass --ask-vault-pass ${LIMIT_ARG} -vvv
 
 echo ""
 echo "🌐 Applying Nginx routing configuration..."
-ansible-playbook -i "${INVENTORY_FILE}" playbooks/04-nginx-setup.yml -b --ask-become-pass --ask-vault-pass "${LIMIT_ARGS[@]}" -vvv
+ansible-playbook -i "${INVENTORY_FILE}" playbooks/04-nginx-setup.yml -b --ask-become-pass --ask-vault-pass ${LIMIT_ARG} -vvv
 
 echo ""
 echo "✅ Deployment completed!"
