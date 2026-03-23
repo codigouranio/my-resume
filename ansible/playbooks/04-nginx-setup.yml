@@ -5,7 +5,10 @@
 - name: Configure Nginx
   hosts: all
   become: yes
-  
+  vars_files:
+    - ../group_vars/all.yml
+    - ../group_vars/all/vault-sandbox.yml
+
   tasks:
     - name: Ensure Nginx is installed
       apt:

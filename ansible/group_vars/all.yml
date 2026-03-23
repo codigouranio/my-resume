@@ -115,7 +115,8 @@ fail2ban_enabled: true
 node_env: production
 enable_source_maps: true
 enable_debug_logging: true
-frontend_url: "https://resumecast.ai"
+frontend_url: "https://app-test.resumecast.ai"
+api_service_url: "https://api-test.resumecast.ai"
 frontend_reserved_hostnames:
   - "staging-test.resumecast.ai"
   - "www.staging-test.resumecast.ai"

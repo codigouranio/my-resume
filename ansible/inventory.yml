@@ -46,8 +46,8 @@ all:
     domain: resumecast.ai
 
     # Service URLs (external/production URLs)
-    frontend_url: https://resumecast.ai
-    api_service_url: https://api.resumecast.ai  # Used for API_BASE_URL and API_SERVICE_URL
+    frontend_url: https://app-test.resumecast.ai
+    api_service_url: https://api-test.resumecast.ai  # Used for API_BASE_URL and API_SERVICE_URL
     llm_base_url: https://llm-service.paskot.com  # External LLM service URL (if needed)
     
     # SSL Configuration - Disable when using Cloudflare Tunnel
