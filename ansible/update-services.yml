@@ -136,9 +136,9 @@
       copy:
         dest: "{{ frontend_path }}/.env"
         content: |
-          PUBLIC_API_URL=https://api.{{ domain }}
-          PUBLIC_LLM_API_URL=https://llm.{{ domain }}
-          PUBLIC_BASE_DOMAIN={{ domain }}
+          PUBLIC_API_URL={{ frontend_public_api_url | default('https://api.' ~ domain) }}
+          PUBLIC_LLM_API_URL={{ frontend_public_llm_url | default('https://llm.' ~ domain) }}
+          PUBLIC_BASE_DOMAIN={{ frontend_public_base_domain | default(domain) }}
           PUBLIC_GTM_ID={{ gtm_id }}
           PUBLIC_GA_ID={{ ga_id }}
         owner: "{{ ansible_user }}"

@@ -82,7 +82,7 @@ server {
 # Frontend - react app
 server {
     listen 80 default_server;
-    server_name {{ domain }} *.{{ domain }};
+    server_name {{ frontend_server_names | default(domain ~ ' *.' ~ domain) }};
 
     # Bull Board Dashboard - Local network only
     location /admin/queues {
