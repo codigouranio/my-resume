@@ -227,7 +227,7 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
               <img
                 src={`${API_BASE_URL}/badges/musashi?slug=${encodeURIComponent(resumeData.slug || slug || '')}`}
                 alt="Musashi Index Badge"
-                className="h-16 w-auto rounded-xl shadow-md border border-base-300 bg-base-100"
+                className="h-16 w-auto opacity-90 hover:opacity-100 transition-opacity"
                 loading="lazy"
                 onError={() => setHideMusashiBadge(true)}
               />
