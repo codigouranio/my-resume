@@ -338,7 +338,7 @@
 
     - name: Configure Frontend environment
       copy:
-        dest: "{{ frontend_path }}/.env"
+        dest: "{{ frontend_path }}/{{ item }}"
         content: |
           PUBLIC_API_URL={{ frontend_public_api_url | default(api_service_url | default('https://api.' ~ domain)) }}
           PUBLIC_LLM_API_URL={{ frontend_public_llm_url | default('https://llm.' ~ domain) }}
@@ -348,6 +348,9 @@
           PUBLIC_GA_ID={{ ga_id }}
         owner: "{{ ansible_user }}"
         mode: '0644'
+      loop:
+        - .env
+        - .env.production
       become_user: "{{ ansible_user }}"
 
     - name: Install Frontend dependencies (clean reinstall to fix Rspack bindings)

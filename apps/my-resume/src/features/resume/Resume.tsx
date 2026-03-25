@@ -1,10 +1,10 @@
 import { isValidElement, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { apiClient } from '../../shared/api/client';
 import { CourseraCertificate, GitHubStats } from '../badges';
 import { ChatWidget } from '../chat';
-import { TEMPLATES, TemplateType } from '../templates';
+import type { TemplateType } from '../templates';
 import './Resume.css';
 const API_BASE_URL = import.meta.env.PUBLIC_API_URL || '/api';
 const MUSASHI_BADGE_MARKER = '/* resumecast:musashi-badge=enabled */';
@@ -19,6 +19,7 @@ interface ResumeProps {
 
 export default function Resume({ customDomain }: ResumeProps = {}) {
   const appVersion = import.meta.env.VITE_APP_VERSION || 'dev';
+  const { slug: routeSlug } = useParams<{ slug: string }>();
 
   const [markdown, setMarkdown] = useState<string>('');
   const [resumeData, setResumeData] = useState<any>(null);
@@ -45,12 +46,30 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
   }
 
   useEffect(() => {
+    // For /resume/:slug routes, trust the route slug first.
+    if (routeSlug) {
+      setSlug(routeSlug);
+      return;
+    }
+
+    // Otherwise resolve slug from host/domain (custom-domain mode).
     const fetchSlug = async () => {
-      const result = await apiClient.identifySlug();
-      setSlug(result?.slug || null);
+      try {
+        const result = await apiClient.identifySlug();
+        const resolvedSlug = result?.slug || null;
+        setSlug(resolvedSlug);
+        if (!resolvedSlug) {
+          setError('Resume not found');
+          setIsLoading(false);
+        }
+      } catch (err: any) {
+        setError(err.message || 'Resume not found');
+        setIsLoading(false);
+      }
     };
+
     fetchSlug();
-  }, []);
+  }, [routeSlug]);
 
   useEffect(() => {
     if (slug) {
@@ -261,8 +280,6 @@ export default function Resume({ customDomain }: ResumeProps = {}) {
       {/* Template-based Resume Rendering */}
       {(() => {
         const templateType = (resumeData?.theme || 'default') as TemplateType;
-        const TemplateComponent =
-          TEMPLATES[templateType]?.component || TEMPLATES.default.component;
 
         const customComponents = {
           pre: ({ node, children, ...props }: any) => {

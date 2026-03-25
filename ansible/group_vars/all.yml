@@ -90,7 +90,7 @@ pm2_max_memory_restart: "512M"
 
 # Nginx Configuration
 enable_ssl: false # Set to true for Let's Encrypt SSL
-domain: "{{ ansible_host }}" # Override with your domain
+domain: resumecast.ai # Override per-host in inventory (host vars are shadowed by vars_files, so keep this a real default)
 domain_paskot: "paskot.com"
 
 # CloudFlare Configuration (optional)
@@ -117,7 +117,11 @@ enable_source_maps: true
 enable_debug_logging: true
 frontend_url: "https://app-test.resumecast.ai"
 api_service_url: "https://api-test.resumecast.ai"
+frontend_public_api_url: "https://api-test.resumecast.ai/api"
+frontend_public_llm_url: "https://llm-service.paskot.com"
 frontend_reserved_hostnames:
+  - "app-test.resumecast.ai"
+  - "www.app-test.resumecast.ai"
   - "staging-test.resumecast.ai"
   - "www.staging-test.resumecast.ai"
 
@@ -130,5 +134,7 @@ cors_origins:
   - "http://localhost:3001"
   - "https://{{ domain }}"
   - "https://api.{{ domain }}"
+  - "https://api-test.{{ domain }}"
+  - "https://app-test.{{ domain }}"
   - "https://llm.{{ domain }}"
   - "https://*.{{ domain }}"
