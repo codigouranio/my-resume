@@ -60,6 +60,11 @@ celery_app.conf.update(
             "rate_limit": "10/m",  # 10 per minute
         },
     },
+    # Redis transport: visibility_timeout must be >= task_time_limit so tasks
+    # are not re-queued while still running (default is 3600 s which equals 1 h).
+    broker_transport_options={
+        "visibility_timeout": 3600,  # 1 hour — covers 10-min task_time_limit with margin
+    },
     # Worker settings
     worker_prefetch_multiplier=1,  # One task at a time per worker
     worker_max_tasks_per_child=50,  # Restart worker after 50 tasks (prevent memory leaks)

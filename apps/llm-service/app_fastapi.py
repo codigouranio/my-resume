@@ -1353,7 +1353,7 @@ async def calculate_musashi_index_async(
             resume_content,
             hidden_context,
             request.career_profile or "",
-            request.experience_years,
+            request.experience_years or 0,
             request.portfolio_items or [],
             request.impact_highlights or [],
             request.learning_highlights or [],
