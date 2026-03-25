@@ -198,15 +198,13 @@ export class BadgesService {
     }
 
     const level = this.escapeXml(input.level);
-    const width = 220;
+    const width = 240;
     const height = 64;
 
-    return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Musashi Index ${rounded}">
+    return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Musashi Index ${rounded} ${level}">
   <rect x="0" y="0" width="${width}" height="${height}" rx="10" fill="#0f172a"/>
-  <rect x="0" y="0" width="3" height="${height}" rx="1" fill="${accentColor}"/>
   <text x="18" y="24" font-family="Segoe UI,-apple-system,BlinkMacSystemFont,sans-serif" font-size="9.5" font-weight="600" fill="#475569" letter-spacing="1.8">MUSASHI INDEX</text>
   <text x="18" y="52" font-family="Segoe UI,-apple-system,BlinkMacSystemFont,sans-serif" font-size="28" font-weight="800" fill="${accentColor}">${rounded}</text>
-  <text x="${width - 14}" y="52" font-family="Segoe UI,-apple-system,BlinkMacSystemFont,sans-serif" font-size="12" font-weight="500" fill="#64748b" text-anchor="end">${level}</text>
 </svg>`.trim();
   }
 
