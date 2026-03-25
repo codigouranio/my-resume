@@ -542,7 +542,6 @@ export class ResumesService {
         content,
         llmContext: aiContext,
       },
-      resumeSlug: input.slug,
       callbackUrl,
       metadata: {
         userId: input.userId,

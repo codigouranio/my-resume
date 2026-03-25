@@ -4,11 +4,11 @@ set -e
 
 prompt_secret() {
 	prompt="$1"
-	printf '%s' "${prompt}"
+	printf '%s' "${prompt}" >&2
 	stty -echo
 	IFS= read -r secret
 	stty echo
-	echo
+	echo >&2
 	printf '%s' "${secret}"
 }
 
@@ -35,7 +35,7 @@ printf '%s' "${VAULT_PASS}" > "${VAULT_PASS_FILE}"
 BECOME_VARS_FILE="$(mktemp)"
 cat > "${BECOME_VARS_FILE}" <<EOF
 ansible_become_password: |-
-	${BECOME_PASS}
+  ${BECOME_PASS}
 EOF
 
 trap 'rm -f "${VAULT_PASS_FILE}" "${BECOME_VARS_FILE}"' EXIT

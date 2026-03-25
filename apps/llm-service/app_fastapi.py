@@ -394,7 +394,7 @@ class MusashiIndexRequest(BaseModel):
     resume_slug: Optional[str] = Field(
         None,
         alias="resumeSlug",
-        description="Optional resume slug to load content + llmContext from API",
+        description="Deprecated in generic mode. Send resume.content + resume.llmContext directly.",
     )
     ai_context: Optional[str] = Field(
         None,
@@ -1226,6 +1226,43 @@ async def score_position(
 # ============================================================================
 
 
+def resolve_musashi_context(request: MusashiIndexRequest) -> tuple[str, str]:
+    """Resolve Musashi inputs from request payload only (generic service mode)."""
+    if request.resume_slug:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "resumeSlug is not supported in generic llm-service mode. "
+                "Send resume.content and resume.llmContext in request.resume instead."
+            ),
+        )
+
+    resume_content = ""
+    hidden_context = ""
+
+    if request.resume:
+        resume_content = (request.resume.get("content") or "").strip()
+        hidden_context = (request.resume.get("llmContext") or "").strip()
+
+    if request.ai_context and request.ai_context.strip():
+        ai_context = request.ai_context.strip()
+        hidden_context = (
+            f"{hidden_context}\n\n{ai_context}" if hidden_context else ai_context
+        )
+
+    if not resume_content or not hidden_context:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Both resume content and AI context are required. "
+                "Provide resume.content + resume.llmContext, "
+                "or provide aiContext alongside resume.content."
+            ),
+        )
+
+    return resume_content, hidden_context
+
+
 @app.post(
     "/api/musashi-index",
     response_model=MusashiIndexResponse,
@@ -1241,43 +1278,7 @@ async def score_position(
 async def calculate_musashi_index(request: MusashiIndexRequest):
     """Compute the Índice de Musashi for the supplied career profile."""
     try:
-        resume_content = ""
-        hidden_context = ""
-
-        if request.resume:
-            resume_content = (request.resume.get("content") or "").strip()
-            hidden_context = (request.resume.get("llmContext") or "").strip()
-
-        if request.resume_slug:
-            url = f"{API_SERVICE_URL}/api/llm-service/resume/{request.resume_slug}"
-            response = requests.get(url, headers=get_headers(), timeout=10)
-            if response.status_code == 404:
-                raise HTTPException(status_code=404, detail="Resume not found")
-            response.raise_for_status()
-            resume_data = response.json()
-            resume_content = (
-                resume_data.get("content") or resume_content or ""
-            ).strip()
-            hidden_context = (
-                resume_data.get("llmContext") or hidden_context or ""
-            ).strip()
-
-        if request.ai_context and request.ai_context.strip():
-            ai_context = request.ai_context.strip()
-            if hidden_context:
-                hidden_context = f"{hidden_context}\n\n{ai_context}"
-            else:
-                hidden_context = ai_context
-
-        if not resume_content or not hidden_context:
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    "Both resume content and AI context are required. "
-                    "Provide resume.content + resume.llmContext, or resumeSlug with llmContext, "
-                    "or aiContext alongside resume content."
-                ),
-            )
+        resume_content, hidden_context = resolve_musashi_context(request)
 
         logger.info(
             f"Musashi Index evaluation started — "
@@ -1334,34 +1335,7 @@ async def calculate_musashi_index_async(
     if not callback_url:
         raise HTTPException(status_code=400, detail="callbackUrl is required")
 
-    resume_content = ""
-    hidden_context = ""
-
-    if request.resume:
-        resume_content = (request.resume.get("content") or "").strip()
-        hidden_context = (request.resume.get("llmContext") or "").strip()
-
-    if request.resume_slug:
-        url = f"{API_SERVICE_URL}/api/llm-service/resume/{request.resume_slug}"
-        response = requests.get(url, headers=get_headers(), timeout=10)
-        if response.status_code == 404:
-            raise HTTPException(status_code=404, detail="Resume not found")
-        response.raise_for_status()
-        resume_data = response.json()
-        resume_content = (resume_data.get("content") or resume_content or "").strip()
-        hidden_context = (resume_data.get("llmContext") or hidden_context or "").strip()
-
-    if request.ai_context and request.ai_context.strip():
-        ai_context = request.ai_context.strip()
-        hidden_context = (
-            f"{hidden_context}\n\n{ai_context}" if hidden_context else ai_context
-        )
-
-    if not resume_content or not hidden_context:
-        raise HTTPException(
-            status_code=400,
-            detail="Both resume content and AI context are required",
-        )
+    resume_content, hidden_context = resolve_musashi_context(request)
 
     logger.info(
         "Musashi async request validated — "
