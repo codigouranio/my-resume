@@ -20,6 +20,7 @@ from dotenv import load_dotenv
 from prompt_manager import get_prompt_manager
 from company_research_agent import CompanyResearchAgent
 from position_fit_agent import PositionFitAgent
+from llm_guard_service import protect_prompt, protect_output, GuardRejection
 from api_client import (
     load_resume_from_api,
     get_user_info_from_api,
@@ -443,16 +444,39 @@ def generate_completion(
 ) -> dict:
     """Route to appropriate LLAMA server based on API type."""
 
+    guarded_user_message = protect_prompt(
+        user_message,
+        source="app_remote.generate_completion.user_message",
+    )
+
     logger.info(
-        f"Generating completion with API type '{LLAMA_API_TYPE}' for prompt: {user_message[:100]}..."
+        f"Generating completion with API type '{LLAMA_API_TYPE}' for prompt: {guarded_user_message[:100]}..."
     )
 
     if LLAMA_API_TYPE == "llama-cpp":
-        return call_llama_cpp_server(user_message, max_tokens)
+        result = call_llama_cpp_server(guarded_user_message, max_tokens)
+        result["text"] = protect_output(
+            result.get("text", ""),
+            source="app_remote.generate_completion.llama_cpp",
+            prompt_context=guarded_user_message,
+        )
+        return result
     elif LLAMA_API_TYPE == "ollama":
-        return call_ollama_server(user_message, max_tokens)
+        result = call_ollama_server(guarded_user_message, max_tokens)
+        result["text"] = protect_output(
+            result.get("text", ""),
+            source="app_remote.generate_completion.ollama",
+            prompt_context=guarded_user_message,
+        )
+        return result
     elif LLAMA_API_TYPE in ["openai", "vllm"]:
-        return call_openai_compatible(system_prompt, user_message, max_tokens)
+        result = call_openai_compatible(system_prompt, guarded_user_message, max_tokens)
+        result["text"] = protect_output(
+            result.get("text", ""),
+            source="app_remote.generate_completion.openai_compatible",
+            prompt_context=guarded_user_message,
+        )
+        return result
     else:
         raise ValueError(f"Unsupported LLAMA_API_TYPE: {LLAMA_API_TYPE}")
 
@@ -466,20 +490,34 @@ class RemoteLLMWrapper:
     ) -> str:
         """Generate text using the remote LLM server."""
         try:
+            guarded_prompt = protect_prompt(
+                prompt,
+                source="app_remote.RemoteLLMWrapper.generate.prompt",
+            )
+
             if LLAMA_API_TYPE == "ollama":
-                result = call_ollama_for_completion(prompt, max_tokens, temperature)
+                result = call_ollama_for_completion(
+                    guarded_prompt, max_tokens, temperature
+                )
             elif LLAMA_API_TYPE == "llama-cpp":
-                result = call_llama_cpp_server(prompt, max_tokens)
+                result = call_llama_cpp_server(guarded_prompt, max_tokens)
             elif LLAMA_API_TYPE in ["openai", "vllm"]:
                 result = call_openai_compatible(
                     system_prompt="You are a helpful assistant.",
-                    user_message=prompt,
+                    user_message=guarded_prompt,
                     max_tokens=max_tokens,
                 )
             else:
                 raise ValueError(f"Unsupported LLAMA_API_TYPE: {LLAMA_API_TYPE}")
 
-            return result.get("text", "")
+            return protect_output(
+                result.get("text", ""),
+                source="app_remote.RemoteLLMWrapper.generate.output",
+                prompt_context=guarded_prompt,
+            )
+        except GuardRejection as e:
+            logger.warning(f"LLM guard rejected prompt/output: {e}")
+            return "I am unable to process this request safely."
         except Exception as e:
             logger.error(f"LLM generation failed: {e}")
             return ""

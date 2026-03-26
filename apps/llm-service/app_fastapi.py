@@ -26,6 +26,7 @@ from prompt_manager import get_prompt_manager
 from company_research_agent import CompanyResearchAgent
 from position_fit_agent import PositionFitAgent
 from musashi_index_agent import MusashiIndexAgent
+from llm_guard_service import protect_prompt, protect_output, GuardRejection
 from api_client import (
     load_resume_from_api,
     get_user_info_from_api,
@@ -690,27 +691,49 @@ def generate_completion(
     - vllm: Alias for openai (uses vLLM server)
     """
     try:
+        guarded_user_message = protect_prompt(
+            user_message,
+            source="app_fastapi.generate_completion.user_message",
+        )
+
         logger.info(
-            f"Generating completion with API type '{LLAMA_API_TYPE}' for prompt: {user_message[:100]}..."
+            f"Generating completion with API type '{LLAMA_API_TYPE}' for prompt: {guarded_user_message[:100]}..."
         )
 
         # Build full prompt for llama-cpp and ollama
-        full_prompt = f"{system_prompt}\n\nUser: {user_message}\nAssistant:"
+        full_prompt = f"{system_prompt}\n\nUser: {guarded_user_message}\nAssistant:"
 
         if LLAMA_API_TYPE == "llama-cpp":
             result = call_llama_cpp_server(full_prompt, max_tokens)
-            return result.get("text", "")
+            return protect_output(
+                result.get("text", ""),
+                source="app_fastapi.generate_completion.llama_cpp",
+                prompt_context=full_prompt,
+            )
         elif LLAMA_API_TYPE == "ollama":
             result = call_ollama_server(full_prompt, max_tokens)
-            return result.get("text", "")
+            return protect_output(
+                result.get("text", ""),
+                source="app_fastapi.generate_completion.ollama",
+                prompt_context=full_prompt,
+            )
         elif LLAMA_API_TYPE in ["openai", "vllm"]:
             # vLLM uses OpenAI-compatible API, so both types work the same way
-            result = call_openai_compatible(system_prompt, user_message, max_tokens)
-            return result.get("text", "")
+            result = call_openai_compatible(
+                system_prompt, guarded_user_message, max_tokens
+            )
+            return protect_output(
+                result.get("text", ""),
+                source="app_fastapi.generate_completion.openai_compatible",
+                prompt_context=guarded_user_message,
+            )
         else:
             raise ValueError(
                 f"Unsupported LLAMA_API_TYPE: {LLAMA_API_TYPE}. Supported: llama-cpp, ollama, openai, vllm"
             )
+    except GuardRejection as e:
+        logger.warning(f"LLM guard rejected request: {e}")
+        raise HTTPException(status_code=400, detail="Prompt rejected by LLM guard")
     except HTTPException:
         raise
     except Exception as e:
