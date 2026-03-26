@@ -433,25 +433,72 @@
       when: pm2_startup.rc == 1 # only run if the first command "failed" as expected
       changed_when: true
 
+    - name: Wait briefly for PM2 to start processes
+      pause:
+        seconds: 10
+
+    - name: Check PM2 services status before wait_for
+      command: "{{ app_root }}/conda-env/bin/pm2 list"
+      args:
+        chdir: "{{ app_root }}"
+      become_user: "{{ ansible_user }}"
+      register: pm2_initial_status
+      changed_when: false
+
+    - name: Display PM2 initial status
+      debug:
+        msg: "{{ pm2_initial_status.stdout }}"
+
+    - name: Check for PM2 errors
+      command: "{{ app_root }}/conda-env/bin/pm2 logs --nostream"
+      args:
+        chdir: "{{ app_root }}"
+      become_user: "{{ ansible_user }}"
+      register: pm2_logs
+      changed_when: false
+      ignore_errors: true
+
+    - name: Display PM2 logs for debugging
+      debug:
+        msg: "{{ pm2_logs.stdout }}"
+
     - name: Wait for services to start
       wait_for:
         port: "{{ item }}"
         delay: 5
-        timeout: 30
+        timeout: 60
       loop:
         - "{{ api_port }}"
         - "{{ llm_port }}"
+      register: wait_result
+      ignore_errors: true
 
-    - name: Check PM2 services status
+    - name: Display final PM2 status
       command: "{{ app_root }}/conda-env/bin/pm2 list"
       args:
         chdir: "{{ app_root }}"
       become_user: "{{ ansible_user }}"
       register: pm2_status
+      changed_when: false
 
     - name: Display PM2 status
       debug:
         msg: "{{ pm2_status.stdout_lines }}"
+
+    - name: Fail if services did not start
+      fail:
+        msg: |
+          Services failed to start within timeout period.
+          API Port: {{ api_port }}
+          LLM Port: {{ llm_port }}
+          
+          Check PM2 logs with:
+          ssh {{ ansible_user }}@{{ inventory_hostname }} "cd {{ app_root }} && conda-env/bin/pm2 logs"
+          
+          Or check individual service logs:
+          - API: {{ app_root }}/apps/api-service/api.log
+          - LLM: {{ app_root }}/apps/llm-service/llm.log
+      when: wait_result.failed
 
     - name: Test API health endpoint
       uri:
