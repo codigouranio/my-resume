@@ -498,7 +498,9 @@
           Or check individual service logs:
           - API: {{ app_root }}/apps/api-service/api.log
           - LLM: {{ app_root }}/apps/llm-service/llm.log
-      when: wait_result.failed
+      when: >-
+        wait_result is defined and
+        (wait_result.results | default([]) | selectattr('failed', 'defined') | selectattr('failed') | list | length) > 0
 
     - name: Test API health endpoint
       uri:
