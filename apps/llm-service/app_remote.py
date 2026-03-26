@@ -76,7 +76,9 @@ VLLM_MODEL = os.getenv("VLLM_MODEL", "Qwen/Qwen2.5-7B-Instruct")
 LLAMA_SERVER_URL = os.getenv("LLAMA_SERVER_URL", "http://localhost:8080")
 LLAMA_MODEL = os.getenv("LLAMA_MODEL", "llama3.1")
 
-LLAMA_API_TYPE = os.getenv("LLAMA_API_TYPE", "llama-cpp")  # or "ollama", "openai"
+LLAMA_API_TYPE = os.getenv(
+    "LLAMA_API_TYPE", "llama-cpp"
+)  # or "ollama", "openai", "vllm"
 
 # API service configuration (replaces direct database access)
 API_SERVICE_URL = os.getenv("API_SERVICE_URL", "http://localhost:3000")
@@ -449,7 +451,7 @@ def generate_completion(
         return call_llama_cpp_server(user_message, max_tokens)
     elif LLAMA_API_TYPE == "ollama":
         return call_ollama_server(user_message, max_tokens)
-    elif LLAMA_API_TYPE == "openai":
+    elif LLAMA_API_TYPE in ["openai", "vllm"]:
         return call_openai_compatible(system_prompt, user_message, max_tokens)
     else:
         raise ValueError(f"Unsupported LLAMA_API_TYPE: {LLAMA_API_TYPE}")
@@ -468,7 +470,7 @@ class RemoteLLMWrapper:
                 result = call_ollama_for_completion(prompt, max_tokens, temperature)
             elif LLAMA_API_TYPE == "llama-cpp":
                 result = call_llama_cpp_server(prompt, max_tokens)
-            elif LLAMA_API_TYPE == "openai":
+            elif LLAMA_API_TYPE in ["openai", "vllm"]:
                 result = call_openai_compatible(
                     system_prompt="You are a helpful assistant.",
                     user_message=prompt,
