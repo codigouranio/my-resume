@@ -7,7 +7,7 @@
   become: yes
   vars_files:
     - ../group_vars/all.yml
-    - ../group_vars/all/vault-sandbox.yml
+    - "{{ vault_vars_file | default('../group_vars/all/vault.yml') }}"
 
   tasks:
     - name: Ensure Nginx is installed
