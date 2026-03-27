@@ -238,6 +238,73 @@ resource "google_secret_manager_secret" "llm_webhook_secret" {
   }
 }
 
+resource "google_secret_manager_secret" "stripe_secret_key" {
+  secret_id = "stripe-secret-key"
+
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret" "stripe_webhook_secret" {
+  secret_id = "stripe-webhook-secret"
+
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret" "stripe_price_id" {
+  secret_id = "stripe-price-id"
+
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret" "stripe_product_id" {
+  secret_id = "stripe-product-id"
+
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "jwt_secret_latest" {
+  secret      = google_secret_manager_secret.jwt_secret.id
+  secret_data = var.jwt_secret
+}
+
+resource "google_secret_manager_secret_version" "database_url_latest" {
+  secret      = google_secret_manager_secret.database_url.id
+  secret_data = "postgresql://${google_sql_user.main.name}:${urlencode(var.database_password)}@${google_sql_database_instance.main.public_ip_address}:5432/${google_sql_database.main.name}"
+}
+
+resource "google_secret_manager_secret_version" "llm_webhook_secret_latest" {
+  secret      = google_secret_manager_secret.llm_webhook_secret.id
+  secret_data = var.llm_webhook_secret
+}
+
+resource "google_secret_manager_secret_version" "stripe_secret_key_latest" {
+  secret      = google_secret_manager_secret.stripe_secret_key.id
+  secret_data = var.stripe_secret_key
+}
+
+resource "google_secret_manager_secret_version" "stripe_webhook_secret_latest" {
+  secret      = google_secret_manager_secret.stripe_webhook_secret.id
+  secret_data = var.stripe_webhook_secret
+}
+
+resource "google_secret_manager_secret_version" "stripe_price_id_latest" {
+  secret      = google_secret_manager_secret.stripe_price_id.id
+  secret_data = var.stripe_price_id
+}
+
+resource "google_secret_manager_secret_version" "stripe_product_id_latest" {
+  secret      = google_secret_manager_secret.stripe_product_id.id
+  secret_data = var.stripe_product_id
+}
+
 # Cloud Run - API Service
 resource "google_cloud_run_v2_service" "api" {
   name     = "api-service"
@@ -338,8 +405,43 @@ resource "google_cloud_run_v2_service" "api" {
       }
 
       env {
-        name  = "STRIPE_SECRET_KEY"
-        value = "not-configured" # Set actual key if using Stripe
+        name = "STRIPE_SECRET_KEY"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.stripe_secret_key.secret_id
+            version = "latest"
+          }
+        }
+      }
+
+      env {
+        name = "STRIPE_WEBHOOK_SECRET"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.stripe_webhook_secret.secret_id
+            version = "latest"
+          }
+        }
+      }
+
+      env {
+        name = "STRIPE_PRICE_ID"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.stripe_price_id.secret_id
+            version = "latest"
+          }
+        }
+      }
+
+      env {
+        name = "STRIPE_PRODUCT_ID"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.stripe_product_id.secret_id
+            version = "latest"
+          }
+        }
       }
 
       env {
@@ -414,6 +516,10 @@ resource "google_cloud_run_v2_service" "api" {
     google_project_service.required_apis,
     google_sql_database.main,
     google_secret_manager_secret.database_url,
+    google_secret_manager_secret.stripe_secret_key,
+    google_secret_manager_secret.stripe_webhook_secret,
+    google_secret_manager_secret.stripe_price_id,
+    google_secret_manager_secret.stripe_product_id,
   ]
 }
 
@@ -461,6 +567,11 @@ resource "google_cloud_run_v2_service" "frontend" {
       env {
         name  = "PUBLIC_LLM_API_URL"
         value = var.llm_service_url
+      }
+
+      env {
+        name  = "PUBLIC_STRIPE_PRICE_ID"
+        value = var.stripe_price_id
       }
     }
   }

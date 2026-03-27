@@ -109,6 +109,49 @@ variable "jwt_secret" {
   sensitive   = true
 }
 
+# Stripe Configuration
+variable "stripe_secret_key" {
+  description = "Stripe secret key for API billing operations"
+  type        = string
+  sensitive   = true
+
+  validation {
+    condition     = can(regex("^sk_(test|live)_", var.stripe_secret_key))
+    error_message = "stripe_secret_key must start with sk_test_ or sk_live_."
+  }
+}
+
+variable "stripe_webhook_secret" {
+  description = "Stripe webhook signing secret"
+  type        = string
+  sensitive   = true
+
+  validation {
+    condition     = can(regex("^whsec_", var.stripe_webhook_secret))
+    error_message = "stripe_webhook_secret must start with whsec_."
+  }
+}
+
+variable "stripe_price_id" {
+  description = "Stripe recurring price ID used for checkout"
+  type        = string
+
+  validation {
+    condition     = can(regex("^price_", var.stripe_price_id))
+    error_message = "stripe_price_id must start with price_."
+  }
+}
+
+variable "stripe_product_id" {
+  description = "Stripe product ID associated with the price"
+  type        = string
+
+  validation {
+    condition     = can(regex("^prod_", var.stripe_product_id))
+    error_message = "stripe_product_id must start with prod_."
+  }
+}
+
 # Frontend Configuration
 variable "frontend_url" {
   description = "Frontend URL for CORS"

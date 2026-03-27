@@ -32,6 +32,12 @@ llm_service_password = "CHANGE_ME_PASSWORD"  # LLM service auth password (must m
 # Application Secrets
 jwt_secret = "CHANGE_ME_RANDOM_32_CHAR_STRING"  # Generate with: openssl rand -base64 32
 
+# Stripe Configuration
+stripe_secret_key     = "sk_test_CHANGE_ME"
+stripe_webhook_secret = "whsec_CHANGE_ME"
+stripe_price_id       = "price_CHANGE_ME"
+stripe_product_id     = "prod_CHANGE_ME"
+
 # Frontend Configuration
 frontend_url = "https://resumecast.ai"  # Your domain
 frontend_urls = [

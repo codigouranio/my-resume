@@ -106,6 +106,10 @@ output "secrets_created" {
     google_secret_manager_secret.jwt_secret.secret_id,
     google_secret_manager_secret.database_url.secret_id,
     google_secret_manager_secret.llm_webhook_secret.secret_id,
+    google_secret_manager_secret.stripe_secret_key.secret_id,
+    google_secret_manager_secret.stripe_webhook_secret.secret_id,
+    google_secret_manager_secret.stripe_price_id.secret_id,
+    google_secret_manager_secret.stripe_product_id.secret_id,
   ]
 }
 
