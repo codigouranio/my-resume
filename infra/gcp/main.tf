@@ -616,7 +616,7 @@ resource "google_cloud_run_domain_mapping" "frontend_www" {
 
 resource "google_cloud_run_domain_mapping" "api" {
   location = var.region
-  name     = "api-service.resumecast.ai"
+  name     = "api.resumecast.ai"
 
   metadata {
     namespace = var.project_id

@@ -7,6 +7,7 @@ import {
   getDisplayBaseDomain,
   formatCustomDomainUrl,
 } from '../../shared/utils/domain';
+import { formatUsdPrice } from '../../shared/utils/pricing';
 import { ChangePasswordForm } from './ChangePasswordForm';
 import { LanguageSwitcher } from '@shared/components/LanguageSwitcher';
 import './SettingsPage.css';
@@ -729,7 +730,7 @@ export function SettingsPage() {
                       {isPro
                         ? priceLoading
                           ? '$—'
-                          : `$${(priceAmount ?? 9).toFixed(0)}`
+                          : formatUsdPrice(priceAmount ?? 9)
                         : '$0'}
                     </div>
                     <div className="text-sm text-base-content/60">
@@ -789,7 +790,7 @@ export function SettingsPage() {
                 <div className="card-body">
                   <h3 className="card-title text-primary">PRO ⭐</h3>
                   <div className="text-3xl font-bold mb-4">
-                    {priceLoading ? '$9' : `$${(priceAmount ?? 9).toFixed(0)}`}
+                    {priceLoading ? '$—' : formatUsdPrice(priceAmount ?? 9)}
                     <span className="text-sm font-normal">
                       /{priceInterval}
                     </span>

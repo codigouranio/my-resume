@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { apiClient } from '../../shared/api/client';
 import { getDisplayBaseDomain } from '../../shared/utils/domain';
+import { formatUsdPrice } from '../../shared/utils/pricing';
 import './PricingPage.css';
 
 export function PricingPage() {
@@ -195,7 +196,7 @@ export function PricingPage() {
               <h2 className="card-title text-3xl justify-center">PRO</h2>
               <div className="text-center py-6">
                 <span className="text-5xl font-bold">
-                  {priceLoading ? '$—' : `$${(priceAmount ?? 9).toFixed(0)}`}
+                  {priceLoading ? '$—' : formatUsdPrice(priceAmount ?? 9)}
                 </span>
                 <span className="text-xl opacity-70">/{priceInterval}</span>
                 {priceLoading && (

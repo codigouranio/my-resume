@@ -61,7 +61,7 @@ jobs:
           TF_VAR_database_password: ${{ secrets.DB_PASSWORD }}
           TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
           TF_VAR_redis_url: ${{ secrets.REDIS_URL }}
-          TF_VAR_api_base_url: https://api-service.resumecast.ai
+          TF_VAR_api_base_url: https://api.resumecast.ai
           TF_VAR_llm_service_url: ${{ secrets.LLM_SERVICE_URL }}
           TF_VAR_llm_webhook_secret: ${{ secrets.LLM_WEBHOOK_SECRET }}
           TF_VAR_home_network_ip: ${{ secrets.HOME_NETWORK_IP }}
@@ -92,7 +92,7 @@ jobs:
           TF_VAR_database_password: ${{ secrets.DB_PASSWORD }}
           TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
           TF_VAR_redis_url: ${{ secrets.REDIS_URL }}
-          TF_VAR_api_base_url: https://api-service.resumecast.ai
+          TF_VAR_api_base_url: https://api.resumecast.ai
           TF_VAR_llm_service_url: ${{ secrets.LLM_SERVICE_URL }}
           TF_VAR_llm_webhook_secret: ${{ secrets.LLM_WEBHOOK_SECRET }}
           TF_VAR_home_network_ip: ${{ secrets.HOME_NETWORK_IP }}
@@ -137,7 +137,7 @@ jobs:
           docker build \
             -t ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/frontend:${{ github.sha }} \
             -t ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/frontend:latest \
-            --build-arg PUBLIC_API_URL=https://api-service.resumecast.ai/api \
+            --build-arg PUBLIC_API_URL=https://api.resumecast.ai/api \
             --build-arg PUBLIC_LLM_API_URL=${{ secrets.LLM_SERVICE_URL }} \
             -f apps/my-resume/Dockerfile \
             .

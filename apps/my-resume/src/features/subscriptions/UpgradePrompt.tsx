@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../shared/api/client';
 import { getDisplayBaseDomain } from '../../shared/utils/domain';
+import { formatUsdPrice } from '../../shared/utils/pricing';
 import './UpgradePrompt.css';
 
 interface UpgradePromptProps {
@@ -12,15 +13,50 @@ export const UpgradePrompt: React.FC<UpgradePromptProps> = ({ onClose }) => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [priceAmount, setPriceAmount] = useState<number | null>(null);
+  const [priceInterval, setPriceInterval] = useState('month');
+  const [priceId, setPriceId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadPrice = async () => {
+      try {
+        const data = await apiClient.getPriceDetails('SUBSCRIPTION_PRO');
+        if (!isMounted) {
+          return;
+        }
+
+        if (typeof data?.unitAmount === 'number') {
+          setPriceAmount(data.unitAmount / 100);
+        }
+
+        if (data?.interval) {
+          setPriceInterval(data.interval);
+        }
+
+        setPriceId(data?.id ?? null);
+      } catch (err) {
+        console.error('Failed to load Stripe price', err);
+      }
+    };
+
+    loadPrice();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleUpgrade = async () => {
     setIsLoading(true);
     setError('');
 
     try {
-      const priceId = import.meta.env.PUBLIC_STRIPE_PRICE_ID || 'price_1234567890'; // Replace with actual Stripe price ID
+      const checkoutPriceId =
+        priceId || import.meta.env.PUBLIC_STRIPE_PRICE_ID || 'price_1234567890';
 
-      const response = await apiClient.createCheckoutSession(priceId);
+      const response = await apiClient.createCheckoutSession(checkoutPriceId);
 
       if (response.url) {
         // Redirect to Stripe checkout
@@ -68,8 +104,8 @@ export const UpgradePrompt: React.FC<UpgradePromptProps> = ({ onClose }) => {
         </div>
 
         <div className="upgrade-pricing">
-          <span className="price">$9</span>
-          <span className="period">/month</span>
+          <span className="price">{formatUsdPrice(priceAmount ?? 9)}</span>
+          <span className="period">/{priceInterval}</span>
         </div>
 
         {error && <div className="error-message">{error}</div>}

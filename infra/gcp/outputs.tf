@@ -86,8 +86,8 @@ output "domain_mapping_dns_records" {
       domain  = "www.resumecast.ai"
       records = google_cloud_run_domain_mapping.frontend_www.status[0].resource_records
     }
-    api_service_resumecast_ai = {
-      domain  = "api-service.resumecast.ai"
+    api_resumecast_ai = {
+      domain  = "api.resumecast.ai"
       records = google_cloud_run_domain_mapping.api.status[0].resource_records
     }
   }

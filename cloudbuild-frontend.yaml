@@ -5,7 +5,7 @@ steps:
       - '-f'
       - 'apps/my-resume/Dockerfile'
       - '--build-arg'
-      - 'PUBLIC_API_URL=https://api-service.resumecast.ai/api'
+      - 'PUBLIC_API_URL=https://api.resumecast.ai/api'
       - '-t'
       - 'gcr.io/resume-cast-ai-prod/frontend:latest'
       - '.'

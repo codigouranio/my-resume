@@ -7,7 +7,7 @@ steps:
       - '-f'
       - 'apps/my-resume/Dockerfile'
       - '--build-arg'
-      - 'PUBLIC_API_URL=https://api-service.resumecast.ai/api'
+      - 'PUBLIC_API_URL=https://api.resumecast.ai/api'
       - '--build-arg'
       - 'PUBLIC_LLM_API_URL=https://llm-service.paskot.com'
       - '.'
