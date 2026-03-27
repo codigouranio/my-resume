@@ -111,7 +111,7 @@ module.exports = {
       cwd: '{{ llm_service_path }}',
       interpreter: '{{ llm_service_path }}/.venv/bin/python',
       script: '{{ llm_service_path }}/.venv/bin/celery',
-      args: '-A celery_config flower --port={{ flower_port }} --persistent=True --db={{ llm_service_path }}/flower.db',
+      args: '-A celery_config flower --address=0.0.0.0 --port={{ flower_port }} --persistent=True --db={{ llm_service_path }}/flower.db',
       instances: 1,
       max_memory_restart: '512M',
       env: {

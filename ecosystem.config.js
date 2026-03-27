@@ -91,7 +91,7 @@ module.exports = {
     {
       name: "llm-flower",
       script: "celery",
-      args: "-A celery_config flower --port=5555 --persistent=True --db=flower.db",
+      args: "-A celery_config flower --address=0.0.0.0 --port=5555 --persistent=True --db=flower.db",
       interpreter: "/opt/my-resume/apps/llm-service/.venv/bin/python",
       cwd: "/opt/my-resume/apps/llm-service",
       instances: 1,
