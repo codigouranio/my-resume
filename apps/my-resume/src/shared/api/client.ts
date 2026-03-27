@@ -311,6 +311,10 @@ class ApiClient {
 
   // Subscriptions (Stripe)
   async createCheckoutSession(priceId: string | null) {
+    if (!priceId) {
+      throw new Error('Stripe price is not configured yet.');
+    }
+
     return this.request('/subscriptions/checkout', {
       method: 'POST',
       body: JSON.stringify({ priceId }),

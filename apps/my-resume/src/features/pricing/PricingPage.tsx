@@ -13,8 +13,7 @@ export function PricingPage() {
   const [priceAmount, setPriceAmount] = useState<number | null>(null);
   const [priceInterval, setPriceInterval] = useState<string>('month');
   const [priceLoading, setPriceLoading] = useState(true);
-
-  let stripePriceId: string | null = null;
+  const [stripePriceId, setStripePriceId] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -29,8 +28,7 @@ export function PricingPage() {
         if (data?.interval) {
           setPriceInterval(data.interval);
         }
-
-        stripePriceId = data.id;
+        setStripePriceId(data?.id ?? null);
       } catch (err) {
         console.error('Failed to load Stripe price', err);
       } finally {
@@ -58,6 +56,10 @@ export function PricingPage() {
     setError(null);
 
     try {
+      if (!stripePriceId) {
+        throw new Error('Pricing is still loading. Please try again in a moment.');
+      }
+
       const response = await apiClient.createCheckoutSession(stripePriceId);
 
       // Redirect to Stripe Checkout
