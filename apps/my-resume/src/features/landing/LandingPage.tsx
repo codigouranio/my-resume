@@ -54,11 +54,13 @@ export function LandingPage() {
         <div className="hero-content text-center text-white">
           <div className="max-w-4xl">
             <h1 className="text-6xl font-bold mb-6">
-              Build Your Resume Once, Evolve Forever
+              Your Career Record. Your Proof. Your Story.
             </h1>
             <p className="text-xl mb-8 opacity-90">
-              Your Career on Autopilot: AI Resumes That Interview for You, Log
-              Achievements Forever, and Unlock Recruiter Insights.
+              It's a career operating system.
+              Capture your milestones like social posts, achievements, and experiences track your growth over years,
+              publish multiple targeted resumes, and power an AI storyteller with rich private context that never appears
+              in your public profile.
             </p>
             <div className="flex gap-4 justify-center">
               <Link
@@ -66,14 +68,14 @@ export function LandingPage() {
                 className="btn btn-lg bg-white text-gray-900 px-8 py-4 rounded-lg font-semibold text-lg shadow-lg hover:bg-gray-100 hover:shadow-xl transition-all duration-200"
                 data-discover="true"
               >
-                Get Started Free
+                Start Your Career Record
               </Link>
               <Link
                 to="/pricing"
                 className="btn btn-lg bg-transparent text-white border-2 border-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-gray-900 transition-all duration-200"
                 data-discover="true"
               >
-                View Pricing
+                See PRO Plan
               </Link>
             </div>
           </div>
@@ -84,44 +86,54 @@ export function LandingPage() {
       <div className="features-section py-20 bg-base-200">
         <div className="container mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-12">
-            Why Choose ResumeCast.ai?
+            Why This Is Different
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="card bg-base-100">
               <div className="card-body items-center text-center">
+                <div className="text-5xl mb-4">🧭</div>
+                <h3 className="card-title">Career Timeline, Not File Storage</h3>
+                <p>
+                  Keep a living history of your career with timestamped entries,
+                  wins, projects, outcomes, and lessons. Your profile grows with
+                  you instead of being rewritten from scratch every time.
+                </p>
+              </div>
+            </div>
+
+            <div className="card bg-base-100">
+              <div className="card-body items-center text-center">
+                <div className="text-5xl mb-4">📝</div>
+                <h3 className="card-title">Social-Style Career Posts</h3>
+                <p>
+                  Publish short career updates internally like a professional
+                  feed: launches, promotions, certifications, metrics, and key
+                  decisions. Build evidence over time, not hype.
+                </p>
+              </div>
+            </div>
+
+            <div className="card bg-base-100">
+              <div className="card-body items-center text-center">
+                <div className="text-5xl mb-4">📄</div>
+                <h3 className="card-title">Multiple Resumes, One Source of Truth</h3>
+                <p>
+                  Create role-specific resumes for different opportunities while
+                  reusing the same verified career record. Share the right
+                  version with each recruiter without losing consistency.
+                </p>
+              </div>
+            </div>
+
+            <div className="card bg-base-100">
+              <div className="card-body items-center text-center">
                 <div className="text-5xl mb-4">🤖</div>
-                <h3 className="card-title">Recruiter-Facing AI Avatar</h3>
+                <h3 className="card-title">Private AI Storyteller Context</h3>
                 <p>
-                  Let your personal AI representative answer questions 24/7
-                  using public resume + private hidden context professional
-                  responses without ever exposing your notes. Recruiters chat
-                  instantly; you sleep.
-                </p>
-              </div>
-            </div>
-
-            <div className="card bg-base-100">
-              <div className="card-body items-center text-center">
-                <div className="text-5xl mb-4">📖</div>
-                <h3 className="card-title">Lifelong Private Career Log</h3>
-                <p>
-                  Keep a detailed record of your career achievements and
-                  milestones, accessible anytime for personal growth and
-                  reflection.
-                </p>
-              </div>
-            </div>
-
-            <div className="card bg-base-100">
-              <div className="card-body items-center text-center">
-                <div className="text-5xl mb-4">🔐</div>
-                <h3 className="card-title">
-                  Full Privacy & Rule-Based Control
-                </h3>
-                <p>
-                  Private data stays encrypted and never shown GDPR-compliant
-                  and secure.
+                  Store the details that do not fit a public resume, then let AI
+                  use that private context to answer recruiter questions with
+                  depth, while keeping private notes hidden.
                 </p>
               </div>
             </div>
@@ -129,35 +141,23 @@ export function LandingPage() {
             <div className="card bg-base-100">
               <div className="card-body items-center text-center">
                 <div className="text-5xl mb-4">📊</div>
-                <h3 className="card-title">Market Feedback Dashboard</h3>
+                <h3 className="card-title">Recruiter Signal Analytics</h3>
                 <p>
-                  See exactly what recruiters ask about you, top topics, skill
-                  gaps, and personalized learning suggestions to accelerate your
-                  next offer.
+                  See what questions recruiters ask, where interest drops, and
+                  which skills get attention. Improve positioning with evidence,
+                  not guesswork.
                 </p>
               </div>
             </div>
 
             <div className="card bg-base-100">
               <div className="card-body items-center text-center">
-                <div className="text-5xl mb-4">🎨</div>
-                <h3 className="card-title">Stunning Professional Templates</h3>
+                <div className="text-5xl mb-4">🔐</div>
+                <h3 className="card-title">Public Profile + Private Intelligence</h3>
                 <p>
-                  Choose from designer-crafted templates that render beautifully
-                  on web and PDF make your resume stand out while staying fully
-                  ATS-friendly.
-                </p>
-              </div>
-            </div>
-
-            <div className="card bg-base-100">
-              <div className="card-body items-center text-center">
-                <div className="text-5xl mb-4">👥</div>
-                <h3 className="card-title">Multi-Faceted Resume Versions</h3>
-                <p>
-                  Create unlimited tailored resumes for different roles or
-                  industries share one unified private AI context and bitácora
-                  across all versions for smarter, consistent avatar responses.
+                  Your public resume stays clean and recruiter-friendly. Your
+                  private context stays protected and only informs AI responses
+                  under your rules.
                 </p>
               </div>
             </div>
@@ -165,17 +165,69 @@ export function LandingPage() {
         </div>
       </div>
 
+      <div className="py-20 bg-base-100">
+        <div className="container mx-auto px-4">
+          <h2 className="text-4xl font-bold text-center mb-12">
+            Built for Every Career Stage
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="card bg-base-200">
+              <div className="card-body">
+                <h3 className="card-title">Students & New Graduates</h3>
+                <p>
+                  Turn internships, projects, and coursework into a credible
+                  career narrative before your first full-time role.
+                </p>
+              </div>
+            </div>
+            <div className="card bg-base-200">
+              <div className="card-body">
+                <h3 className="card-title">Mid-Career Professionals</h3>
+                <p>
+                  Track impact, manage multiple role-focused resumes, and stay
+                  ready for better opportunities without last-minute rewrites.
+                </p>
+              </div>
+            </div>
+            <div className="card bg-base-200">
+              <div className="card-body">
+                <h3 className="card-title">Senior Leaders & Experts</h3>
+                <p>
+                  Preserve institutional knowledge, leadership outcomes, and
+                  strategic decisions in a durable record that recruiters can
+                  understand fast.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="py-20 bg-base-300">
+        <div className="container mx-auto px-4 text-center max-w-4xl">
+          <h2 className="text-4xl font-bold mb-6">
+            Not Another “AI Resume Builder”
+          </h2>
+          <p className="text-lg opacity-80">
+            Most tools generate one polished document and stop there. ResumeCast.ai
+            is a long-term SaaS product for career records, evidence, and
+            recruiter-facing AI storytelling at scale.
+          </p>
+        </div>
+      </div>
+
       {/* CTA Section */}
       <div className="cta-section py-20 bg-primary text-primary-content">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl font-bold mb-6">
-            Ready to Build Your Resume?
+            Ready to Own Your Career Data?
           </h2>
           <p className="text-xl mb-8 opacity-90">
-            Join thousands of professionals who trust ResumeCast.ai
+            Start free. Upgrade to PRO when you need deeper analytics,
+            multi-resume strategy, and always-on AI storytelling.
           </p>
           <Link to="/register" className="btn btn-lg btn-neutral">
-            Create Your Free Account
+            Create Free Account
           </Link>
         </div>
       </div>
@@ -188,7 +240,7 @@ export function LandingPage() {
               <span style={{ color: '#525252', fontWeight: 700 }}>Resume</span>
               <span style={{ color: '#383838', fontWeight: 700 }}>Cast.ai</span>
             </p>
-            <p>Professional Resume Builder © 2025</p>
+            <p>Career Intelligence Platform © 2025</p>
           </div>
           <p className="text-xs opacity-60">UI v{appVersion}</p>
         </div>

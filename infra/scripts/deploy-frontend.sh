@@ -16,7 +16,7 @@ SERVICE_NAME="frontend"
 IMAGE_NAME="gcr.io/${PROJECT_ID}/${SERVICE_NAME}:latest"
 
 # Build arguments
-PUBLIC_API_URL="https://api.resumecast.ai/api"
+PUBLIC_API_URL="https://api-service.resumecast.ai/api"
 
 echo "📦 Building Docker image..."
 cat > /tmp/cloudbuild-frontend.yaml << EOF

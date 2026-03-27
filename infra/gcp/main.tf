@@ -277,7 +277,7 @@ resource "google_secret_manager_secret_version" "jwt_secret_latest" {
 
 resource "google_secret_manager_secret_version" "database_url_latest" {
   secret      = google_secret_manager_secret.database_url.id
-  secret_data = "postgresql://${google_sql_user.main.name}:${urlencode(var.database_password)}@${google_sql_database_instance.main.public_ip_address}:5432/${google_sql_database.main.name}"
+  secret_data = "postgresql://${google_sql_user.main.name}:${urlencode(var.database_password)}@localhost/${google_sql_database.main.name}?host=/cloudsql/${google_sql_database_instance.main.connection_name}"
 }
 
 resource "google_secret_manager_secret_version" "llm_webhook_secret_latest" {
@@ -561,7 +561,7 @@ resource "google_cloud_run_v2_service" "frontend" {
 
       env {
         name  = "PUBLIC_API_URL"
-        value = google_cloud_run_v2_service.api.uri
+        value = "${trimsuffix(var.api_base_url, "/")}/api"
       }
 
       env {
@@ -616,7 +616,7 @@ resource "google_cloud_run_domain_mapping" "frontend_www" {
 
 resource "google_cloud_run_domain_mapping" "api" {
   location = var.region
-  name     = "api.resumecast.ai"
+  name     = "api-service.resumecast.ai"
 
   metadata {
     namespace = var.project_id
