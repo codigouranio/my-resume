@@ -75,12 +75,22 @@ export class InterviewCompanyChangedHandler
    */
   private async triggerCompanyEnrichment(companyName: string, userId: string, companyId?: string): Promise<void> {
     const LLM_SERVICE_URL = process.env.LLM_SERVICE_URL || 'http://localhost:5000';
-    const API_URL = process.env.API_BASE_URL || 'http://localhost:3000';
+    const configuredApiBaseUrl = process.env.API_BASE_URL || process.env.API_URL || 'http://localhost:3000';
+    const isLocalCallbackBase =
+      configuredApiBaseUrl.includes('localhost') ||
+      configuredApiBaseUrl.includes('127.0.0.1');
+    const callbackBaseUrl = isLocalCallbackBase
+      ? 'https://api.resumecast.ai'
+      : configuredApiBaseUrl;
+    const callbackUrl = `${callbackBaseUrl}/api/webhooks/llm-result`;
     const LLM_API_KEY = process.env.LLM_API_KEY || '';
 
     this.logger.log(`[triggerCompanyEnrichment] START for company: "${companyName}", userId: ${userId}, companyId: ${companyId || 'N/A'}`);
     this.logger.log(`[triggerCompanyEnrichment] LLM_SERVICE_URL: ${LLM_SERVICE_URL}`);
-    this.logger.log(`[triggerCompanyEnrichment] API_BASE_URL: ${API_URL}`);
+    this.logger.log(`[triggerCompanyEnrichment] API_BASE_URL: ${configuredApiBaseUrl}`);
+    if (isLocalCallbackBase) {
+      this.logger.warn(`[triggerCompanyEnrichment] Local callback base detected (${configuredApiBaseUrl}). Using fallback ${callbackBaseUrl}`);
+    }
     this.logger.log(`[triggerCompanyEnrichment] LLM_API_KEY configured: ${LLM_API_KEY ? 'YES (length: ' + LLM_API_KEY.length + ')' : 'NO'}`);
 
     try {
@@ -94,7 +104,6 @@ export class InterviewCompanyChangedHandler
         this.logger.log(`[triggerCompanyEnrichment] Company ${companyId} status updated to PROCESSING`);
       }
 
-      const callbackUrl = `${API_URL}/api/webhooks/llm-result`;
       const requestBody = {
         companyName,
         callbackUrl,

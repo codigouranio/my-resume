@@ -31,6 +31,7 @@ interface LLMWebhookPayload {
     resumeId?: string;
     slug?: string;
     companyName?: string;
+    companyId?: string;
   };
 }
 
@@ -208,22 +209,87 @@ export class WebhooksController {
       }
     }
 
-    // Save to database
-    const companyInfo = await this.prisma.companyInfo.upsert({
-      where: { companyName: officialName },
-      create: {
-        companyName: officialName,
-        ...dataForDb,
-        source: 'llm_webhook',
-        enrichmentStatus: 'COMPLETED',
-      },
-      update: {
-        ...dataForDb,
-        source: 'llm_webhook',
-        enrichmentStatus: 'COMPLETED',
-        updatedAt: new Date(),
-      },
-    });
+    let companyInfo: any = null;
+    const placeholderCompanyId = metadata?.companyId;
+
+    // If webhook metadata includes the placeholder companyId, update/merge that record
+    // so interviews linked at creation time keep their enrichment data.
+    if (placeholderCompanyId) {
+      const placeholderCompany = await this.prisma.companyInfo.findUnique({
+        where: { id: placeholderCompanyId },
+        select: { id: true, companyName: true },
+      });
+
+      if (placeholderCompany) {
+        const existingOfficial = await this.prisma.companyInfo.findFirst({
+          where: {
+            companyName: {
+              equals: officialName,
+              mode: 'insensitive',
+            },
+          },
+          select: { id: true, companyName: true },
+        });
+
+        if (existingOfficial && existingOfficial.id !== placeholderCompany.id) {
+          companyInfo = await this.prisma.companyInfo.update({
+            where: { id: existingOfficial.id },
+            data: {
+              ...dataForDb,
+              source: 'llm_webhook',
+              enrichmentStatus: 'COMPLETED',
+              updatedAt: new Date(),
+            },
+          });
+
+          await this.prisma.interviewProcess.updateMany({
+            where: { companyInfoId: placeholderCompany.id },
+            data: { companyInfoId: existingOfficial.id },
+          });
+
+          await this.prisma.companyInfo
+            .delete({ where: { id: placeholderCompany.id } })
+            .catch((error) => {
+              this.logger.warn(
+                `Could not delete placeholder company ${placeholderCompany.id}: ${error.message}`,
+              );
+            });
+        } else {
+          companyInfo = await this.prisma.companyInfo.update({
+            where: { id: placeholderCompany.id },
+            data: {
+              companyName: officialName,
+              ...dataForDb,
+              source: 'llm_webhook',
+              enrichmentStatus: 'COMPLETED',
+              updatedAt: new Date(),
+            },
+          });
+        }
+
+        // Link unlinked interviews that might still use the original input name.
+        await this.companiesService.linkToInterviews(placeholderCompany.companyName);
+      }
+    }
+
+    // Fallback when metadata.companyId is absent (older jobs/manual runs).
+    if (!companyInfo) {
+      companyInfo = await this.prisma.companyInfo.upsert({
+        where: { companyName: officialName },
+        create: {
+          companyName: officialName,
+          ...dataForDb,
+          source: 'llm_webhook',
+          enrichmentStatus: 'COMPLETED',
+        },
+        update: {
+          ...dataForDb,
+          source: 'llm_webhook',
+          enrichmentStatus: 'COMPLETED',
+          updatedAt: new Date(),
+        },
+      });
+    }
 
     this.logger.log(`Saved company info: ${officialName} with status COMPLETED`);
 

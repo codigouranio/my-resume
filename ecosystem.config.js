@@ -99,6 +99,7 @@ module.exports = {
         // DATABASE_URL removed - Flower monitoring doesn't need DB
         API_SERVICE_URL: "http://localhost:3000",
         LLM_SERVICE_TOKEN: "change_me_32_chars_min_secure_token",
+        LLM_WEBHOOK_SECRET: "change_me_32_chars_min",
         REDIS_HOST: "localhost",
         REDIS_PORT: 6379, // Shared Redis
         REDIS_DB: 2, // Database 2 (for Flower isolation)

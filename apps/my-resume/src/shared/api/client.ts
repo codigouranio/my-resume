@@ -1,5 +1,11 @@
 const API_BASE_URL = import.meta.env.PUBLIC_API_URL || '/api';
 
+interface AdminUsersFilters {
+  search?: string;
+  subscriptionTier?: string;
+  limit?: number;
+}
+
 class ApiClient {
   private baseURL: string;
   private token: string | null = null;
@@ -329,6 +335,25 @@ class ApiClient {
     return this.request('/subscriptions/portal', {
       method: 'POST',
     });
+  }
+
+  // Admin
+  async getAdminOverview() {
+    return this.request('/admin/overview');
+  }
+
+  async getAdminUsers(filters: AdminUsersFilters = {}) {
+    const params = new URLSearchParams();
+    if (filters.search) params.append('search', filters.search);
+    if (filters.subscriptionTier) {
+      params.append('subscriptionTier', filters.subscriptionTier);
+    }
+    if (typeof filters.limit === 'number') {
+      params.append('limit', String(filters.limit));
+    }
+
+    const query = params.toString();
+    return this.request(`/admin/users${query ? `?${query}` : ''}`);
   }
 
   // Templates
@@ -706,6 +731,12 @@ class ApiClient {
   async normalizeCompanyNames() {
     return this.request('/companies/normalize-company-names', {
       method: 'POST',
+    });
+  }
+
+  async clearFailedEmbeddingJobs() {
+    return this.request('/embeddings/queue/failed', {
+      method: 'DELETE',
     });
   }
 

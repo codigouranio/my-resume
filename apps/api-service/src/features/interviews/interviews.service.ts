@@ -164,38 +164,56 @@ export class InterviewsService {
 
     this.logger.log(`[update] Current interview company: "${interview.company || 'N/A'}"`);
 
-    // If company name changed, try to re-link company info
+    // Re-link and (re)trigger enrichment when needed.
+    // We trigger not only on company text changes, but also when company info is missing
+    // or when existing enrichment is still pending/failed.
     let companyInfoId = interview.companyInfoId;
-    
-    if (dto.company && dto.company !== interview.company) {
-      this.logger.log(`[update] Company changed from "${interview.company}" to "${dto.company}"`);
-      
+    const companyToUse = (dto.company || interview.company || '').trim();
+    const companyChanged = Boolean(dto.company && dto.company !== interview.company);
+
+    if (companyToUse) {
       const companyInfo = await this.prisma.companyInfo.findFirst({
         where: {
           companyName: {
-            equals: dto.company,
+            equals: companyToUse,
             mode: 'insensitive',
           },
         },
         select: {
           id: true,
+          enrichmentStatus: true,
         },
       });
-      
+
       if (companyInfo) {
-        this.logger.log(`[update] Found existing CompanyInfo ${companyInfo.id} for "${dto.company}", linking to it`);
-        companyInfoId = companyInfo.id;
-      } else {
-        this.logger.log(`[update] No CompanyInfo found for "${dto.company}", publishing InterviewCompanyChangedEvent`);
-        companyInfoId = null;
-        // Publish event for company enrichment side effect
-        this.eventBus.publish(
-          new InterviewCompanyChangedEvent(id, userId, interview.company, dto.company),
+        this.logger.log(
+          `[update] Found CompanyInfo ${companyInfo.id} for "${companyToUse}" (status=${companyInfo.enrichmentStatus})`,
         );
-        this.logger.log(`[update] InterviewCompanyChangedEvent published for interview ${id}`);
+        companyInfoId = companyInfo.id;
+
+        const shouldRetryEnrichment =
+          companyInfo.enrichmentStatus === 'FAILED' ||
+          companyInfo.enrichmentStatus === 'PENDING';
+
+        if (shouldRetryEnrichment || companyChanged) {
+          this.logger.log(
+            `[update] Publishing InterviewCompanyChangedEvent for "${companyToUse}" (changed=${companyChanged}, retry=${shouldRetryEnrichment})`,
+          );
+          this.eventBus.publish(
+            new InterviewCompanyChangedEvent(id, userId, interview.company, companyToUse),
+          );
+        }
+      } else {
+        this.logger.log(
+          `[update] No CompanyInfo found for "${companyToUse}", publishing InterviewCompanyChangedEvent`,
+        );
+        companyInfoId = null;
+        this.eventBus.publish(
+          new InterviewCompanyChangedEvent(id, userId, interview.company, companyToUse),
+        );
       }
     } else {
-      this.logger.log(`[update] Company name unchanged or not provided, no event published`);
+      this.logger.log(`[update] Company value empty, skipping company enrichment checks`);
     }
 
     return this.prisma.interviewProcess.update({

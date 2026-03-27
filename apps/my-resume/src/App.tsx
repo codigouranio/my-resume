@@ -3,9 +3,11 @@ import { useEffect } from 'react';
 import { AuthProvider } from './shared/contexts/AuthContext';
 import { AIContextProvider } from './shared/contexts/AIContextContext';
 import { ProtectedRoute } from './features/auth/ProtectedRoute';
+import { AdminRoute } from './features/auth/AdminRoute';
 import { LandingPage } from './features/landing';
 import { LoginPage, RegisterPage, ForgotPasswordPage, ResetPasswordPage } from './features/auth';
 import { UserAgreementPage, PrivacyPolicyPage, CookiePolicyPage } from './features/legal';
+import { BackofficePage } from './features/backoffice';
 import { DashboardPage } from './features/dashboard';
 import { EditorPage } from './features/editor';
 import { PricingPage } from './features/pricing';
@@ -115,6 +117,14 @@ const App = () => {
                 <ProtectedRoute>
                   <SettingsPage />
                 </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/backoffice"
+              element={
+                <AdminRoute>
+                  <BackofficePage />
+                </AdminRoute>
               }
             />
             <Route

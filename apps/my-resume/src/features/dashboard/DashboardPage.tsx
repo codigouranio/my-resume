@@ -264,6 +264,9 @@ export function DashboardPage() {
               <li className="menu-title">
                 <span>{user?.email}</span>
               </li>
+              {user?.role === 'ADMIN' ? (
+                <li><Link to="/backoffice">🛠️ Back office</Link></li>
+              ) : null}
               <li><Link to="/settings">⚙️ {t('nav.settings')}</Link></li>
               <li><a onClick={handleLogout}>🚪 {t('auth.logout')}</a></li>
             </ul>

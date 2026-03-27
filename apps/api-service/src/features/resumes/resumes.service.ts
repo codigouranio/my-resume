@@ -631,6 +631,8 @@ export class ResumesService {
     if (dto.company) {
       const LLM_SERVICE_URL =
         process.env.LLM_SERVICE_URL || "http://localhost:5000";
+      const API_BASE_URL =
+        process.env.API_BASE_URL || process.env.API_URL || 'http://localhost:3000';
       
       try {
         const response = await fetch(`${LLM_SERVICE_URL}/api/companies/enrich`, {
@@ -640,7 +642,7 @@ export class ResumesService {
           },
           body: JSON.stringify({
             companyName: dto.company,
-            callbackUrl: `${process.env.API_URL || 'http://localhost:3000'}/api/webhooks/llm-result`,
+            callbackUrl: `${API_BASE_URL}/api/webhooks/llm-result`,
             metadata: { 
               recruiterInterestId: recruiterInterest.id,
               resumeId: resume.id,

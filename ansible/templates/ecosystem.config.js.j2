@@ -119,7 +119,8 @@ module.exports = {
         REDIS_HOST: '{{ llm_redis_host }}',
         REDIS_PORT: {{ llm_redis_port }},
         REDIS_DB: {{ llm_redis_db }},
-        REDIS_PASSWORD: '{{ llm_redis_password }}'
+        REDIS_PASSWORD: '{{ llm_redis_password }}',
+        LLM_WEBHOOK_SECRET: '{{ llm_webhook_secret }}'
       },
       error_file: '{{ llm_service_path }}/logs/flower-error.log',
       out_file: '{{ llm_service_path }}/logs/flower-out.log',

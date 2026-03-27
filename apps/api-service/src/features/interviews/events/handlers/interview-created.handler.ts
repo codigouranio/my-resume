@@ -14,7 +14,7 @@ export class InterviewCreatedHandler implements IEventHandler<InterviewCreatedEv
   private readonly logger = new Logger(InterviewCreatedHandler.name);
   private readonly llmServiceUrl: string;
   private readonly llmApiKey: string;
-  private readonly apiUrl: string;
+  private readonly callbackBaseUrl: string;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -22,7 +22,22 @@ export class InterviewCreatedHandler implements IEventHandler<InterviewCreatedEv
   ) {
     this.llmServiceUrl = this.configService.get<string>('LLM_SERVICE_URL', 'http://localhost:5000');
     this.llmApiKey = this.configService.get<string>('LLM_API_KEY', '');
-    this.apiUrl = this.configService.get<string>('API_URL', 'http://localhost:3000');
+    const configuredApiBaseUrl = this.configService.get<string>(
+      'API_BASE_URL',
+      this.configService.get<string>('API_URL', 'http://localhost:3000'),
+    );
+    const isLocalCallbackBase =
+      configuredApiBaseUrl.includes('localhost') ||
+      configuredApiBaseUrl.includes('127.0.0.1');
+    this.callbackBaseUrl = isLocalCallbackBase
+      ? 'https://api.resumecast.ai'
+      : configuredApiBaseUrl;
+
+    if (isLocalCallbackBase) {
+      this.logger.warn(
+        `Resolved local callback base (${configuredApiBaseUrl}). Falling back to ${this.callbackBaseUrl}`,
+      );
+    }
     
     if (!this.llmApiKey) {
       this.logger.warn('LLM_API_KEY not configured - LLM service calls may fail');
@@ -95,6 +110,8 @@ export class InterviewCreatedHandler implements IEventHandler<InterviewCreatedEv
    */
   private async triggerCompanyEnrichment(companyName: string, userId: string, companyId?: string): Promise<void> {
     try {
+      const callbackUrl = `${this.callbackBaseUrl}/api/webhooks/llm-result`;
+
       // Update status to PROCESSING
       if (companyId) {
         await this.prisma.companyInfo.update({
@@ -108,7 +125,7 @@ export class InterviewCreatedHandler implements IEventHandler<InterviewCreatedEv
         headers: this.getLLMHeaders(),
         body: JSON.stringify({
           companyName,
-          callbackUrl: `${this.apiUrl}/api/webhooks/llm-result`,
+          callbackUrl,
           metadata: {
             userId,
             companyId,
@@ -123,7 +140,9 @@ export class InterviewCreatedHandler implements IEventHandler<InterviewCreatedEv
       }
 
       const result = await response.json();
-      this.logger.log(`Company enrichment queued: ${result.jobId} for company ${companyId || companyName}`);
+      this.logger.log(
+        `Company enrichment queued: ${result.jobId} for company ${companyId || companyName} (callback: ${callbackUrl})`,
+      );
     } catch (error) {
       this.logger.error(`Failed to trigger company enrichment: ${error.message}`);
       
