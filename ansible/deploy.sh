@@ -4,6 +4,8 @@ set -e
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 
+cd "${SCRIPT_DIR}"
+
 prompt_secret() {
 	prompt="$1"
 	printf '%s' "${prompt}" >&2

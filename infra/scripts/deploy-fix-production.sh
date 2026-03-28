@@ -4,11 +4,14 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+
 echo "🔧 Quick Fix Deployment to Production"
 echo "======================================"
 echo ""
 
-cd "$(dirname "$0")/ansible"
+cd "${REPO_ROOT}/ansible"
 
 echo "1️⃣ Running Ansible playbook to fix .env configurations..."
 ansible-playbook -i inventory-production.yml \

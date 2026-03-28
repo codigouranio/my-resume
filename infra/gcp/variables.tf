@@ -116,8 +116,8 @@ variable "stripe_secret_key" {
   sensitive   = true
 
   validation {
-    condition     = can(regex("^mk_(test|live)_", var.stripe_secret_key))
-    error_message = "stripe_secret_key must start with ?k_test_ or ?k_live_."
+    condition     = can(regex("^(sk|rk)_(test|live)_", var.stripe_secret_key))
+    error_message = "stripe_secret_key must start with sk_test_, sk_live_, rk_test_, or rk_live_."
   }
 }
 

@@ -9,6 +9,25 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
+usage() {
+        cat <<EOF
+Usage:
+    ./infra/gcp/deploy.sh
+
+Description:
+    Performs initial GCP infrastructure deployment with Terraform.
+
+Environment:
+    AUTO_APPROVE=true   Skip interactive confirmation before terraform apply.
+    CI=true             Skip interactive confirmation before terraform apply.
+EOF
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" || "${1:-}" == "help" ]]; then
+        usage
+        exit 0
+fi
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'

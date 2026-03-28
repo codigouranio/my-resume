@@ -8,7 +8,6 @@
   vars:
     postgres_version: "16"
   vars_files:
-    - ../group_vars/all.yml
     - "{{ vault_vars_file | default('../group_vars/all/vault.yml') }}"
   
   tasks:
