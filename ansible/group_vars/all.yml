@@ -59,6 +59,8 @@ llama_server_url: "http://localhost:11434"
 llama_api_type: "vllm"  # Options: llama-cpp, ollama, openai, vllm
 vllm_model: "Qwen/Qwen2.5-7B-Instruct"
 vllm_server_url: "http://localhost:9000"
+llm_request_timeout: 180
+ollama_keep_alive: "10m"
 
 # Redis Configuration for LLM Service Celery
 # Shared Redis with different database for MVP simplicity
@@ -90,7 +92,7 @@ pm2_max_memory_restart: "512M"
 
 # Nginx Configuration
 enable_ssl: false # Set to true for Let's Encrypt SSL
-domain: resumecast.ai # Override per-host in inventory (host vars are shadowed by vars_files, so keep this a real default)
+domain: resumecast.ai # Override per-host in inventory
 domain_paskot: "paskot.com"
 
 # CloudFlare Configuration (optional)

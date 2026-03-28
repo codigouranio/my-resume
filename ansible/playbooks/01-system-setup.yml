@@ -11,8 +11,6 @@
     enable_firewall: true
     allowed_ssh_ips: []
     app_root: /opt/my-resume
-  vars_files:
-    - ../group_vars/all.yml
   
   pre_tasks:
     - name: Update apt cache

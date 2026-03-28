@@ -7,7 +7,7 @@
   become: yes
   become_user: "{{ ansible_user }}"
   vars_files:
-    - group_vars/all.yml
+    - "{{ vault_vars_file | default('group_vars/all/vault.yml') }}"
   
   tasks:
     - name: Pre-flight check - Verify app directory exists
@@ -115,6 +115,8 @@
           LLAMA_SERVER_URL={{ llama_server_url }}
           LLAMA_API_TYPE={{ llama_api_type }}
           LLAMA_MODEL={{ llama_model }}
+          LLM_REQUEST_TIMEOUT={{ llm_request_timeout }}
+          OLLAMA_KEEP_ALIVE={{ ollama_keep_alive }}
           RESUME_PATH=../../data/resume.md
           DATABASE_URL=postgresql://{{ db_user }}:{{ db_password }}@localhost:{{ postgres_port }}/{{ db_name }}
           ADMIN_TOKEN={{ llm_admin_token }}
@@ -131,6 +133,14 @@
         owner: "{{ ansible_user }}"
         mode: '0600'
       register: llm_env_result
+
+    - name: Re-render PM2 ecosystem config
+      template:
+        src: templates/ecosystem.config.js.j2
+        dest: "{{ app_root }}/ecosystem.config.js"
+        owner: "{{ ansible_user }}"
+        mode: '0644'
+      register: ecosystem_result
 
     - name: Configure Frontend environment
       copy:
@@ -195,7 +205,7 @@
     - name: Restart API Service
       shell: |
         if {{ pm2_cmd }} list | grep -q "api-service"; then
-          {{ pm2_cmd }} restart api-service
+          {{ pm2_cmd }} restart {{ app_root }}/ecosystem.config.js --only api-service --update-env
         else
           echo "api-service not running in PM2, skipping restart"
         fi
@@ -203,7 +213,7 @@
         executable: /bin/bash
       when: 
         - pm2_cmd != "NOT_FOUND"
-        - git_result.changed or api_env_result.changed
+        - git_result.changed or api_env_result.changed or ecosystem_result.changed
 
     # LLM Service (no build needed, Python)
     - name: Update LLM Service dependencies with Poetry
@@ -224,7 +234,7 @@
     - name: Restart LLM Service
       shell: |
         if {{ pm2_cmd }} list | grep -q "llm-service"; then
-          {{ pm2_cmd }} restart llm-service
+          {{ pm2_cmd }} restart {{ app_root }}/ecosystem.config.js --only llm-service --update-env
         else
           echo "llm-service not running in PM2, skipping restart"
         fi
@@ -232,12 +242,12 @@
         executable: /bin/bash
       when:
         - pm2_cmd != "NOT_FOUND"
-        - git_result.changed or llm_env_result.changed
+        - git_result.changed or llm_env_result.changed or ecosystem_result.changed
     
     - name: Restart Celery Worker
       shell: |
         if {{ pm2_cmd }} list | grep -q "llm-celery-worker"; then
-          {{ pm2_cmd }} restart llm-celery-worker
+          {{ pm2_cmd }} restart {{ app_root }}/ecosystem.config.js --only llm-celery-worker --update-env
         else
           echo "llm-celery-worker not running in PM2, skipping restart"
         fi
@@ -245,12 +255,12 @@
         executable: /bin/bash
       when:
         - pm2_cmd != "NOT_FOUND"
-        - git_result.changed or llm_env_result.changed
+        - git_result.changed or llm_env_result.changed or ecosystem_result.changed
     
     - name: Restart Flower Dashboard
       shell: |
         if {{ pm2_cmd }} list | grep -q "llm-flower"; then
-          {{ pm2_cmd }} restart llm-flower
+          {{ pm2_cmd }} restart {{ app_root }}/ecosystem.config.js --only llm-flower --update-env
         else
           echo "llm-flower not running in PM2, skipping restart"
         fi
@@ -258,7 +268,20 @@
         executable: /bin/bash
       when:
         - pm2_cmd != "NOT_FOUND"
-        - (git_result.changed or llm_env_result.changed) and flower_enabled | default(true)
+        - (git_result.changed or llm_env_result.changed or ecosystem_result.changed) and flower_enabled | default(true)
+
+    - name: Verify LLM health after update
+      uri:
+        url: "http://localhost:{{ llm_port }}/health"
+        method: GET
+        status_code: 200
+      register: llm_health
+      retries: 6
+      delay: 5
+      until: llm_health.status == 200
+      when:
+        - pm2_cmd != "NOT_FOUND"
+        - git_result.changed or llm_env_result.changed or ecosystem_result.changed
 
     # Frontend
     - name: Clean frontend node_modules and lock file

@@ -6,7 +6,6 @@
   hosts: all
   become: yes
   vars_files:
-    - ../group_vars/all.yml
     - "{{ vault_vars_file | default('../group_vars/all/vault.yml') }}"
 
   tasks:
@@ -268,6 +267,8 @@
           LLAMA_SERVER_URL="{{ llama_server_url }}"
           LLAMA_API_TYPE="{{ llama_api_type }}"
           LLAMA_MODEL="{{ llama_model }}"
+          LLM_REQUEST_TIMEOUT="{{ llm_request_timeout }}"
+          OLLAMA_KEEP_ALIVE="{{ ollama_keep_alive }}"
           VLLM_SERVER_URL="{{ vllm_server_url }}"
           VLLM_MODEL="{{ vllm_model }}"
           RESUME_PATH=../../data/resume.md
@@ -281,6 +282,10 @@
           LLM_API_KEYS='{{ llm_authorized_api_keys }}'
         owner: "{{ ansible_user }}"
         mode: "0600"
+
+    - name: Display resolved LLM backend
+      debug:
+        msg: "LLM backend for {{ inventory_hostname }}: api_type={{ llama_api_type }}, server={{ llama_server_url }}, model={{ llama_model }}, timeout={{ llm_request_timeout }}"
 
     - name: Check if Ollama is installed
       command: which ollama
@@ -513,6 +518,28 @@
     - name: Display API health status
       debug:
         msg: "API Service: {{ 'HEALTHY' if api_health.status == 200 else 'STARTED (health endpoint may not exist)' }}"
+
+    - name: Test LLM health endpoint
+      uri:
+        url: "http://localhost:{{ llm_port }}/health"
+        method: GET
+        status_code: 200
+      register: llm_health
+      retries: 6
+      delay: 5
+      until: llm_health.status == 200
+
+    - name: Assert deployed LLM backend matches resolved configuration
+      assert:
+        that:
+          - llm_health.json.llama_server == llama_server_url
+          - llm_health.json.model == llama_model
+          - llm_health.json.server_reachable | bool
+        fail_msg: >-
+          LLM health check does not match the resolved deployment configuration.
+          Expected server={{ llama_server_url }}, model={{ llama_model }}.
+          Got {{ llm_health.json }}
+        success_msg: "LLM health matches resolved configuration"
 
     - name: Display completion message
       debug:

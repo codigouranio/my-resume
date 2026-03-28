@@ -85,6 +85,8 @@ VLLM_MODEL = os.getenv("VLLM_MODEL", "Qwen/Qwen2.5-7B-Instruct")
 LLAMA_SERVER_URL = os.getenv("LLAMA_SERVER_URL", "http://localhost:8080")
 LLAMA_MODEL = os.getenv("LLAMA_MODEL", "llama3.1")
 LLAMA_API_TYPE = os.getenv("LLAMA_API_TYPE", "llama-cpp")
+LLM_REQUEST_TIMEOUT = int(os.getenv("LLM_REQUEST_TIMEOUT", "180"))
+OLLAMA_KEEP_ALIVE = os.getenv("OLLAMA_KEEP_ALIVE", "10m")
 SERVICE_VERSION = (
     os.getenv("APP_VERSION")
     or os.getenv("K_REVISION")
@@ -599,7 +601,7 @@ def call_llama_cpp_server(prompt: str, max_tokens: int = 256) -> dict:
                 "top_p": 0.9,
                 "stop": ["User:", "\n\n"],
             },
-            timeout=60,
+            timeout=LLM_REQUEST_TIMEOUT,
         )
         response.raise_for_status()
         data = response.json()
@@ -619,6 +621,7 @@ def call_ollama_server(prompt: str, max_tokens: int = 256) -> dict:
             f"{LLAMA_SERVER_URL}/api/chat",
             json={
                 "model": LLAMA_MODEL,
+                "keep_alive": OLLAMA_KEEP_ALIVE,
                 "messages": [{"role": "user", "content": prompt}],
                 "stream": False,
                 "options": {
@@ -627,7 +630,7 @@ def call_ollama_server(prompt: str, max_tokens: int = 256) -> dict:
                     "num_predict": max_tokens,
                 },
             },
-            timeout=60,
+            timeout=LLM_REQUEST_TIMEOUT,
         )
         response.raise_for_status()
         data = response.json()
@@ -656,7 +659,7 @@ def call_openai_compatible(
                 "top_p": 0.9,
                 "stop": None,
             },
-            timeout=60,
+            timeout=LLM_REQUEST_TIMEOUT,
         )
         response.raise_for_status()
         data = response.json()
