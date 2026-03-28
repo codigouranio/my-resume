@@ -2,6 +2,8 @@
 
 set -e
 
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+
 prompt_secret() {
 	prompt="$1"
 	printf '%s' "${prompt}" >&2
@@ -16,9 +18,9 @@ prompt_secret() {
 	printf '%s' "${secret}"
 }
 
-INVENTORY_FILE="${INVENTORY_FILE:-inventory-production.yml}"
+INVENTORY_FILE="${INVENTORY_FILE:-${SCRIPT_DIR}/inventory-production.yml}"
 if [ ! -f "${INVENTORY_FILE}" ]; then
-	INVENTORY_FILE="inventory.yml"
+	INVENTORY_FILE="${SCRIPT_DIR}/inventory.yml"
 fi
 
 LIMIT_HOSTS="${1:-${DEPLOY_LIMIT:-production}}"
@@ -30,13 +32,33 @@ fi
 
 if [ -n "${VAULT_VARS_FILE}" ]; then
 	SELECTED_VAULT_VARS_FILE="${VAULT_VARS_FILE}"
-elif [ -f "group_vars/all/vault.yml" ]; then
-	SELECTED_VAULT_VARS_FILE="group_vars/all/vault.yml"
-elif [ -f "group_vars/all/vault-sandbox.yml" ]; then
-	SELECTED_VAULT_VARS_FILE="group_vars/all/vault-sandbox.yml"
+elif [ -f "${SCRIPT_DIR}/group_vars/all/vault.yml" ]; then
+	SELECTED_VAULT_VARS_FILE="${SCRIPT_DIR}/group_vars/all/vault.yml"
+elif [ -f "${SCRIPT_DIR}/group_vars/all/vault-sandbox.yml" ]; then
+	SELECTED_VAULT_VARS_FILE="${SCRIPT_DIR}/group_vars/all/vault-sandbox.yml"
 else
 	echo "❌ No vault vars file found (expected group_vars/all/vault.yml or vault-sandbox.yml)." >&2
 	exit 1
+fi
+
+case "${SELECTED_VAULT_VARS_FILE}" in
+	/*) ;;
+	*) SELECTED_VAULT_VARS_FILE="${SCRIPT_DIR}/${SELECTED_VAULT_VARS_FILE}" ;;
+esac
+
+# Ansible auto-loads files from group_vars/all/. If both vault.yml and
+# vault-sandbox.yml exist with different passwords, deploy can fail decryption.
+VAULT_FILE_PROD="${SCRIPT_DIR}/group_vars/all/vault.yml"
+VAULT_FILE_SANDBOX="${SCRIPT_DIR}/group_vars/all/vault-sandbox.yml"
+NON_SELECTED_VAULT_FILE=""
+QUARANTINED_VAULT_FILE=""
+
+if [ -f "${VAULT_FILE_PROD}" ] && [ -f "${VAULT_FILE_SANDBOX}" ]; then
+	if [ "${SELECTED_VAULT_VARS_FILE}" = "${VAULT_FILE_PROD}" ]; then
+		NON_SELECTED_VAULT_FILE="${VAULT_FILE_SANDBOX}"
+	elif [ "${SELECTED_VAULT_VARS_FILE}" = "${VAULT_FILE_SANDBOX}" ]; then
+		NON_SELECTED_VAULT_FILE="${VAULT_FILE_PROD}"
+	fi
 fi
 
 # Prompt once for both passwords (unless provided via environment)
@@ -63,7 +85,19 @@ ansible_become_password: |-
 vault_vars_file: ${SELECTED_VAULT_VARS_FILE}
 EOF
 
-trap 'rm -f "${VAULT_PASS_FILE}" "${BECOME_VARS_FILE}"' EXIT
+cleanup() {
+	if [ -n "${QUARANTINED_VAULT_FILE}" ] && [ -f "${QUARANTINED_VAULT_FILE}" ] && [ -n "${NON_SELECTED_VAULT_FILE}" ]; then
+		mv "${QUARANTINED_VAULT_FILE}" "${NON_SELECTED_VAULT_FILE}"
+	fi
+	rm -f "${VAULT_PASS_FILE}" "${BECOME_VARS_FILE}"
+}
+
+if [ -n "${NON_SELECTED_VAULT_FILE}" ]; then
+	QUARANTINED_VAULT_FILE="$(mktemp "${SCRIPT_DIR}/.vault-quarantine.XXXXXX")"
+	mv "${NON_SELECTED_VAULT_FILE}" "${QUARANTINED_VAULT_FILE}"
+fi
+
+trap cleanup EXIT
 
 echo "🔐 Using vault vars file: ${SELECTED_VAULT_VARS_FILE}"
 

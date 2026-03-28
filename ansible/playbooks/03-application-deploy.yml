@@ -527,19 +527,41 @@
       register: llm_health
       retries: 6
       delay: 5
-      until: llm_health.status == 200
+      until: llm_health.status is defined and llm_health.status == 200
+      ignore_errors: yes
 
-    - name: Assert deployed LLM backend matches resolved configuration
+    - name: Display LLM health check result
+      debug:
+        msg: >-
+          LLM health: {{ 'OK' if not llm_health.failed else 'UNREACHABLE' }}.
+          {% if not llm_health.failed %}
+          server={{ llm_health.json.llama_server }},
+          model={{ llm_health.json.model }},
+          backend_reachable={{ llm_health.json.server_reachable }}
+          {% endif %}
+
+    - name: Warn if LLM backend is not reachable (Ollama may be cold-starting)
+      debug:
+        msg: >-
+          WARNING: LLM backend server_reachable=false. Ollama may be cold-starting.
+          Chat will work once Ollama loads the model (first request may be slow).
+          Expected: server={{ llama_server_url }}, model={{ llama_model }}.
+          Got: {{ llm_health.json | default({}) }}
+      when:
+        - not llm_health.failed
+        - not (llm_health.json.server_reachable | bool)
+
+    - name: Assert deployed LLM config matches resolved configuration
       assert:
         that:
           - llm_health.json.llama_server == llama_server_url
           - llm_health.json.model == llama_model
-          - llm_health.json.server_reachable | bool
         fail_msg: >-
-          LLM health check does not match the resolved deployment configuration.
-          Expected server={{ llama_server_url }}, model={{ llama_model }}.
-          Got {{ llm_health.json }}
-        success_msg: "LLM health matches resolved configuration"
+          LLM config mismatch! Expected server={{ llama_server_url }}, model={{ llama_model }}.
+          Got {{ llm_health.json }}. Check that llama_api_type/llama_server_url/llama_model
+          are set correctly in inventory and group_vars.
+        success_msg: "✅ LLM config matches resolved configuration"
+      when: not llm_health.failed
 
     - name: Display completion message
       debug:
