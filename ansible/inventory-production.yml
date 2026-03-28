@@ -10,6 +10,9 @@ all:
           ansible_host: 172.16.23.127
           ansible_user: jose
           ansible_python_interpreter: /usr/bin/python3
+          llama_api_type: ollama
+          llama_server_url: http://localhost:11434
+          llama_model: llama3.1
           # Override domain for this specific server
           domain: resumecast.ai 
           enable_cloudflare: true
