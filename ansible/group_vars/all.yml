@@ -56,7 +56,7 @@ postgres_password: "{{ db_password }}"
 # LLM Service Configuration
 llama_model: "llama3.1"
 llama_server_url: "http://localhost:11434"
-llama_api_type: "vllm"  # Options: llama-cpp, ollama, openai, vllm
+llama_api_type: "ollama"  # Options: llama-cpp, ollama, openai, vllm
 vllm_model: "Qwen/Qwen2.5-7B-Instruct"
 vllm_server_url: "http://localhost:9000"
 llm_request_timeout: 180
