@@ -356,6 +356,12 @@ class ApiClient {
     return this.request(`/admin/users${query ? `?${query}` : ''}`);
   }
 
+  async upgradeUserToPro(userId: string) {
+    return this.request(`/admin/users/${userId}/upgrade-pro`, {
+      method: 'POST',
+    });
+  }
+
   // Templates
   async getTemplates() {
     return this.request('/templates');

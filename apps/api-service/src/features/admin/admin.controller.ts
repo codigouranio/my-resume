@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -43,5 +43,12 @@ export class AdminController {
       subscriptionTier,
       limit: limit ? Number(limit) : undefined,
     });
+  }
+
+  @Post('users/:id/upgrade-pro')
+  @ApiOperation({ summary: 'Manually upgrade a user to PRO tier' })
+  @ApiResponse({ status: 200, description: 'User upgraded to PRO' })
+  upgradeUserToPro(@Param('id') id: string) {
+    return this.adminService.upgradeUserToPro(id);
   }
 }

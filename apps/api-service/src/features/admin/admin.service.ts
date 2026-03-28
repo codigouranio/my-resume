@@ -168,4 +168,49 @@ export class AdminService {
       take: limit,
     });
   }
+
+  async upgradeUserToPro(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        subscriptionTier: true,
+      },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    if (user.subscriptionTier === SubscriptionTier.PRO) {
+      return {
+        message: 'User is already PRO',
+        user,
+      };
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        subscriptionTier: SubscriptionTier.PRO,
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        subscriptionTier: true,
+      },
+    });
+
+    this.logger.log(`Admin upgraded user ${updatedUser.email} (${updatedUser.id}) to PRO`);
+
+    return {
+      message: 'User upgraded to PRO successfully',
+      user: updatedUser,
+    };
+  }
 }

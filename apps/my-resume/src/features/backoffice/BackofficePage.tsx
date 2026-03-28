@@ -292,18 +292,19 @@ export function BackofficePage() {
                       <th>Resumes</th>
                       <th>Domain</th>
                       <th>Created</th>
+                      <th className="text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {isLoadingUsers ? (
                       <tr>
-                        <td colSpan={6} className="text-center py-8">
+                        <td colSpan={7} className="text-center py-8">
                           <span className="loading loading-spinner loading-lg"></span>
                         </td>
                       </tr>
                     ) : users.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="text-center py-8 text-base-content/60">
+                        <td colSpan={7} className="text-center py-8 text-base-content/60">
                           No users matched the current filters.
                         </td>
                       </tr>
@@ -327,6 +328,30 @@ export function BackofficePage() {
                           <td>{account._count.resumes}</td>
                           <td>{account.customDomain || '—'}</td>
                           <td>{new Date(account.createdAt).toLocaleDateString()}</td>
+                          <td className="text-right">
+                            {account.subscriptionTier === 'PRO' ? (
+                              <span className="text-xs text-base-content/60">Already PRO</span>
+                            ) : (
+                              <button
+                                className="btn btn-xs btn-primary"
+                                disabled={!!operationLoading[`upgrade-${account.id}`]}
+                                onClick={() =>
+                                  runOperation(
+                                    `upgrade-${account.id}`,
+                                    () => apiClient.upgradeUserToPro(account.id),
+                                    (result) => result.message || `${account.email} upgraded to PRO.`,
+                                    `Upgrade ${account.email} to PRO now?`,
+                                  )
+                                }
+                              >
+                                {operationLoading[`upgrade-${account.id}`] ? (
+                                  <span className="loading loading-spinner loading-xs"></span>
+                                ) : (
+                                  'Upgrade to PRO'
+                                )}
+                              </button>
+                            )}
+                          </td>
                         </tr>
                       ))
                     )}
