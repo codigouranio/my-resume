@@ -1,8 +1,9 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Logger } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Logger, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Public } from '../auth/decorators/public.decorator';
 import { ChatService } from './chat.service';
 import { ChatRequestDto, ChatResponseDto } from './dto/chat.dto';
+import { Request } from 'express';
 
 /**
  * Controller for chat endpoints
@@ -41,12 +42,22 @@ export class ChatController {
     status: 503,
     description: 'LLM service unavailable',
   })
-  async chat(@Body() chatRequest: ChatRequestDto): Promise<ChatResponseDto> {
+  async chat(
+    @Body() chatRequest: ChatRequestDto,
+    @Req() req: Request,
+  ): Promise<ChatResponseDto> {
     this.logger.log(
       `[chat] Request received - slug: ${chatRequest.slug}, message length: ${chatRequest.message.length}`,
     );
 
-    const response = await this.chatService.chat(chatRequest);
+    const response = await this.chatService.chat(chatRequest, {
+      ipAddress:
+        (req.headers['x-real-ip'] as string) ||
+        (req.headers['x-forwarded-for'] as string) ||
+        req.ip,
+      userAgent: req.headers['user-agent'] as string,
+      referrer: req.headers['referer'] as string,
+    });
 
     this.logger.log(
       `[chat] Response sent - conversationId: ${response.conversationId}, response length: ${response.response.length}`,

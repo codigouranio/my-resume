@@ -1,7 +1,15 @@
 # Test script for LLM service
 
+import os
+import pytest
 import requests
 import json
+
+if os.getenv("RUN_LIVE_LLM_TESTS") != "1":
+    pytest.skip(
+        "Skipping live service tests (set RUN_LIVE_LLM_TESTS=1 to enable)",
+        allow_module_level=True,
+    )
 
 BASE_URL = "http://localhost:5000"
 

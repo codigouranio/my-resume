@@ -16,8 +16,16 @@ import requests
 from bs4 import BeautifulSoup
 
 # LangChain imports
-from langchain.tools import Tool
-from langchain.agents import AgentExecutor, create_react_agent
+try:
+    from langchain.tools import Tool
+except ImportError:
+    from langchain_core.tools import Tool
+
+try:
+    from langchain.agents import AgentExecutor, create_react_agent
+except ImportError:
+    AgentExecutor = None
+    create_react_agent = None
 from langchain_core.prompts import PromptTemplate
 from langchain_core.language_models.llms import LLM
 from langchain_core.callbacks.manager import CallbackManagerForLLMRun
@@ -186,8 +194,15 @@ class CompanyResearchAgent:
             )
         ]
 
-    def _create_agent(self) -> AgentExecutor:
+    def _create_agent(self):
         """Create LangChain ReAct agent."""
+
+        if not AgentExecutor or not create_react_agent:
+            logger.warning(
+                "LangChain agent APIs not available in this environment; "
+                "falling back to direct research mode"
+            )
+            return None
 
         # ReAct prompt template
         template = """Answer the following question as best you can. You have access to the following tools:

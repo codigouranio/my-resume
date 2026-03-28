@@ -18,7 +18,9 @@ class APIKeyManager:
 
     def __init__(self):
         self.api_keys: Dict[str, str] = {}
+        self.tenant_allowlist: Dict[str, list[str] | str] = {}
         self._load_api_keys()
+        self._load_tenant_allowlist()
 
     def _load_api_keys(self):
         """Load API keys from environment variable."""
@@ -44,6 +46,37 @@ class APIKeyManager:
                 "Set LLM_API_KEYS in .env"
             )
 
+    def _load_tenant_allowlist(self):
+        """Load tenant allowlist map from environment variable.
+
+        Format:
+        {
+          "api-service": ["tenant-a", "tenant-b"],
+          "admin-dashboard": "*"
+        }
+        """
+        tenants_json = os.getenv("LLM_API_KEY_TENANTS", "{}")
+
+        try:
+            parsed = json.loads(tenants_json)
+            if not isinstance(parsed, dict):
+                logger.error("LLM_API_KEY_TENANTS must be a JSON object")
+                self.tenant_allowlist = {}
+            else:
+                self.tenant_allowlist = parsed
+                if self.tenant_allowlist:
+                    logger.info(
+                        "✅ Loaded tenant allowlist for services: "
+                        f"{list(self.tenant_allowlist.keys())}"
+                    )
+                else:
+                    logger.info(
+                        "No tenant allowlist configured; tenant checks are permissive"
+                    )
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse LLM_API_KEY_TENANTS JSON: {e}")
+            self.tenant_allowlist = {}
+
     def validate_key(self, provided_key: Optional[str]) -> tuple[bool, Optional[str]]:
         """
         Validate provided API key.
@@ -63,6 +96,54 @@ class APIKeyManager:
                 return True, service_name
 
         return False, None
+
+    def validate_tenant(
+        self, service_name: Optional[str], tenant_id: Optional[str]
+    ) -> bool:
+        """Validate whether a service can act on behalf of tenant_id.
+
+        Backward compatibility rules:
+        - If no allowlist is configured, allow all tenant values.
+        - If service has no explicit allowlist entry, allow all tenant values.
+        """
+        if not service_name:
+            return False
+
+        if not self.tenant_allowlist:
+            return True
+
+        rule = self.tenant_allowlist.get(service_name)
+        if rule is None:
+            return True
+
+        if rule == "*":
+            return True
+
+        if isinstance(rule, list):
+            if not tenant_id:
+                return False
+            return tenant_id in rule
+
+        logger.warning(
+            f"Invalid tenant allowlist format for service '{service_name}': {type(rule)}"
+        )
+        return False
+
+    def validate_request(
+        self, provided_key: Optional[str], tenant_id: Optional[str]
+    ) -> tuple[bool, Optional[str], Optional[str]]:
+        """Validate API key + tenant pair.
+
+        Returns (is_valid, service_name, failure_reason).
+        """
+        is_valid_key, service_name = self.validate_key(provided_key)
+        if not is_valid_key:
+            return False, None, "invalid_api_key"
+
+        if not self.validate_tenant(service_name, tenant_id):
+            return False, service_name, "tenant_not_allowed"
+
+        return True, service_name, None
 
     def get_service_count(self) -> int:
         """Get number of configured services."""
@@ -100,14 +181,17 @@ def require_api_key(f):
 
         # Get API key from header
         provided_key = request.headers.get("X-API-Key")
+        tenant_id = request.headers.get("X-Tenant-Id")
 
-        # Validate key
-        is_valid, service_name = manager.validate_key(provided_key)
+        # Validate key and tenant
+        is_valid, service_name, failure_reason = manager.validate_request(
+            provided_key, tenant_id
+        )
 
         if not is_valid:
             logger.warning(
                 f"Unauthorized API request to {request.path} "
-                f"from {request.remote_addr}"
+                f"from {request.remote_addr} (reason={failure_reason}, tenant={tenant_id})"
             )
             return (
                 jsonify(
@@ -115,6 +199,7 @@ def require_api_key(f):
                         "error": "Unauthorized",
                         "message": "Valid API key required. "
                         "Provide X-API-Key header.",
+                        "reason": failure_reason,
                     }
                 ),
                 401,
@@ -128,6 +213,7 @@ def require_api_key(f):
 
         # Store service name in request context for logging
         request.api_service = service_name
+        request.tenant_id = tenant_id
 
         return f(*args, **kwargs)
 

@@ -121,7 +121,8 @@ module.exports = {
         REDIS_DB: {{ llm_redis_db }},
         REDIS_PASSWORD: '{{ llm_redis_password }}',
         LLM_WEBHOOK_SECRET: '{{ llm_webhook_secret }}',
-        FLOWER_UNAUTHENTICATED_API: 'true'
+        FLOWER_UNAUTHENTICATED_API: 'true',
+        LLM_SKIP_TOKEN_MANAGER: 'true'
       },
       error_file: '{{ llm_service_path }}/logs/flower-error.log',
       out_file: '{{ llm_service_path }}/logs/flower-out.log',

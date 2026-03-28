@@ -27,13 +27,6 @@ from company_research_agent import CompanyResearchAgent
 from position_fit_agent import PositionFitAgent
 from musashi_index_agent import MusashiIndexAgent
 from llm_guard_service import protect_prompt, protect_output, GuardRejection
-from api_client import (
-    load_resume_from_api,
-    get_user_info_from_api,
-    log_chat_interaction_to_api,
-    load_conversation_history_from_api,
-    get_headers,
-)
 from api_key_auth import get_api_key_manager
 from app_remote import RemoteLLMWrapper, research_company_async, analyze_position_async
 
@@ -98,31 +91,6 @@ SERVICE_VERSION = (
     or os.getenv("SERVICE_VERSION")
     or "1.0.0"
 )
-
-# API service configuration
-API_SERVICE_URL = os.getenv("API_SERVICE_URL", "http://localhost:3000")
-
-# JWT authentication
-LLM_SERVICE_USERNAME = os.getenv("LLM_SERVICE_USERNAME", "llm-service")
-LLM_SERVICE_PASSWORD = os.getenv("LLM_SERVICE_PASSWORD", "")
-LLM_SERVICE_TOKEN = os.getenv("LLM_SERVICE_TOKEN", "")
-
-# Initialize JWT token manager if credentials are provided
-if LLM_SERVICE_PASSWORD:
-    try:
-        from token_manager import init_token_manager
-
-        logger.info("Initializing JWT token manager...")
-        init_token_manager(
-            api_url=API_SERVICE_URL,
-            username=LLM_SERVICE_USERNAME,
-            password=LLM_SERVICE_PASSWORD,
-            start_background=True,
-        )
-        logger.info("✅ JWT token manager initialized successfully")
-    except Exception as e:
-        logger.error(f"❌ Failed to initialize JWT token manager: {e}")
-        logger.warning("Falling back to static token authentication")
 
 WEBHOOK_SECRET = os.getenv("LLM_WEBHOOK_SECRET", "").encode("utf-8")
 if not WEBHOOK_SECRET:
@@ -199,6 +167,16 @@ class ChatRequest(BaseModel):
     message: str = Field(..., description="User question about the resume")
     slug: str = Field(..., description="Resume slug identifier")
     conversationId: Optional[str] = Field(None, description="Conversation session ID")
+    resumeContext: str = Field(
+        ...,
+        description="Complete resume context (public content + private llm context)",
+    )
+    userInfo: Dict[str, Any] = Field(
+        ..., description="User profile data (at minimum firstName/lastName)"
+    )
+    conversationHistory: Optional[List[Dict[str, Any]]] = Field(
+        default_factory=list, description="Recent history items with {question, answer}"
+    )
 
     class Config:
         json_schema_extra = {
@@ -206,6 +184,14 @@ class ChatRequest(BaseModel):
                 "message": "What are your Python skills?",
                 "slug": "john-doe",
                 "conversationId": "550e8400-e29b-41d4-a716-446655440000",
+                "resumeContext": "Senior engineer with 10 years...",
+                "userInfo": {"firstName": "John", "lastName": "Doe"},
+                "conversationHistory": [
+                    {
+                        "question": "Tell me about AWS",
+                        "answer": "I used ECS and Lambda...",
+                    }
+                ],
             }
         }
 
@@ -215,6 +201,11 @@ class ChatResponse(BaseModel):
 
     response: str = Field(..., description="AI-generated answer")
     conversationId: str = Field(..., description="Conversation session ID")
+    topics: Optional[List[str]] = Field(None, description="Detected topics")
+    sentiment: Optional[str] = Field(None, description="Inferred answer sentiment")
+    responseTime: Optional[int] = Field(
+        None, description="Response time in milliseconds"
+    )
 
 
 class HealthResponse(BaseModel):
@@ -225,7 +216,7 @@ class HealthResponse(BaseModel):
     llama_server: str = Field(..., description="LLAMA server URL")
     server_reachable: bool = Field(..., description="Whether LLAMA server is reachable")
     model: str = Field(..., description="Model name")
-    api_url: Optional[str] = Field(None, description="API service URL")
+    mode: str = Field(..., description="Service mode")
 
 
 class ResumeResponse(BaseModel):
@@ -470,15 +461,18 @@ class MusashiIndexResponse(BaseModel):
 
 
 async def verify_api_key(
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
-) -> str:
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    x_tenant_id: Optional[str] = Header(None, alias="X-Tenant-Id"),
+) -> Dict[str, Optional[str]]:
     """
     Verify API key from X-API-Key header.
     Returns service name if valid, raises HTTPException if invalid.
     """
     logger.debug(f"[AUTH] Verifying API key (present: {x_api_key is not None})")
     manager = get_api_key_manager()
-    is_valid, service_name = manager.validate_key(x_api_key)
+    is_valid, service_name, failure_reason = manager.validate_request(
+        x_api_key, x_tenant_id
+    )
 
     if not is_valid:
         logger.warning(
@@ -486,12 +480,12 @@ async def verify_api_key(
         )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or missing API key",
+            detail=f"Invalid API key/tenant combination ({failure_reason})",
             headers={"WWW-Authenticate": "ApiKey"},
         )
 
     logger.info(f"[AUTH] ✅ Valid API key for service: {service_name}")
-    return service_name
+    return {"service_name": service_name, "tenant_id": x_tenant_id}
 
 
 async def verify_webhook_signature(
@@ -573,26 +567,24 @@ def extract_topics_from_question(question: str) -> list:
     return topics if topics else ["general"]
 
 
-# Import helper functions from original app
-# These would need to be refactored from app_remote.py
-# For now, we'll create stubs that reference the original implementations
+def infer_sentiment(answer: str) -> str:
+    """Infer a coarse sentiment label for analytics payloads."""
+    answer_lower = answer.lower()
+    negative_indicators = [
+        "i don't have",
+        "not mentioned",
+        "cannot provide",
+        "i don't know",
+        "no information",
+        "not available",
+        "not specified",
+    ]
 
-
-def load_resume_from_db(slug: str):
-    """Load resume from database via API - import from app_remote.py"""
-    # This function should be extracted from app_remote.py
-    # For now, use the API client
-    return load_resume_from_api(slug)
-
-
-def get_user_info(slug: str):
-    """Get user info from API"""
-    return get_user_info_from_api(slug)
-
-
-def load_conversation_history(conversation_id: str, resume_id: str):
-    """Load conversation history from API"""
-    return load_conversation_history_from_api(conversation_id, resume_id)
+    if any(indicator in answer_lower for indicator in negative_indicators):
+        return "NEGATIVE"
+    if len(answer) > 100:
+        return "POSITIVE"
+    return "NEUTRAL"
 
 
 def call_llama_cpp_server(prompt: str, max_tokens: int = 256) -> dict:
@@ -805,7 +797,7 @@ async def health_check():
         llama_server=server_url,
         server_reachable=server_reachable,
         model=model_name,
-        api_url=API_SERVICE_URL,
+        mode="stateless",
     )
 
 
@@ -813,12 +805,12 @@ async def health_check():
 async def chat(
     request: Request,
     chat_request: ChatRequest,
-    service_name: str = Depends(verify_api_key),
+    caller: Dict[str, Optional[str]] = Depends(verify_api_key),
 ):
     """
     Chat endpoint for resume questions.
 
-    Loads fresh resume data and generates AI responses based on the resume context.
+    Generates AI responses based exclusively on request payload context.
     Maintains conversation history per session.
 
     Requires X-API-Key header for authentication.
@@ -829,40 +821,28 @@ async def chat(
         user_message = chat_request.message.strip()
         slug = chat_request.slug
         conversation_id = chat_request.conversationId or str(uuid.uuid4())
+        resume_context = (chat_request.resumeContext or "").strip()
+        user_info = chat_request.userInfo or {}
+        conversation_history = chat_request.conversationHistory or []
 
         if not user_message:
             raise HTTPException(status_code=400, detail="Message is required")
 
-        user_info = get_user_info(slug)
-        if not user_info:
-            logger.warning(f"No user information found for slug: {slug}")
-            raise HTTPException(status_code=404, detail="Resume not found")
+        if not resume_context:
+            raise HTTPException(
+                status_code=400,
+                detail="resumeContext is required in stateless mode",
+            )
 
-        user_first_name = user_info.get("firstName", "The person").strip()
-        user_full_name = f"{user_info.get('firstName', 'The person')} {user_info.get('lastName', '')}".strip()
+        if not user_info:
+            raise HTTPException(
+                status_code=400,
+                detail="userInfo is required in stateless mode",
+            )
 
         # Safety guardrails for AI responses
         safety_instructions = _get_safety_instructions(user_info)
         system_instructions = _get_system_instructions(user_info)
-
-        # Load fresh resume context from database
-        resume_context = None
-        resume_id = None
-
-        if slug:
-            db_context, db_resume_id = load_resume_from_db(slug)
-            if db_context:
-                resume_context = db_context
-                resume_id = db_resume_id
-                logger.info(f"✓ Loaded fresh resume from database for slug: {slug}")
-            else:
-                logger.warning(f"✗ Slug '{slug}' not found in database")
-                raise HTTPException(status_code=404, detail="Resume not found")
-
-        # Load conversation history
-        conversation_history = []
-        if conversation_id and resume_id:
-            conversation_history = load_conversation_history(conversation_id, resume_id)
 
         history_block = ""
         if conversation_history:
@@ -877,38 +857,33 @@ async def chat(
             "chat_personalized_full",
             system_instructions=system_instructions,
             safety_instructions=safety_instructions,
-            resume_context=resume_context,
+            resume_context=f"{resume_context}{history_block}",
         )
 
         # Generate response via LLAMA server
         logger.info(f"Generating response for: {user_message[:100]}")
         result = generate_completion(system_prompt, user_message, max_tokens=200)
 
-        # Log interaction for analytics
+        # Compute analytics hints and return them to api-service for persistence.
         response_time = int((time.time() - start_time) * 1000)
         topics = extract_topics_from_question(user_message)
 
-        try:
-            # Extract request metadata
-            ip_address = request.client.host if request.client else None
-            user_agent = request.headers.get("user-agent")
-            referrer = request.headers.get("referer")
+        logger.info(
+            "[chat] completed request",
+            extra={
+                "service": caller.get("service_name"),
+                "tenant": caller.get("tenant_id"),
+                "slug": slug,
+            },
+        )
 
-            log_chat_interaction_to_api(
-                resume_slug=slug,
-                question=user_message,
-                answer=result,
-                response_time=response_time,
-                session_id=conversation_id,
-                topics=topics,
-                ip_address=ip_address,
-                user_agent=user_agent,
-                referrer=referrer,
-            )
-        except Exception as log_error:
-            logger.error(f"Failed to log chat interaction: {log_error}")
-
-        return ChatResponse(response=result, conversationId=conversation_id)
+        return {
+            "response": result,
+            "conversationId": conversation_id,
+            "topics": topics,
+            "sentiment": infer_sentiment(result),
+            "responseTime": response_time,
+        }
 
     except HTTPException:
         raise
@@ -925,17 +900,10 @@ async def get_resume(slug: str, service_name: str = Depends(verify_api_key)):
     Returns full resume data including public content and LLM context.
     Requires X-API-Key header for authentication.
     """
-    try:
-        context, resume_id = load_resume_from_db(slug)
-        if not context:
-            raise HTTPException(status_code=404, detail="Resume not found")
-
-        return ResumeResponse(resume={"context": context, "id": resume_id})
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error fetching resume: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    raise HTTPException(
+        status_code=410,
+        detail="Deprecated in stateless mode. api-service must send resume context directly.",
+    )
 
 
 @app.post(
@@ -1026,20 +994,14 @@ async def reload_resume(
     Webhook endpoint to refresh cached resume data.
     Requires X-Webhook-Signature header for authentication.
     """
-    try:
-        slug = reload_request.slug
-        context, resume_id = load_resume_from_db(slug)
-
-        if context:
-            logger.info(f"✅ Resume reloaded for slug: {slug}")
-            return {"status": "success", "slug": slug}
-        else:
-            raise HTTPException(status_code=404, detail="Resume not found")
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error reloading resume: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    logger.info(
+        "reload-resume requested in stateless mode; no cache invalidation required"
+    )
+    return {
+        "status": "success",
+        "slug": reload_request.slug,
+        "message": "No-op in stateless mode",
+    }
 
 
 @app.post("/api/companies/enrich", tags=["Research"])
@@ -1203,21 +1165,18 @@ async def score_position(
 
         # SYNC MODE: No callback, use resume_slug
         else:
-            resume_slug = score_request.resume_slug
+            resume = score_request.resume or {}
             job_description = score_request.job_description
+            resume_content = (resume.get("content") or "").strip()
+            resume_llm_context = (resume.get("llmContext") or "").strip()
 
-            if not resume_slug or not job_description:
+            if not resume_content or not job_description:
                 raise HTTPException(
                     status_code=400,
-                    detail="resume_slug and job_description are required for sync mode",
+                    detail="resume.content and job_description are required for sync mode",
                 )
 
-            logger.info(f"Synchronous position scoring for resume: {resume_slug}")
-
-            # Load resume
-            context, resume_id = load_resume_from_db(resume_slug)
-            if not context:
-                raise HTTPException(status_code=404, detail="Resume not found")
+            logger.info("Synchronous position scoring in stateless mode")
 
             # Use PositionFitAgent
             agent = get_position_fit_agent()
@@ -1226,8 +1185,8 @@ async def score_position(
                 position="Position",
                 job_url=None,
                 job_description=job_description,
-                resume_content=context,
-                resume_llm_context="",
+                resume_content=resume_content,
+                resume_llm_context=resume_llm_context,
                 journal_entries=[],
             )
 
@@ -1410,7 +1369,7 @@ async def startup_event():
     logger.info(f"LLAMA Server: {LLAMA_SERVER_URL}")
     logger.info(f"LLAMA Model: {LLAMA_MODEL}")
     logger.info(f"API Type: {LLAMA_API_TYPE}")
-    logger.info(f"API Service: {API_SERVICE_URL}")
+    logger.info("Mode: stateless (context supplied by caller)")
     logger.info(f"Celery: {'Enabled' if CELERY_AVAILABLE else 'Disabled'}")
     logger.info(f"API Keys: {api_key_manager.get_service_count()} configured")
     logger.info("=" * 80)

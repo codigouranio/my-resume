@@ -18,7 +18,6 @@ from company_research_agent import CompanyResearchAgent
 from position_fit_agent import PositionFitAgent
 from musashi_index_agent import MusashiIndexAgent
 from prompt_manager import get_prompt_manager
-from app_remote import RemoteLLMWrapper
 
 # Configure logging for Celery tasks
 logging.basicConfig(
@@ -201,6 +200,9 @@ def research_company_task(
             f"[Task {self.request.id}] Starting company research for: {company_name}"
         )
 
+        # Lazy import avoids Flower startup pulling app_remote + NLP bootstrap.
+        from app_remote import RemoteLLMWrapper
+
         # Initialize research agent (cached after first call)
         llm_wrapper = RemoteLLMWrapper()
         agent = CompanyResearchAgent(llm_wrapper)
@@ -299,6 +301,9 @@ def analyze_position_task(
             f"[Task {self.request.id}] Starting position analysis for: {position} at {company}"
         )
 
+        # Lazy import avoids Flower startup pulling app_remote + NLP bootstrap.
+        from app_remote import RemoteLLMWrapper
+
         # Initialize position fit agent (cached after first call)
         llm_wrapper = RemoteLLMWrapper()
         agent = PositionFitAgent(llm_wrapper)
@@ -387,6 +392,9 @@ def calculate_musashi_task(
     """Calculate Musashi Index asynchronously and post result to webhook."""
     try:
         logger.info(f"[Task {self.request.id}] Starting Musashi Index job {job_id}")
+
+        # Lazy import avoids Flower startup pulling app_remote + auth bootstrap.
+        from app_remote import RemoteLLMWrapper
 
         llm_wrapper = RemoteLLMWrapper()
         prompts = get_prompt_manager()

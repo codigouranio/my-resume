@@ -4,6 +4,7 @@ import { ResumesService } from './resumes.service';
 import { PrismaService } from '@shared/database/prisma.service';
 import { EmailService } from '@shared/email/email.service';
 import { EmbeddingQueueService } from '../embeddings/embedding-queue.service';
+import { AIContextService } from '../ai-context/ai-context.service';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { CreateRecruiterInterestDto } from './dto/create-recruiter-interest.dto';
 
@@ -91,6 +92,12 @@ describe('ResumesService - Recruiter Interest', () => {
           useValue: {
             addJob: jest.fn(),
             processQueue: jest.fn(),
+          },
+        },
+        {
+          provide: AIContextService,
+          useValue: {
+            prepareContext: jest.fn(),
           },
         },
       ],

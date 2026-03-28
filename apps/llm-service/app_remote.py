@@ -21,12 +21,6 @@ from prompt_manager import get_prompt_manager
 from company_research_agent import CompanyResearchAgent
 from position_fit_agent import PositionFitAgent
 from llm_guard_service import protect_prompt, protect_output, GuardRejection
-from api_client import (
-    load_resume_from_api,
-    get_user_info_from_api,
-    log_chat_interaction_to_api,
-    load_conversation_history_from_api,
-)
 from api_key_auth import require_api_key, get_api_key_manager
 
 # Import Celery app and tasks  (optional - graceful fallback if not available)
@@ -80,43 +74,6 @@ LLAMA_MODEL = os.getenv("LLAMA_MODEL", "llama3.1")
 LLAMA_API_TYPE = os.getenv(
     "LLAMA_API_TYPE", "llama-cpp"
 )  # or "ollama", "openai", "vllm"
-
-# API service configuration (replaces direct database access)
-API_SERVICE_URL = os.getenv("API_SERVICE_URL", "http://localhost:3000")
-
-# JWT authentication (preferred - Phase 2)
-LLM_SERVICE_USERNAME = os.getenv("LLM_SERVICE_USERNAME", "llm-service")
-LLM_SERVICE_PASSWORD = os.getenv("LLM_SERVICE_PASSWORD", "")
-
-# Static token (legacy, backward compatible)
-LLM_SERVICE_TOKEN = os.getenv("LLM_SERVICE_TOKEN", "")
-
-# Initialize JWT token manager if credentials are provided
-if LLM_SERVICE_PASSWORD:
-    try:
-        from token_manager import init_token_manager
-
-        logger.info("Initializing JWT token manager...")
-        init_token_manager(
-            api_url=API_SERVICE_URL,
-            username=LLM_SERVICE_USERNAME,
-            password=LLM_SERVICE_PASSWORD,
-            start_background=True,
-        )
-        logger.info("✅ JWT token manager initialized successfully")
-    except Exception as e:
-        logger.error(f"❌ Failed to initialize JWT token manager: {e}")
-        logger.warning("Falling back to static token authentication")
-        if not LLM_SERVICE_TOKEN:
-            logger.error("No valid authentication method available!")
-elif LLM_SERVICE_TOKEN:
-    logger.warning(
-        "Using legacy static token authentication (consider upgrading to JWT)"
-    )
-else:
-    logger.error(
-        "No authentication configured! Set LLM_SERVICE_PASSWORD or LLM_SERVICE_TOKEN"
-    )
 
 WEBHOOK_SECRET = os.getenv("LLM_WEBHOOK_SECRET", "").encode("utf-8")
 if not WEBHOOK_SECRET:
@@ -191,84 +148,20 @@ def log_chat_interaction(
     request_obj,
     session_id: str | None,
 ):
-    """Log chat interaction via API for analytics."""
-    try:
-        # Extract visitor info
-        ip_address = (
-            request_obj.headers.get("X-Real-IP")
-            or request_obj.headers.get("X-Forwarded-For")
-            or request_obj.remote_addr
-        )
-        user_agent = request_obj.headers.get("User-Agent", "")[:500]  # Limit length
-        referrer = request_obj.headers.get("Referer", "")[:500]
-
-        # Simple sentiment analysis based on answer
-        sentiment = "NEUTRAL"
-        was_answered_well = True
-        answer_lower = answer.lower()
-
-        negative_indicators = [
-            "i don't have",
-            "not mentioned",
-            "cannot provide",
-            "i don't know",
-            "no information",
-            "not available",
-            "not specified",
-        ]
-
-        if any(indicator in answer_lower for indicator in negative_indicators):
-            sentiment = "NEGATIVE"
-            was_answered_well = False
-        elif len(answer) > 100:  # Substantial answer
-            sentiment = "POSITIVE"
-
-        # Extract topics from question
-        topics = extract_topics_from_question(question)
-
-        # Log via API
-        success = log_chat_interaction_to_api(
-            resume_slug=resume_slug,
-            session_id=session_id,
-            question=question,
-            answer=answer,
-            sentiment=sentiment,
-            was_answered_well=was_answered_well,
-            topics=topics,
-            ip_address=ip_address,
-            user_agent=user_agent,
-            referrer=referrer,
-            response_time=response_time,
-        )
-
-        if success:
-            logger.info(
-                f"Logged chat interaction for resume {resume_slug} (sentiment: {sentiment})"
-            )
-        else:
-            logger.warning(f"Failed to log chat interaction via API for {resume_slug}")
-
-    except Exception as e:
-        logger.error(f"Error logging chat interaction: {e}")
-        import traceback
-
-        logger.error(traceback.format_exc())
+    """No-op in stateless mode. Persistence is handled by api-service."""
+    return
 
 
 def load_resume_from_db(slug: str):
-    """Load resume context and resume ID via API by slug.
-    Note: Function name kept for backward compatibility but now uses API.
-    """
-    return load_resume_from_api(slug)
+    """Deprecated in stateless mode."""
+    return None, None
 
 
 def load_conversation_history(
     session_id: str, resume_slug: str, limit: int = 6
 ) -> list:
-    """Load recent conversation history via API.
-    Note: Now takes resume_slug instead of resume_id to use API.
-    """
-    return load_conversation_history_from_api(resume_slug, session_id, limit)
+    """Deprecated in stateless mode."""
+    return []
 
 
 def _get_system_instructions(user_info: dict) -> str:
@@ -801,21 +694,8 @@ def analyze_position_async(
 
 
 def get_user_info(resume_slug: str = None):
-    """Get user information via API by resume slug.
-    Note: 'Get all users' functionality removed (was admin-only, migrate separately if needed).
-    """
-    if not resume_slug:
-        logger.warning(
-            "get_user_info called without resume_slug - this is no longer supported"
-        )
-        return []
-
-    try:
-        user_data = get_user_info_from_api(resume_slug)
-        return [user_data] if user_data else []
-    except Exception as e:
-        logger.error(f"Error fetching user information: {e}")
-        return []
+    """Deprecated in stateless mode."""
+    return []
 
 
 @app.route("/health", methods=["GET"])
@@ -859,9 +739,17 @@ def health_check():
 def chat():
     """
     Chat endpoint for resume questions.
-    Expects JSON: {"message": "user question", "slug": "resume-slug", "conversationId": "uuid"}
+        Expects JSON with full context:
+        {
+            "message": "user question",
+            "slug": "resume-slug",
+            "conversationId": "uuid",
+            "resumeContext": "full context",
+            "userInfo": {"firstName": "...", "lastName": "..."},
+            "conversationHistory": [{"question": "...", "answer": "..."}]
+        }
     Returns JSON: {"response": "AI answer", "conversationId": "uuid"}
-    Loads fresh resume data from database on every request for real-time updates.
+        Stateless mode: llm-service does not fetch context from api-service.
     """
     import time
 
@@ -871,53 +759,27 @@ def chat():
         data = request.get_json()
         user_message = data.get("message", "").strip()
         slug = data.get("slug")
-        conversation_id = data.get("conversationId")
+        conversation_id = data.get("conversationId") or str(uuid.uuid4())
+        resume_context = data.get("resumeContext", "").strip()
+        user_info = data.get("userInfo") or {}
+        conversation_history = data.get("conversationHistory") or []
 
         if not user_message:
             return jsonify({"error": "Message is required"}), 400
 
-        user_info = get_user_info(slug)
-
+        if not resume_context:
+            return (
+                jsonify({"error": "resumeContext is required in stateless mode"}),
+                400,
+            )
         if not user_info:
-            logger.warning(f"No user information found for slug: {slug}")
-            return jsonify({"error": "Resume not found"}), 404
-
-        user_first_name = user_info[0].get("firstName", "The person").strip()
-        user_full_name = f"{user_info[0].get('firstName', 'The person')} {user_info[0].get('lastName', '')}".strip()
+            return jsonify({"error": "userInfo is required in stateless mode"}), 400
 
         # Safety guardrails for the AI responses
-        safety_instructions = _get_safety_instructions(user_info[0])
+        safety_instructions = _get_safety_instructions(user_info)
 
         # System instructions for the AI to guide response style and content
-        system_instructions = _get_system_instructions(user_info[0])
-
-        # Always load fresh resume context from database
-        # This ensures every chat gets the latest resume updates (content + llmContext)
-        resume_context = None
-        resume_id = None
-
-        if slug:
-            # Load from database for specific slug
-            db_context, db_resume_id = load_resume_from_db(slug)
-            if db_context:
-                resume_context = db_context
-                resume_id = db_resume_id
-                logger.info(f"✓ Loaded fresh resume from database for slug: {slug}")
-            else:
-                logger.warning(f"✗ Slug '{slug}' not found in database")
-        else:
-            raise ValueError("Resume slug is required")
-
-        # Only fall back to RESUME_CONTEXT if database queries completely failed
-        if not resume_context:
-            logger.warning(
-                "⚠ Database queries failed, falling back to cached resume context"
-            )
-
-        # Load conversation history (per recruiter/session)
-        conversation_history = []
-        if conversation_id and resume_id:
-            conversation_history = load_conversation_history(conversation_id, resume_id)
+        system_instructions = _get_system_instructions(user_info)
 
         history_block = ""
         if conversation_history:
@@ -932,7 +794,7 @@ def chat():
             "chat_personalized_full",
             system_instructions=system_instructions,
             safety_instructions=safety_instructions,
-            resume_context=resume_context,
+            resume_context=f"{resume_context}{history_block}",
         )
 
         # Generate response via external LLAMA server
@@ -945,20 +807,6 @@ def chat():
         # Calculate response time
         response_time_ms = int((time.time() - start_time) * 1000)
 
-        # Log chat interaction for analytics (async, don't block response)
-        if slug:
-            try:
-                log_chat_interaction(
-                    slug,
-                    user_message,
-                    answer,
-                    response_time_ms,
-                    request,
-                    conversation_id,
-                )
-            except Exception as log_error:
-                logger.error(f"Failed to log chat analytics: {log_error}")
-
         return jsonify(
             {
                 "response": answer,
@@ -966,6 +814,8 @@ def chat():
                 "server": LLAMA_SERVER_URL,
                 "slug": slug,
                 "conversationId": conversation_id,
+                "topics": extract_topics_from_question(user_message),
+                "responseTime": response_time_ms,
             }
         )
 

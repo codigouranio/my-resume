@@ -61,7 +61,10 @@ def _load_llm_guard_runtime() -> dict[str, Any]:
                 len(runtime["prompt_scanners"]),
                 len(runtime["output_scanners"]),
             )
-    except Exception as exc:
+    except BaseException as exc:
+        # Some llm_guard/scanner dependencies can terminate with SystemExit during
+        # model/bootstrap checks (e.g., spaCy model downloader). Never let runtime
+        # bootstrap take the process down; fall back to heuristic protections.
         logger.warning("llm_guard unavailable, using fallback protections: %s", exc)
 
     return runtime
