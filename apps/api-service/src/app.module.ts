@@ -25,8 +25,10 @@ import { ChatModule } from './features/chat/chat.module';
 import { AdminModule } from './features/admin/admin.module';
 import { AppThrottlerGuard } from './shared/guards/throttler.guard';
 import { CustomBullBoardModule } from './shared/bull-board/bull-board.module';
+import { HealthController } from './shared/health/health.controller';
 
 @Module({
+  controllers: [HealthController],
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
