@@ -6,18 +6,15 @@ automatic retry, monitoring, and webhook callbacks.
 """
 
 import logging
-import hmac
-import hashlib
-import json
 import os
-import requests
-import time
 from celery import Task
 from celery_config import celery_app
-from company_research_agent import CompanyResearchAgent
-from position_fit_agent import PositionFitAgent
-from musashi_index_agent import MusashiIndexAgent
-from prompt_manager import get_prompt_manager
+from llm_wrapper import (
+    call_webhook,
+    get_musashi_agent,
+    get_position_fit_agent,
+    get_research_agent,
+)
 
 # Configure logging for Celery tasks
 logging.basicConfig(
@@ -47,126 +44,6 @@ class CallbackTask(Task):
     def on_failure(self, exc, task_id, args, kwargs, einfo):
         """Called when task fails after all retries."""
         logger.error(f"Task {task_id} failed permanently: {exc}")
-
-
-def sign_webhook_payload(payload_dict: dict) -> str:
-    """Generate HMAC-SHA256 signature for webhook payload."""
-    webhook_secret = os.getenv("LLM_WEBHOOK_SECRET", "").encode("utf-8")
-    if not webhook_secret:
-        logger.warning("LLM_WEBHOOK_SECRET not set - using default (insecure!)")
-        webhook_secret = b"change-me-in-production"
-
-    # Match JavaScript's JSON.stringify() behavior
-    payload_json = json.dumps(
-        payload_dict, sort_keys=True, separators=(",", ":"), ensure_ascii=False
-    )
-    signature = hmac.new(
-        webhook_secret, payload_json.encode("utf-8"), hashlib.sha256
-    ).hexdigest()
-
-    logger.info(f"Generated webhook signature:")
-    logger.info(f"  Secret: {webhook_secret[:10].decode('utf-8', errors='ignore')}...")
-    logger.info(f"  Payload: {payload_json[:200]}...")
-    logger.info(f"  Signature: {signature}")
-
-    return signature
-
-
-def call_webhook(callback_url: str, payload: dict, max_retries: int = 3):
-    """
-    Call webhook endpoint with retry logic and exponential backoff.
-
-    Args:
-        callback_url: URL to POST results to
-        payload: Dictionary containing webhook payload
-        max_retries: Maximum number of retry attempts
-    """
-    if not callback_url:
-        logger.warning("No callback URL provided, skipping webhook")
-        return
-
-    # Generate sorted JSON once - use for both signature AND HTTP body
-    # CRITICAL: Match JavaScript's JSON.stringify() behavior:
-    # - separators=(',', ':') for compact format (no spaces)
-    # - ensure_ascii=False to preserve unicode characters (José not Jos\u00e9)
-    payload_json = json.dumps(
-        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
-    )
-
-    # Generate signature from the sorted JSON string
-    webhook_secret = os.getenv("LLM_WEBHOOK_SECRET", "").encode("utf-8")
-    if not webhook_secret:
-        logger.warning("LLM_WEBHOOK_SECRET not set - using default (insecure!)")
-        webhook_secret = b"change-me-in-production"
-
-    signature = hmac.new(
-        webhook_secret, payload_json.encode("utf-8"), hashlib.sha256
-    ).hexdigest()
-
-    job_id = payload.get("jobId", "unknown")
-
-    # Detailed debugging logs
-    payload_bytes = payload_json.encode("utf-8")
-    payload_hash = hashlib.sha256(payload_bytes).hexdigest()
-
-    logger.info(f"=== WEBHOOK SIGNATURE DEBUG (Celery) ===")
-    logger.info(f"  Job ID: {job_id}")
-    logger.info(
-        f"  Secret (first 10): {webhook_secret[:10].decode('utf-8', errors='ignore')}..."
-    )
-    logger.info(
-        f"  Payload length: {len(payload_json)} chars, {len(payload_bytes)} bytes"
-    )
-    logger.info(f"  Payload SHA256: {payload_hash}")
-    logger.info(f"  FULL Payload JSON:\n{payload_json}")
-    logger.info(f"  Generated Signature: {signature}")
-    logger.info(f"========================================")
-
-    headers = {
-        "Content-Type": "application/json",
-        "X-Webhook-Signature": signature,
-        "X-Job-Id": job_id,
-    }
-
-    for attempt in range(max_retries):
-        try:
-            logger.info(
-                f"Sending webhook to {callback_url} (attempt {attempt + 1}/{max_retries})"
-            )
-
-            # Send the EXACT same sorted JSON string used for signature
-            response = requests.post(
-                callback_url, data=payload_json, headers=headers, timeout=10
-            )
-
-            # Accept any 2xx status code as success (200, 201, 204, etc.)
-            if 200 <= response.status_code < 300:
-                logger.info(
-                    f"Webhook delivered successfully for job {job_id} (status: {response.status_code})"
-                )
-                return True
-            else:
-                logger.warning(
-                    f"Webhook returned status {response.status_code}: {response.text}"
-                )
-
-        except requests.exceptions.Timeout:
-            logger.error(f"Webhook timeout (attempt {attempt + 1})")
-        except requests.exceptions.ConnectionError as e:
-            logger.error(f"Webhook connection error (attempt {attempt + 1}): {e}")
-        except Exception as e:
-            logger.error(f"Webhook error (attempt {attempt + 1}): {e}")
-
-        # Exponential backoff: 1s, 2s, 4s
-        if attempt < max_retries - 1:
-            sleep_time = 2**attempt
-            logger.info(f"Retrying webhook in {sleep_time}s...")
-            time.sleep(sleep_time)
-
-    logger.error(
-        f"Webhook failed permanently after {max_retries} attempts for job {job_id}"
-    )
-    return False
 
 
 @celery_app.task(
@@ -200,12 +77,7 @@ def research_company_task(
             f"[Task {self.request.id}] Starting company research for: {company_name}"
         )
 
-        # Lazy import avoids Flower startup pulling app_remote + NLP bootstrap.
-        from app_remote import RemoteLLMWrapper
-
-        # Initialize research agent (cached after first call)
-        llm_wrapper = RemoteLLMWrapper()
-        agent = CompanyResearchAgent(llm_wrapper)
+        agent = get_research_agent()
 
         # Perform research (can take 10-60 seconds)
         company_info = agent.research_company(company_name)
@@ -301,12 +173,7 @@ def analyze_position_task(
             f"[Task {self.request.id}] Starting position analysis for: {position} at {company}"
         )
 
-        # Lazy import avoids Flower startup pulling app_remote + NLP bootstrap.
-        from app_remote import RemoteLLMWrapper
-
-        # Initialize position fit agent (cached after first call)
-        llm_wrapper = RemoteLLMWrapper()
-        agent = PositionFitAgent(llm_wrapper)
+        agent = get_position_fit_agent()
 
         # Analyze fit (can take 10-60 seconds)
         result = agent.analyze_fit(
@@ -393,12 +260,7 @@ def calculate_musashi_task(
     try:
         logger.info(f"[Task {self.request.id}] Starting Musashi Index job {job_id}")
 
-        # Lazy import avoids Flower startup pulling app_remote + auth bootstrap.
-        from app_remote import RemoteLLMWrapper
-
-        llm_wrapper = RemoteLLMWrapper()
-        prompts = get_prompt_manager()
-        agent = MusashiIndexAgent(llm_wrapper, prompts)
+        agent = get_musashi_agent()
 
         result = agent.score(
             career_profile=career_profile,

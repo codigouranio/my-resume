@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { API_BASE_URL } from '../../shared/api/client';
 import './Auth.css';
 
 export function ResetPasswordPage() {
@@ -44,8 +45,7 @@ export function ResetPasswordPage() {
     setIsLoading(true);
 
     try {
-      const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
-      const response = await fetch(`${apiUrl}/auth/reset-password`, {
+      const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -56,7 +56,7 @@ export function ResetPasswordPage() {
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
         throw new Error(data.message || 'Failed to reset password. The link may have expired.');

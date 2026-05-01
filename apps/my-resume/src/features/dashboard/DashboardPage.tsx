@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../shared/contexts/AuthContext';
-import { apiClient } from '../../shared/api/client';
+import { apiClient, API_BASE_URL } from '../../shared/api/client';
 import { AnalyticsDashboard, ChatAnalyticsDashboard } from '../analytics';
 import { AIContextFeed } from '../ai-context';
 import { InterviewBoard } from '../interviews';
@@ -186,7 +186,6 @@ export function DashboardPage() {
 
   const handleLinkedInImport = () => {
     // Redirect to LinkedIn OAuth flow
-    const API_BASE_URL = import.meta.env.PUBLIC_API_URL || '/api';
     window.location.href = `${API_BASE_URL}/resumes/import/linkedin/auth`;
   };
 

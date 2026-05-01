@@ -32,6 +32,20 @@ export class ResumesController {
     private readonly emailService: EmailService,
   ) {}
 
+  private extractViewData(
+    req: Request,
+    view?: string,
+  ): Record<string, string | undefined> | undefined {
+    if (view !== 'true') return undefined;
+    return {
+      ipAddress: req.ip || (req as any).connection?.remoteAddress,
+      userAgent: req.headers['user-agent'],
+      referrer: (req.headers['referer'] || req.headers['referrer']) as string | undefined,
+      country: req.headers['cf-ipcountry'] as string | undefined,
+      city: req.headers['cf-ipcity'] as string | undefined,
+    };
+  }
+
   @Post()
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
@@ -64,20 +78,9 @@ export class ResumesController {
   findBySlug(
     @Param("slug") slug: string,
     @Query("view") view?: string,
-    @Req() req?: any,
+    @Req() req?: Request,
   ) {
-    const viewData =
-      view === "true"
-        ? {
-            ipAddress: req?.ip || req?.connection?.remoteAddress,
-            userAgent: req?.headers?.["user-agent"],
-            referrer: req?.headers?.["referer"] || req?.headers?.["referrer"],
-            country: req?.headers?.["cf-ipcountry"],
-            city: req?.headers?.["cf-ipcity"],
-          }
-        : undefined;
-
-    return this.resumesService.findBySlug(slug, view === "true", viewData);
+    return this.resumesService.findBySlug(slug, view === "true", this.extractViewData(req, view));
   }
 
   @Get("public/:slug/pdf")
@@ -100,23 +103,12 @@ export class ResumesController {
   findByDomain(
     @Param("domain") domain: string,
     @Query("view") view?: string,
-    @Req() req?: any,
+    @Req() req?: Request,
   ) {
-    const viewData =
-      view === "true"
-        ? {
-            ipAddress: req?.ip || req?.connection?.remoteAddress,
-            userAgent: req?.headers?.["user-agent"],
-            referrer: req?.headers?.["referer"] || req?.headers?.["referrer"],
-            country: req?.headers?.["cf-ipcountry"],
-            city: req?.headers?.["cf-ipcity"],
-          }
-        : undefined;
-
     return this.resumesService.findByCustomDomain(
       domain,
       view === "true",
-      viewData,
+      this.extractViewData(req, view),
     );
   }
 

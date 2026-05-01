@@ -19,13 +19,14 @@ import { AIContextService } from "../ai-context/ai-context.service";
 import { CreateRecruiterInterestDto } from "./dto/create-recruiter-interest.dto";
 import { CreateResumeDto } from "./dto/create-resume.dto";
 import { UpdateResumeDto } from "./dto/update-resume.dto";
-import { first } from "rxjs";
+
 
 @Injectable()
 export class ResumesService {
   private readonly logger = new Logger(ResumesService.name);
   private readonly llmServiceUrl: string;
   private readonly llmApiKey: string;
+  private readonly apiBaseUrl: string;
 
   constructor(
     private prisma: PrismaService,
@@ -36,6 +37,7 @@ export class ResumesService {
   ) {
     this.llmServiceUrl = this.configService.get<string>('LLM_SERVICE_URL', 'http://localhost:5000');
     this.llmApiKey = this.configService.get<string>('LLM_API_KEY', '');
+    this.apiBaseUrl = this.configService.get<string>('API_BASE_URL', this.configService.get<string>('API_URL', 'http://localhost:3000'));
     
     if (!this.llmApiKey) {
       this.logger.warn('LLM_API_KEY not configured - LLM service calls may fail');
@@ -375,7 +377,7 @@ export class ResumesService {
       },
     });
 
-    if (!resume || !resume) {
+    if (!resume) {
       throw new NotFoundException("Resume not found");
     }
 
@@ -629,21 +631,14 @@ export class ResumesService {
 
     // Trigger background company research via Celery
     if (dto.company) {
-      const LLM_SERVICE_URL =
-        process.env.LLM_SERVICE_URL || "http://localhost:5000";
-      const API_BASE_URL =
-        process.env.API_BASE_URL || process.env.API_URL || 'http://localhost:3000';
-      
       try {
-        const response = await fetch(`${LLM_SERVICE_URL}/api/companies/enrich`, {
+        const response = await fetch(`${this.llmServiceUrl}/api/companies/enrich`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: this.getLLMHeaders(),
           body: JSON.stringify({
             companyName: dto.company,
-            callbackUrl: `${API_BASE_URL}/api/webhooks/llm-result`,
-            metadata: { 
+            callbackUrl: `${this.apiBaseUrl}/api/webhooks/llm-result`,
+            metadata: {
               recruiterInterestId: recruiterInterest.id,
               resumeId: resume.id,
               type: 'company_research'

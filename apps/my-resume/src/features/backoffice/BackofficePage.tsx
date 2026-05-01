@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../shared/contexts/AuthContext';
-import { apiClient } from '../../shared/api/client';
+import { apiClient, API_BASE_URL } from '../../shared/api/client';
 import { formatUsdPrice } from '../../shared/utils/pricing';
 
 interface AdminOverview {
@@ -58,7 +58,6 @@ interface AdminUser {
   };
 }
 
-const API_BASE_URL = import.meta.env.PUBLIC_API_URL || '/api';
 
 function formatDisplayName(user: AdminUser) {
   const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();

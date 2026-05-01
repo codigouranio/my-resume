@@ -1,12 +1,11 @@
 import { isValidElement, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { apiClient } from '../../shared/api/client';
+import { apiClient, API_BASE_URL } from '../../shared/api/client';
 import { CourseraCertificate, GitHubStats } from '../badges';
 import { ChatWidget } from '../chat';
 import type { TemplateType } from '../templates';
 import './Resume.css';
-const API_BASE_URL = import.meta.env.PUBLIC_API_URL || '/api';
 const MUSASHI_BADGE_MARKER = '/* resumecast:musashi-badge=enabled */';
 
 function hasMusashiBadgeEnabled(customCss?: string): boolean {

@@ -23,12 +23,17 @@ from dotenv import load_dotenv
 
 # Import existing modules
 from prompt_manager import get_prompt_manager
-from company_research_agent import CompanyResearchAgent
-from position_fit_agent import PositionFitAgent
 from musashi_index_agent import MusashiIndexAgent
 from llm_guard_service import protect_prompt, protect_output, GuardRejection
 from api_key_auth import get_api_key_manager
-from app_remote import RemoteLLMWrapper, research_company_async, analyze_position_async
+from llm_wrapper import (
+    RemoteLLMWrapper,
+    analyze_position_async,
+    get_musashi_agent,
+    get_position_fit_agent,
+    get_research_agent,
+    research_company_async,
+)
 
 # Import Celery app and tasks (optional - graceful fallback if not available)
 try:
@@ -68,13 +73,19 @@ app = FastAPI(
 )
 
 # CORS configuration
-cors_origins = [re.compile(r"^https?://([a-zA-Z0-9-]+\.)*resumecast\.ai(:\d+)?$")]
-cors_origins.extend(os.getenv("CORS_ORIGINS", "http://localhost:3000").split(","))
+# allow_origin_regex covers *.resumecast.ai; allow_origins covers explicit extra origins.
+_cors_regex = r"^https?://([a-zA-Z0-9-]+\.)*resumecast\.ai(:\d+)?$"
+_extra_origins = [
+    o.strip()
+    for o in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+    if o.strip()
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Filter in application logic
-    allow_credentials=True,
+    allow_origins=_extra_origins,
+    allow_origin_regex=_cors_regex,
+    allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
@@ -94,10 +105,12 @@ SERVICE_VERSION = (
     or "1.0.0"
 )
 
-WEBHOOK_SECRET = os.getenv("LLM_WEBHOOK_SECRET", "").encode("utf-8")
-if not WEBHOOK_SECRET:
-    logger.warning("LLM_WEBHOOK_SECRET not set - webhook signatures will be insecure!")
-    WEBHOOK_SECRET = b"change-me-in-production"
+_raw_webhook_secret = os.getenv("LLM_WEBHOOK_SECRET", "")
+if not _raw_webhook_secret:
+    logger.warning("LLM_WEBHOOK_SECRET not set — webhook signatures will be insecure!")
+WEBHOOK_SECRET: bytes = (
+    _raw_webhook_secret.encode("utf-8") if _raw_webhook_secret else b""
+)
 
 # Initialize API key manager
 api_key_manager = get_api_key_manager()
@@ -107,55 +120,6 @@ if api_key_manager.get_service_count() > 0:
     )
 else:
     logger.warning("⚠️  API key authentication disabled (no keys configured)")
-
-
-# ============================================================================
-# Lazy Loading for Research Agents
-# ============================================================================
-
-# Initialize research agent (lazy loading)
-research_agent = None
-
-
-def get_research_agent():
-    """Lazy load the research agent."""
-    global research_agent
-    if research_agent is None:
-        logger.info("Initializing company research agent...")
-        llm_wrapper = RemoteLLMWrapper()
-        research_agent = CompanyResearchAgent(llm_wrapper)
-        logger.info("Research agent initialized")
-    return research_agent
-
-
-# Initialize position fit agent (lazy loading)
-position_fit_agent = None
-
-
-def get_position_fit_agent():
-    """Lazy load the position fit agent."""
-    global position_fit_agent
-    if position_fit_agent is None:
-        logger.info("Initializing position fit agent...")
-        llm_wrapper = RemoteLLMWrapper()
-        position_fit_agent = PositionFitAgent(llm_wrapper)
-        logger.info("Position fit agent initialized")
-    return position_fit_agent
-
-
-# Initialize Musashi Index agent (lazy loading)
-musashi_agent = None
-
-
-def get_musashi_agent():
-    """Lazy load the Musashi Index agent."""
-    global musashi_agent
-    if musashi_agent is None:
-        logger.info("Initializing Musashi Index agent...")
-        llm_wrapper = RemoteLLMWrapper()
-        musashi_agent = MusashiIndexAgent(llm_wrapper, prompts)
-        logger.info("Musashi Index agent initialized")
-    return musashi_agent
 
 
 # ============================================================================
@@ -589,8 +553,57 @@ def infer_sentiment(answer: str) -> str:
     return "NEUTRAL"
 
 
-def call_llama_cpp_server(prompt: str, max_tokens: int = 256) -> dict:
+def _build_messages(
+    system_prompt: str,
+    user_message: str,
+    history: Optional[List[Dict[str, Any]]] = None,
+) -> List[Dict[str, str]]:
+    """Build a messages array with proper role separation.
+
+    System prompt and user message are kept in distinct roles so the model
+    never confuses untrusted user input with trusted instructions.
+    Conversation history items ({question, answer}) are interleaved as
+    user/assistant turns before the current message.
+    """
+    messages: List[Dict[str, str]] = [{"role": "system", "content": system_prompt}]
+    for item in history or []:
+        q = (item.get("question") or "").strip()
+        a = (item.get("answer") or "").strip()
+        if q:
+            messages.append({"role": "user", "content": q})
+        if a:
+            messages.append({"role": "assistant", "content": a})
+    if user_message:
+        messages.append({"role": "user", "content": user_message})
+    return messages
+
+
+def _serialize_messages_for_llama_cpp(messages: List[Dict[str, str]]) -> str:
+    """Serialise a messages array into a plain-text prompt for llama.cpp /completion.
+
+    llama.cpp's /completion endpoint does not understand message roles natively,
+    so we flatten to a structured text format that most instruction-tuned models
+    were trained on, then add a bare 'Assistant:' suffix to trigger generation.
+    """
+    parts = []
+    for msg in messages:
+        role = msg["role"]
+        content = msg["content"]
+        if role == "system":
+            parts.append(f"System: {content}")
+        elif role == "user":
+            parts.append(f"User: {content}")
+        elif role == "assistant":
+            parts.append(f"Assistant: {content}")
+    parts.append("Assistant:")
+    return "\n\n".join(parts)
+
+
+def call_llama_cpp_server(
+    messages: List[Dict[str, str]], max_tokens: int = 256
+) -> dict:
     """Call llama.cpp server API."""
+    prompt = _serialize_messages_for_llama_cpp(messages)
     try:
         response = requests.post(
             f"{LLAMA_SERVER_URL}/completion",
@@ -599,7 +612,7 @@ def call_llama_cpp_server(prompt: str, max_tokens: int = 256) -> dict:
                 "n_predict": max_tokens,
                 "temperature": 0.7,
                 "top_p": 0.9,
-                "stop": ["User:", "\n\n"],
+                "stop": ["User:", "System:"],
             },
             timeout=LLM_REQUEST_TIMEOUT,
         )
@@ -614,15 +627,15 @@ def call_llama_cpp_server(prompt: str, max_tokens: int = 256) -> dict:
         raise HTTPException(status_code=500, detail=f"LLAMA server error: {e}")
 
 
-def call_ollama_server(prompt: str, max_tokens: int = 256) -> dict:
-    """Call Ollama API using chat endpoint."""
+def call_ollama_server(messages: List[Dict[str, str]], max_tokens: int = 256) -> dict:
+    """Call Ollama API using the chat endpoint with proper message roles."""
     try:
         response = requests.post(
             f"{LLAMA_SERVER_URL}/api/chat",
             json={
                 "model": LLAMA_MODEL,
                 "keep_alive": OLLAMA_KEEP_ALIVE,
-                "messages": [{"role": "user", "content": prompt}],
+                "messages": messages,
                 "stream": False,
                 "options": {
                     "temperature": 0.7,
@@ -634,15 +647,14 @@ def call_ollama_server(prompt: str, max_tokens: int = 256) -> dict:
         )
         response.raise_for_status()
         data = response.json()
-        message = data.get("message", {})
-        return {"text": message.get("content", ""), "tokens": 0}
+        return {"text": data.get("message", {}).get("content", ""), "tokens": 0}
     except Exception as e:
         logger.error(f"Error calling Ollama server: {e}")
         raise HTTPException(status_code=500, detail=f"Ollama server error: {e}")
 
 
 def call_openai_compatible(
-    system_prompt: str, user_message: str, max_tokens: int = 128
+    messages: List[Dict[str, str]], max_tokens: int = 128
 ) -> dict:
     """Call OpenAI-compatible API (LocalAI, vLLM, etc.)."""
     try:
@@ -650,10 +662,7 @@ def call_openai_compatible(
             f"{VLLM_SERVER_URL}/v1/chat/completions",
             json={
                 "model": os.getenv("MODEL_NAME", VLLM_MODEL),
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_message},
-                ],
+                "messages": messages,
                 "max_tokens": max_tokens,
                 "temperature": 0.7,
                 "top_p": 0.9,
@@ -664,9 +673,8 @@ def call_openai_compatible(
         response.raise_for_status()
         data = response.json()
         choice = data.get("choices", [{}])[0]
-        message = choice.get("message", {})
         return {
-            "text": message.get("content", ""),
+            "text": choice.get("message", {}).get("content", ""),
             "tokens": data.get("usage", {}).get("total_tokens", 0),
         }
     except Exception as e:
@@ -675,15 +683,18 @@ def call_openai_compatible(
 
 
 def generate_completion(
-    system_prompt: str, user_message: str, max_tokens: int = 200
+    system_prompt: str,
+    user_message: str,
+    max_tokens: int = 200,
+    history: Optional[List[Dict[str, Any]]] = None,
 ) -> str:
-    """Generate completion from LLAMA server - routes to appropriate API based on LLAMA_API_TYPE
+    """Generate a completion from the configured LLM backend.
 
-    Supported API types:
-    - llama-cpp: llama.cpp server
-    - ollama: Ollama server
-    - openai: OpenAI-compatible API (including vLLM)
-    - vllm: Alias for openai (uses vLLM server)
+    The system prompt, conversation history, and current user message are kept
+    in separate roles so the model cannot confuse untrusted input with trusted
+    instructions (role-based separation instead of concatenation).
+
+    Supported LLAMA_API_TYPE values: llama-cpp, ollama, openai, vllm
     """
     try:
         guarded_user_message = protect_prompt(
@@ -691,32 +702,28 @@ def generate_completion(
             source="app_fastapi.generate_completion.user_message",
         )
 
+        messages = _build_messages(system_prompt, guarded_user_message, history)
         logger.info(
-            f"Generating completion with API type '{LLAMA_API_TYPE}' for prompt: {guarded_user_message[:100]}..."
+            f"Generating completion: api_type={LLAMA_API_TYPE}, "
+            f"messages={len(messages)}, user_msg={guarded_user_message[:100]!r}..."
         )
 
-        # Build full prompt for llama-cpp and ollama
-        full_prompt = f"{system_prompt}\n\nUser: {guarded_user_message}\nAssistant:"
-
         if LLAMA_API_TYPE == "llama-cpp":
-            result = call_llama_cpp_server(full_prompt, max_tokens)
+            result = call_llama_cpp_server(messages, max_tokens)
             return protect_output(
                 result.get("text", ""),
                 source="app_fastapi.generate_completion.llama_cpp",
-                prompt_context=full_prompt,
+                prompt_context=guarded_user_message,
             )
         elif LLAMA_API_TYPE == "ollama":
-            result = call_ollama_server(full_prompt, max_tokens)
+            result = call_ollama_server(messages, max_tokens)
             return protect_output(
                 result.get("text", ""),
                 source="app_fastapi.generate_completion.ollama",
-                prompt_context=full_prompt,
+                prompt_context=guarded_user_message,
             )
         elif LLAMA_API_TYPE in ["openai", "vllm"]:
-            # vLLM uses OpenAI-compatible API, so both types work the same way
-            result = call_openai_compatible(
-                system_prompt, guarded_user_message, max_tokens
-            )
+            result = call_openai_compatible(messages, max_tokens)
             return protect_output(
                 result.get("text", ""),
                 source="app_fastapi.generate_completion.openai_compatible",
@@ -724,7 +731,8 @@ def generate_completion(
             )
         else:
             raise ValueError(
-                f"Unsupported LLAMA_API_TYPE: {LLAMA_API_TYPE}. Supported: llama-cpp, ollama, openai, vllm"
+                f"Unsupported LLAMA_API_TYPE: {LLAMA_API_TYPE}. "
+                "Supported: llama-cpp, ollama, openai, vllm"
             )
     except GuardRejection as e:
         logger.warning(f"LLM guard rejected request: {e}")
@@ -847,25 +855,21 @@ async def chat(
         safety_instructions = _get_safety_instructions(user_info)
         system_instructions = _get_system_instructions(user_info)
 
-        history_block = ""
-        if conversation_history:
-            formatted_history = []
-            for item in conversation_history:
-                formatted_history.append(f"Recruiter: {item['question']}")
-                formatted_history.append(f"Assistant: {item['answer']}")
-            history_block = "\nCONVERSATION HISTORY:\n" + "\n".join(formatted_history)
-
-        # Build prompt with context and safety guardrails
+        # System prompt carries only trusted content: persona, safety rules, resume.
+        # Conversation history is passed as structured user/assistant role messages
+        # so the model sees a clear boundary between instructions and prior turns.
         system_prompt = prompts.get(
             "chat_personalized_full",
             system_instructions=system_instructions,
             safety_instructions=safety_instructions,
-            resume_context=f"{resume_context}{history_block}",
+            resume_context=resume_context,
         )
 
         # Generate response via LLAMA server
         logger.info(f"Generating response for: {user_message[:100]}")
-        result = generate_completion(system_prompt, user_message, max_tokens=200)
+        result = generate_completion(
+            system_prompt, user_message, max_tokens=200, history=conversation_history
+        )
 
         # Compute analytics hints and return them to api-service for persistence.
         response_time = int((time.time() - start_time) * 1000)

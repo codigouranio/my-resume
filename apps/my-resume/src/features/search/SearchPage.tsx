@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { API_BASE_URL } from '../../shared/api/client';
 
 interface SearchResult {
   id: string;
@@ -56,8 +57,7 @@ export const SearchPage = () => {
     setResults([]);
 
     try {
-      const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
-      const response = await fetch(`${apiUrl}/embeddings/unified-search`, {
+      const response = await fetch(`${API_BASE_URL}/embeddings/unified-search`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

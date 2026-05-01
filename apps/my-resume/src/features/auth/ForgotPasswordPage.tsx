@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../shared/api/client';
 import './Auth.css';
 
 export function ForgotPasswordPage() {
@@ -16,8 +17,7 @@ export function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/api';
-      const response = await fetch(`${apiUrl}/auth/forgot-password`, {
+      const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -26,7 +26,8 @@ export function ForgotPasswordPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send reset email. Please try again.');
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Failed to send reset email. Please try again.');
       }
 
       const data = await response.json();

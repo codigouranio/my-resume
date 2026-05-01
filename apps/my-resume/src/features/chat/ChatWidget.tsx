@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import './ChatWidget.css';
+import { API_BASE_URL } from '../../shared/api/client';
 
-// API Configuration
-// Call API service (which proxies to LLM service with authentication)
-const API_URL = import.meta.env.PUBLIC_API_URL || '/api';
+// API Configuration: URL comes from shared config (see shared/api/client.ts)
+const API_URL = API_BASE_URL;
 
 // Get resume slug from URL
 const getResumeSlug = () => {

@@ -19,7 +19,8 @@ import { EmailModule } from '../../shared/email/email.module';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN') || '7d',
+          // Note: access token expiry is always overridden per-call in auth.service.ts ('15m')
+          expiresIn: '15m',
         },
       }),
       inject: [ConfigService],

@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.PUBLIC_API_URL || '/api';
+export const API_BASE_URL = import.meta.env.PUBLIC_API_URL || '/api';
 
 interface AdminUsersFilters {
   search?: string;
@@ -10,7 +10,7 @@ class ApiClient {
   private baseURL: string;
   private token: string | null = null;
   private refreshToken: string | null = null;
-  private refreshPromise: Promise<any> | null = null;
+  private refreshPromise: Promise<boolean> | null = null;
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;
@@ -89,35 +89,37 @@ class ApiClient {
   }
 
   private async tryRefreshToken(): Promise<boolean> {
-    // Prevent multiple simultaneous refresh attempts
+    // Prevent multiple simultaneous refresh attempts — all waiters share the
+    // same Promise<boolean> so they all see the token once it is set.
     if (this.refreshPromise) {
-      await this.refreshPromise;
-      return true;
+      return this.refreshPromise;
     }
 
-    try {
-      this.refreshPromise = fetch(`${this.baseURL}/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh_token: this.refreshToken }),
-      });
-
-      const response = await this.refreshPromise;
-      if (response.ok) {
-        const data = await response.json();
-        this.setToken(data.access_token);
-        return true;
+    this.refreshPromise = (async () => {
+      try {
+        const response = await fetch(`${this.baseURL}/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: this.refreshToken }),
+        });
+        if (response.ok) {
+          const data = await response.json();
+          this.setToken(data.access_token);
+          return true;
+        }
+      } catch (error) {
+        console.error('Token refresh failed:', error);
+      } finally {
+        this.refreshPromise = null;
       }
-    } catch (error) {
-      console.error('Token refresh failed:', error);
-    } finally {
-      this.refreshPromise = null;
-    }
 
-    // Refresh failed, clear tokens
-    this.setToken(null);
-    this.setRefreshToken(null);
-    return false;
+      // Refresh failed, clear tokens
+      this.setToken(null);
+      this.setRefreshToken(null);
+      return false;
+    })();
+
+    return this.refreshPromise;
   }
 
   // Auth
