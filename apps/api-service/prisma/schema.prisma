@@ -31,6 +31,13 @@ enum ChatSentiment {
   UNKNOWN
 }
 
+enum CorroborationStatus {
+  PENDING
+  CONFIRMED
+  DECLINED
+  EXPIRED
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -364,6 +371,7 @@ model JournalPost {
   reactions       JournalPostReaction[]
   replies         JournalPostReply[]
   resumeTags      PostResumeTag[]
+  corroborations  PostCorroboration[]
   
   @@index([userId])
   @@index([publishedAt])
@@ -443,6 +451,28 @@ model PostResumeTag {
   @@unique([postId, resumeId])
   @@index([postId])
   @@index([resumeId])
+}
+
+model PostCorroboration {
+  id                    String               @id @default(cuid())
+  postId                String
+  corroboratorEmail     String
+  corroboratorName      String
+  corroboratorRole      String?              // e.g. "Direct Manager", "Teammate", "Client"
+  status                CorroborationStatus  @default(PENDING)
+  token                 String               @unique @default(cuid())
+  tokenExpiresAt        DateTime
+  confirmedAt           DateTime?
+  comment               String?              // Optional note from corroborator
+  deletedAt             DateTime?            // Soft delete
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+
+  post                  JournalPost          @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([token])
+  @@index([status])
 }
 
 // ============================================

@@ -13,12 +13,13 @@ echo ""
 PROJECT_ID="resume-cast-ai-prod"
 REGION="us-central1"
 SERVICE_NAME="api-service"
-IMAGE_NAME="gcr.io/${PROJECT_ID}/${SERVICE_NAME}:latest"
+REGISTRY="${REGION}-docker.pkg.dev/${PROJECT_ID}/resumecast-images"
+IMAGE_NAME="${REGISTRY}/${SERVICE_NAME}:latest"
 MIGRATION_JOB_NAME="api-service-migrate"
 DB_SECRET_NAME="database-url"
 
 echo "📦 Building Docker image..."
-cat > /tmp/cloudbuild-api.yaml << 'EOF'
+cat > /tmp/cloudbuild-api.yaml << EOF
 steps:
   - name: 'gcr.io/cloud-builders/docker'
     args:
@@ -26,10 +27,10 @@ steps:
       - '-f'
       - 'apps/api-service/Dockerfile'
       - '-t'
-      - 'gcr.io/resume-cast-ai-prod/api-service:latest'
+      - '${REGISTRY}/api-service:latest'
       - '.'
 images:
-  - 'gcr.io/resume-cast-ai-prod/api-service:latest'
+  - '${REGISTRY}/api-service:latest'
 EOF
 
 gcloud builds submit \
@@ -92,7 +93,7 @@ gcloud run deploy ${SERVICE_NAME} \
   --region=${REGION} \
   --platform=managed \
   --allow-unauthenticated \
-  --port=3000 \
+  --port=8080 \
   --project=${PROJECT_ID} \
   --quiet
 

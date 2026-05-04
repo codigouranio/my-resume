@@ -5,6 +5,7 @@ import { apiClient } from '../../shared/api/client';
 import { PostReactions } from './PostReactions';
 import { PostReplies } from './PostReplies';
 import { PostForm } from './PostForm';
+import { CorroborationSection } from './CorroborationSection';
 import { linkifyText } from './utils/linkify';
 
 interface PostCardProps {
@@ -274,6 +275,9 @@ export function PostCard({ post, onUpdated, onDeleted }: PostCardProps) {
             </div>
           </div>
         )}
+
+        {/* Corroborations */}
+        <CorroborationSection postId={post.id} />
 
         {/* Divider */}
         <div className="divider my-3"></div>

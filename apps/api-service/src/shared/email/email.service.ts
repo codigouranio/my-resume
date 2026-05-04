@@ -194,13 +194,83 @@ export class EmailService {
     await this.sendEmail(email, subject, htmlBody, textBody);
   }
 
+  async sendCorroborationInviteEmail(
+    email: string,
+    corroboratorName: string,
+    authorFirstName: string,
+    postExcerpt: string,
+    verifyUrl: string,
+    signupUrl: string,
+  ): Promise<void> {
+    this.logger.debug(`Preparing corroboration invite for ${email}`);
+    const subject = `${authorFirstName} is asking you to corroborate an achievement`;
+    const htmlBody = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #6366f1;">Achievement Corroboration Request</h1>
+        <p>Hi ${corroboratorName},</p>
+        <p><strong>${authorFirstName}</strong> is asking you to corroborate an achievement on their professional profile.</p>
+        <div style="background-color: #f3f4f6; border-left: 4px solid #6366f1; padding: 16px; border-radius: 4px; margin: 20px 0;">
+          <p style="margin: 0; font-style: italic; color: #374151;">${postExcerpt}</p>
+        </div>
+        <p>If you were involved in or witnessed this achievement, please click the button below to corroborate it. Your endorsement will appear on their profile and strengthen their professional credibility.</p>
+        <p style="margin: 28px 0;">
+          <a href="${verifyUrl}"
+             style="display: inline-block; padding: 12px 28px; background-color: #6366f1; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">
+            ✓ Corroborate This Achievement
+          </a>
+        </p>
+        <p style="color: #6b7280; font-size: 14px;">This link expires in 30 days. If you were not involved, you can safely ignore this email.</p>
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+        <p style="color: #6b7280; font-size: 13px;">
+          Not on ResumeCast yet?
+          <a href="${signupUrl}" style="color: #6366f1;">Create your free profile →</a>
+        </p>
+        <p style="color: #9ca3af; font-size: 12px;">ResumeCast — Professional profile platform</p>
+      </div>
+    `;
+    const textBody = `Hi ${corroboratorName},\n\n${authorFirstName} is asking you to corroborate an achievement:\n\n"${postExcerpt}"\n\nCorroborate it here: ${verifyUrl}\n\nThis link expires in 30 days.\n\nNot on ResumeCast? Sign up at ${signupUrl}\n\nResumeCast Team`;
+    await this.sendEmail(email, subject, htmlBody, textBody);
+  }
+
+  async sendCorroborationConfirmedEmail(
+    email: string,
+    authorFirstName: string,
+    corroboratorName: string,
+    corroboratorRole: string | null,
+    postExcerpt: string,
+    dashboardUrl: string,
+  ): Promise<void> {
+    this.logger.debug(`Preparing corroboration confirmed notification for ${email}`);
+    const roleText = corroboratorRole ? ` (${corroboratorRole})` : '';
+    const subject = `${corroboratorName} corroborated your achievement ✓`;
+    const htmlBody = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #10b981;">🎉 Achievement Corroborated!</h1>
+        <p>Hi ${authorFirstName},</p>
+        <p>Great news! <strong>${corroboratorName}${roleText}</strong> has corroborated your achievement.</p>
+        <div style="background-color: #f3f4f6; border-left: 4px solid #10b981; padding: 16px; border-radius: 4px; margin: 20px 0;">
+          <p style="margin: 0; font-style: italic; color: #374151;">${postExcerpt}</p>
+        </div>
+        <p>This corroboration is now visible on your profile, adding social proof to your accomplishment.</p>
+        <p style="margin: 28px 0;">
+          <a href="${dashboardUrl}"
+             style="display: inline-block; padding: 12px 28px; background-color: #10b981; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+            View Your Journal
+          </a>
+        </p>
+        <p style="color: #9ca3af; font-size: 12px;">ResumeCast — Professional profile platform</p>
+      </div>
+    `;
+    const textBody = `Hi ${authorFirstName},\n\n${corroboratorName}${roleText} has corroborated your achievement:\n\n"${postExcerpt}"\n\nView your journal: ${dashboardUrl}\n\nResumeCast Team`;
+    await this.sendEmail(email, subject, htmlBody, textBody);
+  }
+
   async sendCompanyEnrichmentEmail(
     email: string,
     firstName: string,
     companyName: string,
     companyInfo: any,
   ): Promise<void> {
-    this.logger.debug(`Preparing company enrichment notification for ${email} (${companyName})`);
     const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'https://resumecast.ai');
     const subject = `✅ Company Research Complete: ${companyName}`;
     

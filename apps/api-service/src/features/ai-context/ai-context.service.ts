@@ -1,5 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '@shared/database/prisma.service';
+import { ConfigService } from '@nestjs/config';
+import { EmailService } from '../../shared/email/email.service';
 import { JournalPost, JournalPostReaction, JournalPostReply, Prisma } from '@prisma/client';
 
 export interface CreatePostInput {
@@ -26,7 +28,11 @@ export interface PostFilters {
 
 @Injectable()
 export class AIContextService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly emailService: EmailService,
+    private readonly configService: ConfigService,
+  ) {}
 
   // Posts
   async createPost(userId: string, input: CreatePostInput): Promise<JournalPost> {
@@ -327,6 +333,207 @@ export class AIContextService {
       where: { id: attachmentId },
     });
   }
+
+  // ── Corroborations ────────────────────────────────────────────────────────
+
+  async addCorroborators(
+    postId: string,
+    userId: string,
+    corroborators: { email: string; name: string; role?: string }[],
+  ) {
+    const post = await this.prisma.journalPost.findFirst({
+      where: { id: postId, userId, deletedAt: null },
+      select: { id: true, text: true, user: { select: { firstName: true, email: true } } },
+    });
+    if (!post) throw new NotFoundException('Post not found');
+
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'https://resumecast.ai');
+    const tokenExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+    const excerpt = post.text.length > 200 ? post.text.slice(0, 197) + '…' : post.text;
+
+    const created = await Promise.all(
+      corroborators.map(async (c) => {
+        const record = await this.prisma.postCorroboration.create({
+          data: {
+            postId,
+            corroboratorEmail: c.email.toLowerCase().trim(),
+            corroboratorName: c.name.trim(),
+            corroboratorRole: c.role?.trim() || null,
+            tokenExpiresAt,
+          },
+        });
+
+        const verifyUrl = `${frontendUrl}/verify/corroboration/${record.token}`;
+        const signupUrl = `${frontendUrl}/register`;
+        await this.emailService.sendCorroborationInviteEmail(
+          c.email,
+          c.name,
+          post.user.firstName || 'Someone',
+          excerpt,
+          verifyUrl,
+          signupUrl,
+        );
+
+        return record;
+      }),
+    );
+
+    return created;
+  }
+
+  async getCorroborations(postId: string, userId: string) {
+    const post = await this.prisma.journalPost.findFirst({
+      where: { id: postId, userId, deletedAt: null },
+      select: { id: true },
+    });
+    if (!post) throw new NotFoundException('Post not found');
+
+    return this.prisma.postCorroboration.findMany({
+      where: { postId, deletedAt: null },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getPublicCorroborations(postId: string) {
+    return this.prisma.postCorroboration.findMany({
+      where: { postId, status: 'CONFIRMED', deletedAt: null },
+      select: {
+        id: true,
+        corroboratorName: true,
+        corroboratorRole: true,
+        comment: true,
+        confirmedAt: true,
+      },
+      orderBy: { confirmedAt: 'desc' },
+    });
+  }
+
+  async cancelCorroboration(postId: string, userId: string, corroborationId: string) {
+    const post = await this.prisma.journalPost.findFirst({
+      where: { id: postId, userId, deletedAt: null },
+      select: { id: true },
+    });
+    if (!post) throw new NotFoundException('Post not found');
+
+    return this.prisma.postCorroboration.update({
+      where: { id: corroborationId, postId },
+      data: { deletedAt: new Date() },
+    });
+  }
+
+  async resendCorroboration(postId: string, userId: string, corroborationId: string) {
+    const post = await this.prisma.journalPost.findFirst({
+      where: { id: postId, userId, deletedAt: null },
+      select: { id: true, text: true, user: { select: { firstName: true } } },
+    });
+    if (!post) throw new NotFoundException('Post not found');
+
+    const record = await this.prisma.postCorroboration.findFirst({
+      where: { id: corroborationId, postId, deletedAt: null, status: 'PENDING' },
+    });
+    if (!record) throw new NotFoundException('Corroboration not found or already actioned');
+
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'https://resumecast.ai');
+    const excerpt = post.text.length > 200 ? post.text.slice(0, 197) + '…' : post.text;
+
+    await this.emailService.sendCorroborationInviteEmail(
+      record.corroboratorEmail,
+      record.corroboratorName,
+      post.user.firstName || 'Someone',
+      excerpt,
+      `${frontendUrl}/verify/corroboration/${record.token}`,
+      `${frontendUrl}/register`,
+    );
+
+    return { success: true };
+  }
+
+  async getCorroborationByToken(token: string) {
+    const record = await this.prisma.postCorroboration.findUnique({
+      where: { token },
+      include: {
+        post: {
+          select: {
+            id: true,
+            text: true,
+            publishedAt: true,
+            user: { select: { firstName: true, lastName: true } },
+          },
+        },
+      },
+    });
+
+    if (!record) throw new NotFoundException('Corroboration request not found');
+    if (record.deletedAt) throw new NotFoundException('This request has been cancelled');
+    if (record.status !== 'PENDING') {
+      return { record, alreadyActioned: true };
+    }
+    if (record.tokenExpiresAt < new Date()) {
+      await this.prisma.postCorroboration.update({
+        where: { token },
+        data: { status: 'EXPIRED' },
+      });
+      throw new ForbiddenException('This corroboration link has expired');
+    }
+
+    return { record, alreadyActioned: false };
+  }
+
+  async confirmCorroboration(token: string, comment?: string) {
+    const record = await this.prisma.postCorroboration.findUnique({
+      where: { token },
+      include: {
+        post: {
+          select: {
+            id: true,
+            text: true,
+            user: { select: { email: true, firstName: true } },
+          },
+        },
+      },
+    });
+
+    if (!record || record.deletedAt) throw new NotFoundException('Request not found');
+    if (record.status !== 'PENDING') throw new ForbiddenException('Already actioned');
+    if (record.tokenExpiresAt < new Date()) {
+      await this.prisma.postCorroboration.update({ where: { token }, data: { status: 'EXPIRED' } });
+      throw new ForbiddenException('Link expired');
+    }
+
+    const updated = await this.prisma.postCorroboration.update({
+      where: { token },
+      data: { status: 'CONFIRMED', confirmedAt: new Date(), comment: comment || null },
+    });
+
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'https://resumecast.ai');
+    const excerpt = record.post.text.length > 200
+      ? record.post.text.slice(0, 197) + '…'
+      : record.post.text;
+
+    await this.emailService.sendCorroborationConfirmedEmail(
+      record.post.user.email,
+      record.post.user.firstName || 'there',
+      record.corroboratorName,
+      record.corroboratorRole,
+      excerpt,
+      `${frontendUrl}/dashboard`,
+    );
+
+    return updated;
+  }
+
+  async declineCorroboration(token: string) {
+    const record = await this.prisma.postCorroboration.findUnique({ where: { token } });
+    if (!record || record.deletedAt) throw new NotFoundException('Request not found');
+    if (record.status !== 'PENDING') throw new ForbiddenException('Already actioned');
+
+    return this.prisma.postCorroboration.update({
+      where: { token },
+      data: { status: 'DECLINED' },
+    });
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
 
   private getPostInclude() {
     return {

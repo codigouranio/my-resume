@@ -4,7 +4,9 @@
  */
 
 import { Controller, Get } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Public } from '../../features/auth/decorators/public.decorator';
+import { PrismaService } from '../database/prisma.service';
 
 export interface ServiceStatus {
   service: string;
@@ -26,8 +28,8 @@ export interface SystemHealth {
 @Controller('health')
 export class HealthController {
   constructor(
-    private readonly configService: any,
-    private readonly prisma: any,
+    private readonly configService: ConfigService,
+    private readonly prisma: PrismaService,
   ) {}
 
   private getServiceVersion(): string {

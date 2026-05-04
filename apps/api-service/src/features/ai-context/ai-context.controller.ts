@@ -217,6 +217,7 @@ export class AIContextController {
 
   @UseGuards(JwtAuthGuard)
   @Delete('posts/:postId/attachments/:attachmentId')
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Remove an attachment from a journal post' })
   async removeAttachment(
@@ -226,5 +227,78 @@ export class AIContextController {
   ) {
     await this.aiContextService.removeAttachment(postId, req.user.id, attachmentId);
     return { success: true };
+  }
+
+  // ── Corroborations ────────────────────────────────────────────────────────
+
+  @UseGuards(JwtAuthGuard)
+  @Post('posts/:postId/corroborations')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Send corroboration requests for a journal post' })
+  async addCorroborators(
+    @Request() req,
+    @Param('postId') postId: string,
+    @Body() body: { corroborators: { email: string; name: string; role?: string }[] },
+  ) {
+    return this.aiContextService.addCorroborators(postId, req.user.id, body.corroborators);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('posts/:postId/corroborations')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List corroborations for a journal post' })
+  async getCorroborations(@Request() req, @Param('postId') postId: string) {
+    return this.aiContextService.getCorroborations(postId, req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('posts/:postId/corroborations/:corroborationId')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cancel a corroboration request' })
+  async cancelCorroboration(
+    @Request() req,
+    @Param('postId') postId: string,
+    @Param('corroborationId') corroborationId: string,
+  ) {
+    return this.aiContextService.cancelCorroboration(postId, req.user.id, corroborationId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('posts/:postId/corroborations/:corroborationId/resend')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Resend a corroboration invitation email' })
+  async resendCorroboration(
+    @Request() req,
+    @Param('postId') postId: string,
+    @Param('corroborationId') corroborationId: string,
+  ) {
+    return this.aiContextService.resendCorroboration(postId, req.user.id, corroborationId);
+  }
+
+  @Get('corroborations/verify/:token')
+  @ApiOperation({ summary: 'Get corroboration details for the public verify page' })
+  async getCorroborationByToken(@Param('token') token: string) {
+    return this.aiContextService.getCorroborationByToken(token);
+  }
+
+  @Get('posts/:postId/corroborations/public')
+  @ApiOperation({ summary: 'Get confirmed corroborations for a public post' })
+  async getPublicCorroborations(@Param('postId') postId: string) {
+    return this.aiContextService.getPublicCorroborations(postId);
+  }
+
+  @Post('corroborations/verify/:token/confirm')
+  @ApiOperation({ summary: 'Confirm a corroboration request' })
+  async confirmCorroboration(
+    @Param('token') token: string,
+    @Body() body: { comment?: string },
+  ) {
+    return this.aiContextService.confirmCorroboration(token, body.comment);
+  }
+
+  @Post('corroborations/verify/:token/decline')
+  @ApiOperation({ summary: 'Decline a corroboration request' })
+  async declineCorroboration(@Param('token') token: string) {
+    return this.aiContextService.declineCorroboration(token);
   }
 }

@@ -80,19 +80,42 @@ if [ ! -f "terraform.tfvars" ]; then
 fi
 
 echo -e "${YELLOW}🔐 Checking authentication...${NC}"
-if [ -f "terraform-key.json" ]; then
-    export GOOGLE_APPLICATION_CREDENTIALS="${SCRIPT_DIR}/terraform-key.json"
-    echo -e "${GREEN}✅ Authentication configured with terraform-key.json${NC}"
-elif [ -n "${GOOGLE_APPLICATION_CREDENTIALS:-}" ] && [ -f "${GOOGLE_APPLICATION_CREDENTIALS}" ]; then
-    echo -e "${GREEN}✅ Authentication configured with GOOGLE_APPLICATION_CREDENTIALS${NC}"
-elif gcloud auth application-default print-access-token >/dev/null 2>&1; then
-    echo -e "${GREEN}✅ Authentication configured with gcloud application-default credentials${NC}"
+REQUIRED_GCLOUD_ACCOUNT="${REQUIRED_GCLOUD_ACCOUNT:-codigouranio@gmail.com}"
+AUTH_MODE="${DEPLOY_AUTH_MODE:-gcloud-user}"
+
+if [ "${AUTH_MODE}" = "gcloud-user" ]; then
+    ACTIVE_GCLOUD_ACCOUNT="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' | head -n1)"
+    if [ "${ACTIVE_GCLOUD_ACCOUNT}" != "${REQUIRED_GCLOUD_ACCOUNT}" ]; then
+        echo -e "${RED}❌ Active gcloud account is '${ACTIVE_GCLOUD_ACCOUNT:-none}', expected '${REQUIRED_GCLOUD_ACCOUNT}'.${NC}"
+        echo "Run: gcloud config set account ${REQUIRED_GCLOUD_ACCOUNT}"
+        echo "Then: gcloud auth application-default login"
+        exit 1
+    fi
+
+    if gcloud auth application-default print-access-token >/dev/null 2>&1; then
+        # Ensure Terraform uses user ADC instead of local service-account key.
+        unset GOOGLE_APPLICATION_CREDENTIALS
+        echo -e "${GREEN}✅ Authentication configured with gcloud user ADC (${ACTIVE_GCLOUD_ACCOUNT})${NC}"
+    else
+        echo -e "${RED}❌ No application-default credentials found for ${ACTIVE_GCLOUD_ACCOUNT}.${NC}"
+        echo "Run: gcloud auth application-default login"
+        exit 1
+    fi
+elif [ "${AUTH_MODE}" = "service-account" ]; then
+    if [ -f "terraform-key.json" ]; then
+        export GOOGLE_APPLICATION_CREDENTIALS="${SCRIPT_DIR}/terraform-key.json"
+        echo -e "${GREEN}✅ Authentication configured with terraform-key.json${NC}"
+    elif [ -n "${GOOGLE_APPLICATION_CREDENTIALS:-}" ] && [ -f "${GOOGLE_APPLICATION_CREDENTIALS}" ]; then
+        echo -e "${GREEN}✅ Authentication configured with GOOGLE_APPLICATION_CREDENTIALS${NC}"
+    else
+        echo -e "${RED}❌ AUTH_MODE=service-account but no key file was found.${NC}"
+        echo "Provide one of:"
+        echo "  1) ${SCRIPT_DIR}/terraform-key.json"
+        echo "  2) GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json"
+        exit 1
+    fi
 else
-    echo -e "${RED}❌ No GCP application credentials found${NC}"
-    echo "Use one of these options:"
-    echo "  1) gcloud auth application-default login"
-    echo "  2) export GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json"
-    echo "  3) create ${SCRIPT_DIR}/terraform-key.json"
+    echo -e "${RED}❌ Unsupported DEPLOY_AUTH_MODE='${AUTH_MODE}'. Use 'gcloud-user' or 'service-account'.${NC}"
     exit 1
 fi
 echo ""

@@ -91,6 +91,10 @@ secrets_created = [
   "jwt-secret",
   "database-url",
   "llm-webhook-secret",
+  "stripe-secret-key",
+  "stripe-webhook-secret",
+  "stripe-price-id",
+  "stripe-product-id",
 ]
 uploads_bucket_name = "resume-cast-ai-prod-uploads-61156347"
 uploads_bucket_url = "gs://resume-cast-ai-prod-uploads-61156347"

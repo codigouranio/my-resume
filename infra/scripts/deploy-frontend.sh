@@ -13,7 +13,8 @@ echo ""
 PROJECT_ID="resume-cast-ai-prod"
 REGION="us-central1"
 SERVICE_NAME="frontend"
-IMAGE_NAME="gcr.io/${PROJECT_ID}/${SERVICE_NAME}:latest"
+REGISTRY="${REGION}-docker.pkg.dev/${PROJECT_ID}/resumecast-images"
+IMAGE_NAME="${REGISTRY}/${SERVICE_NAME}:latest"
 
 # Build arguments
 PUBLIC_API_URL="https://api.resumecast.ai/api"
@@ -29,10 +30,10 @@ steps:
       - '--build-arg'
       - 'PUBLIC_API_URL=${PUBLIC_API_URL}'
       - '-t'
-      - 'gcr.io/resume-cast-ai-prod/frontend:latest'
+      - '${REGISTRY}/frontend:latest'
       - '.'
 images:
-  - 'gcr.io/resume-cast-ai-prod/frontend:latest'
+  - '${REGISTRY}/frontend:latest'
 EOF
 
 gcloud builds submit \

@@ -533,6 +533,51 @@ class ApiClient {
     });
   }
 
+  // Corroborations
+  async addCorroborators(postId: string, corroborators: { email: string; name: string; role?: string }[]) {
+    return this.request(`/ai-context/posts/${postId}/corroborations`, {
+      method: 'POST',
+      body: JSON.stringify({ corroborators }),
+    });
+  }
+
+  async getCorroborations(postId: string) {
+    return this.request(`/ai-context/posts/${postId}/corroborations`);
+  }
+
+  async getPublicCorroborations(postId: string) {
+    return this.request(`/ai-context/posts/${postId}/corroborations/public`);
+  }
+
+  async cancelCorroboration(postId: string, corroborationId: string) {
+    return this.request(`/ai-context/posts/${postId}/corroborations/${corroborationId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async resendCorroboration(postId: string, corroborationId: string) {
+    return this.request(`/ai-context/posts/${postId}/corroborations/${corroborationId}/resend`, {
+      method: 'POST',
+    });
+  }
+
+  async getCorroborationByToken(token: string) {
+    return this.request(`/ai-context/corroborations/verify/${token}`);
+  }
+
+  async confirmCorroboration(token: string, comment?: string) {
+    return this.request(`/ai-context/corroborations/verify/${token}/confirm`, {
+      method: 'POST',
+      body: JSON.stringify({ comment }),
+    });
+  }
+
+  async declineCorroboration(token: string) {
+    return this.request(`/ai-context/corroborations/verify/${token}/decline`, {
+      method: 'POST',
+    });
+  }
+
   async identifySlug(): Promise<{ slug: string | null }> {
     return this.request('/resumes/identify-slug');
   }
